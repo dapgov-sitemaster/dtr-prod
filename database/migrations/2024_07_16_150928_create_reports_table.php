@@ -15,11 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('hris_number');
             $table->foreign('hris_number')->references('hris_number')->on('employees');
-            $table->datetime('time_start');
+            $table->datetime('time_start')->nullable();
             $table->datetime('time_end')->nullable();
             $table->time('official_time')->nullable();
             $table->string('office');
             $table->string('appointment_status');
+            $table->string('time_entry_type');
             $table->timestamps();
         });
     }

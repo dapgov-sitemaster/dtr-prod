@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+    --sidebar-width: 20rem;
+    --collapsed-sidebar-width: 5.4rem;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--secondary) var(--primary);
+}
+
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 15px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--primary);
+  border-radius: 5px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--secondary);
+  border-radius: 14px;
+  border: 3px solid var(--primary);
+}
+
+:root {
+    --primary: rgb(243 244 246);
+    --secondary: gray;
+}
+
+.rotate {
+    animation:rotate-back .3s ease;
+    animation-timing-function: cubic-bezier(.8,0,.5,.8);
+}
+
+@keyframes rotate {
+    from { -webkit-transform: rotate(0deg) }
+    to { -webkit-transform: rotate(360deg) }
+}
+
+.rotate-back {
+    animation:rotate .3s ease;
+    animation-timing-function: cubic-bezier(.8,0,.5,.8);
+}
+
+@keyframes rotate-back {
+    from { -webkit-transform: rotate(360deg) }
+    to { -webkit-transform: rotate(0deg) }
+}
