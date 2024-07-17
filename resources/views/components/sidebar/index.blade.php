@@ -34,7 +34,7 @@
             <li>
                 <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
             </li>
-            <x-sidebar.group>
+            {{-- <x-sidebar.group>
                 <x-sidebar.item tooltip="ICT Equipment" :url="route('equipment.index')" :active="request()->routeIs('equipment.*')">
                     <x-filament::icon
                         icon="heroicon-m-cpu-chip"
@@ -72,7 +72,7 @@
                         Clearance
                     </div>
                 </x-sidebar.item>
-            </x-sidebar.group>
+            </x-sidebar.group> --}}
         </ul>
     </nav>
 </aside>

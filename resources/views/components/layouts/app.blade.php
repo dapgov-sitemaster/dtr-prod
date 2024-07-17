@@ -121,6 +121,20 @@
                             </div>
                         </header>
                         <div class="flex-1 w-full px-4 mx-auto md:px-6 lg:px-8">
+
+                            <x-filament::modal id="generate-qr" icon="heroicon-o-qr-code" icon-color="info" width="xl">
+                                <x-slot name="heading">
+                                    QR Code
+                                </x-slot>
+                                Modal description
+                            </x-filament::modal>
+
+                            <x-filament::modal slide-over id="identity-photo" icon="heroicon-o-photo" icon-color="info" width="3xl">
+                                <x-slot name="heading">
+                                    Identity Photo
+                                </x-slot>
+                                @livewire('profile.identity-photo')
+                            </x-filament::modal>
                             {{ $slot }}
                         </div>
                     </div>

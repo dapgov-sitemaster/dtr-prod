@@ -1,10 +1,10 @@
 <div class="flex justify-between w-full h-full px-2 sm:pr-2 md:pr-3 lg:pr-5 z-0">
     {{-- <x-filament.notifications.database-notifications-trigger /> --}}
     <div class="my-auto">
-        <a href="{{ route('home') }}"><img class=" w-56" src="{{ asset('image/banner.png') }}" draggable="false" /></a>
+        <a href="{{ route('home') }}"><img class=" w-56" src="{{ asset('image/edtr-banner.png') }}" draggable="false" /></a>
     </div>
     <div class="flex justify-between">
-        <div class="my-auto">@livewire('database-notifications')</div>
+        {{-- <div class="my-auto">@livewire('database-notifications')</div> --}}
         <x-dropdown align="right" width="48" class="my-auto">
 
             <x-slot name="trigger">
@@ -23,9 +23,18 @@
 
                 <!-- Authentication -->
 
-                <x-dropdown-link href="{{ route('user.profile') }}">
+                {{-- <x-dropdown-link href="{{ route('user.profile') }}">
                     {{ __('Profile') }}
-                </x-dropdown-link>
+                </x-dropdown-link> --}}
+                <button @click="$dispatch('open-modal', { id: 'generate-qr' })" class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
+                    {{ __('Generate QR Code') }}
+                </button>
+                <button @click="$dispatch('open-modal', { id: 'identity-photo' })" class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
+                    {{ __('Identity Photo') }}
+                </button>
+                {{-- <x-dropdown-link href="{{ route('user.photo') }}">
+                    {{ __('Identity Photo') }}
+                </x-dropdown-link> --}}
                 <x-dropdown-link href="{{ route('logout') }}">
                     {{ __('Log Out') }}
                 </x-dropdown-link>
