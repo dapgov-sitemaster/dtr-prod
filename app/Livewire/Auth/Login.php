@@ -16,6 +16,8 @@ class Login extends Component
     #[Validate('required')]
     public $password;
 
+    public $remember = false;
+
     public function render()
     {
         return view('livewire.auth.login');
@@ -25,7 +27,7 @@ class Login extends Component
     {
         $validated = $this->validate();
 
-        if(!Auth::attempt($validated)) {
+        if(!Auth::attempt($validated, $this->remember)) {
             return $this->addError('credentials', 'Invalid email or password.');
         }
 

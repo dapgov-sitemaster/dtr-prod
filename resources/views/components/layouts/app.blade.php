@@ -9,7 +9,9 @@
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha512-+NqPlbbtM1QqiK8ZAo4Yrj2c4lNQoGv8P79DPtKzj++l5jnN39rHA/xsqn8zE9l0uSoxaCdrOgFs6yjyfbBxSg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.6/cropper.css"/>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.6/cropper.js"></script>
         <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
         @livewireStyles
         @filamentStyles
@@ -122,18 +124,39 @@
                         </header>
                         <div class="flex-1 w-full px-4 mx-auto md:px-6 lg:px-8">
 
-                            <x-filament::modal id="generate-qr" icon="heroicon-o-qr-code" icon-color="info" width="xl">
+                            <x-filament::modal slide-over id="generate-qr" icon-color="info" width="xl">
                                 <x-slot name="heading">
-                                    QR Code
+                                    <span class="text-xl text-dap-primary font-semibold underline decoration-dap-secondary">QR Code</span>
                                 </x-slot>
-                                Modal description
+                                <div>
+                                    <div class="text-center">
+                                        <img src="data:image/jpg;base64, {!! base64_encode(QrCode::errorCorrection('H')->format('png')->merge(public_path('image/applogo.jpg'), .1, true)->size(300)->generate(Crypt::encryptString(auth()->user()->hris_number))) !!}" width="300" class="mx-auto border-2" draggable="false" />
+                                        <div class="mx-auto text-base md:text-lg font-semibold">{{ auth()->user()->hris_number. ' - ' .auth()->user()->employee->full_name }}</div>
+                                        <a href="{{ route('pdf.empqrcode') }}" class="text-center" target="_blank">
+                                            <x-button color="primary" class="py-1 my-10">
+                                                Download ID Card
+                                            </x-button>
+                                        </a>
+                                    </div>
+                                </div>
                             </x-filament::modal>
 
                             <x-filament::modal slide-over id="identity-photo" icon="heroicon-o-photo" icon-color="info" width="3xl">
                                 <x-slot name="heading">
-                                    Identity Photo
+                                    <span class="text-xl text-dap-primary font-semibold underline decoration-dap-secondary">Identity Photo</span>
                                 </x-slot>
                                 @livewire('profile.identity-photo')
+                            </x-filament::modal>
+
+                            <x-filament::modal id="e-signature" icon-color="info" width="3xl">
+                                <x-slot name="heading">
+                                    <span class="text-xl text-dap-primary font-semibold underline decoration-dap-secondary">E-Signature</span>
+                                </x-slot>
+                                @livewire('profile.electronic-signature')
+                                {{-- <div class="text-center">
+                                    <img src="data:image/jpg;base64, {!! base64_encode(QrCode::errorCorrection('H')->format('png')->merge(public_path('image/applogo.jpg'), .1, true)->size(300)->generate(Crypt::encryptString(auth()->user()->hris_number))) !!}" width="300" class="mx-auto border-2" draggable="false" />
+                                    <div class="mx-auto text-base md:text-lg font-semibold">{{ auth()->user()->hris_number. ' - ' .auth()->user()->employee->full_name }}</div>
+                                </div> --}}
                             </x-filament::modal>
                             {{ $slot }}
                         </div>
@@ -142,6 +165,7 @@
             </main>
         </div>
     </body>
+    @stack('scripts')
     @livewireScriptConfig
     @filamentScripts
 </html>

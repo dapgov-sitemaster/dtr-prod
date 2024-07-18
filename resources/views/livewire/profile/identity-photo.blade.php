@@ -21,7 +21,7 @@
                 @if($photo)
                     <img src="{{ $photo->temporaryUrl() }}" class=" w-auto mx-auto" draggable="false">
                 @elseif($current_image)
-                    <img src="data:image/jpeg;base64, {{ base64_encode($current_image) }}" class=" w-auto mx-auto" draggable="false">
+                    <img src="data:image/jpeg;base64,{{ $current_image }}" class=" w-auto mx-auto" draggable="false">
                 @else
                     <img src="{{ asset('image/default-photo.jpg') }}" class=" w-48 mx-auto" wire:loading.class="hidden" draggable="false">
                 @endif

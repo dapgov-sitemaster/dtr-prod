@@ -11,31 +11,33 @@ class Azure
     {
         $endpoint = env('AZURE_STORAGE_API_ENDPOINT');
         $sas_token = env('AZURE_STORAGE_SAS_TOKEN');
-        // switch ($path_ex[0]) {
-        //     case 'signatures':
-        //         $sas = "?sp=r&st=2023-10-26T05:54:54Z&se=2023-11-30T16:00:00Z&spr=https&sv=2022-11-02&sr=c&sig=iD1oXRtUb%2BFwuGjUZEZdeW6WROyxBUnV3HLi%2F%2Bi3nRY%3D";
-        //         break;
-        //     case 'movs':
-        //         $sas = "?sp=r&st=2023-10-26T05:57:27Z&se=2023-11-30T16:00:00Z&spr=https&sv=2022-11-02&sr=c&sig=bUum1RLrDDCbT9JM2FHqbos8seBiwEwZLH9OUBaUcdQ%3D";
-        //         break;
-        //     case 'avatar':
-        //         $sas = "?sp=r&st=2023-10-26T05:58:31Z&se=2023-11-30T16:00:00Z&spr=https&sv=2022-11-02&sr=c&sig=sP92FKWFnmYgFRmjxxYKEW%2FPcszr9bn4HZZfP3uPh%2F0%3D";
-        //         break;
-
-        //     default:
-        //         $sas = "";
-        //         break;
-        // }
 
         $url = $endpoint . $path . $sas_token;
-        $response = Http::get($url);
 
-        if ($response->successful()) {
-            return $response->body();
-        } else {
-            $error = $response->status() . ' ' . $response->body();
-            return $error;
+        $client = new Client();
+
+        try {
+            $response = $client->get($url, [
+                'headers' => [
+                    'x-ms-version' => '2020-08-04',
+                ]
+            ]);
+            $imageData = $response->getBody()->getContents();
+            $imageBase64 = base64_encode($imageData);
+
+            return $imageBase64;
         }
+        catch(\Exception $e) {
+            dd($e->getMessage());
+        }
+        // $response = Http::get($url);
+
+        // if ($response->successful()) {
+        //     return $response->body();
+        // } else {
+        //     $error = $response->status() . ' ' . $response->body();
+        //     return $error;
+        // }
     }
 
     public function put(string $path = null, $file, string $filename = null)

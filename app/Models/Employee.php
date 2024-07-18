@@ -28,6 +28,7 @@ class Employee extends Model
         'appointment_status',
         'employment_status',
         'signature_path',
+        'identity_photo_path',
     ];
 
     protected function firstName(): Attribute
@@ -64,5 +65,10 @@ class Employee extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function official_time(): HasMany
+    {
+        return $this->hasMany(OfficialTime::class)->latest();
     }
 }

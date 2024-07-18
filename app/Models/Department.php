@@ -20,4 +20,9 @@ class Department extends Model
         'center',
         'office',
     ];
+
+    public function getDescriptionAttribute()
+    {
+        return "{$this->group}/{$this->center}/{$this->office}";
+    }
 }
