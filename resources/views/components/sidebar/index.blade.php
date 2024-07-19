@@ -31,9 +31,6 @@
                     </div>
                 </x-sidebar.item>
             </x-sidebar.group>
-            <li>
-                <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
-            </li>
             <x-sidebar.group>
                 <x-sidebar.item tooltip="My Daily Time Entries" :url="route('employee.time-entries')" :active="request()->routeIs('employee.time-entries')">
                     <x-filament::icon
@@ -45,25 +42,49 @@
                     </div>
                 </x-sidebar.item>
             </x-sidebar.group>
-            {{--
-            <li>
-                <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
-            </li>
             <x-sidebar.group>
-                <x-sidebar.item tooltip="Diagnosis" :url="route('diagnosis.index')" :active="request()->routeIs('diagnosis.*')">
+                <x-sidebar.item tooltip="My DTR Report" :url="route('employee.dtr-report')" :active="request()->routeIs('employee.dtr-report')">
                     <x-filament::icon
-                        icon="heroicon-m-clipboard-document-list"
+                        icon="heroicon-m-document-text"
                         class="w-6 shrink-0"
                     />
                     <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
-                        Diagnosis
+                        My DTR Report
                     </div>
                 </x-sidebar.item>
             </x-sidebar.group>
             <li>
                 <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
             </li>
-            <x-sidebar.group>
+            <x-sidebar.group label="Admin Coordinator Panel">
+                <x-sidebar.item tooltip="Official Time" :url="route('admin.official-time')" :active="request()->routeIs('admin.official-time')">
+                    <x-filament::icon
+                        icon="heroicon-m-cog"
+                        class="w-6 shrink-0"
+                    />
+                    <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
+                        Official Time
+                    </div>
+                </x-sidebar.item>
+            </x-sidebar.group>
+            <li>
+                <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
+            </li>
+            <x-sidebar.group label="HR Administrator Panel">
+                <x-sidebar.item tooltip="Employee Masterlist" :url="route('hr-admin.master-list')" :active="request()->routeIs('hr-admin.master-list')">
+                    <x-filament::icon
+                        icon="heroicon-m-user-group"
+                        class="w-6 shrink-0"
+                    />
+                    <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
+                        Employee Masterlist
+                    </div>
+                </x-sidebar.item>
+            </x-sidebar.group>
+            <li>
+                <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
+            </li>
+            {{--<x-sidebar.group>
                 <x-sidebar.item tooltip="Clearance" :url="route('clearance.index')" :active="request()->routeIs('clearance.*')">
                     <x-filament::icon
                         icon="heroicon-m-clipboard-document-check"

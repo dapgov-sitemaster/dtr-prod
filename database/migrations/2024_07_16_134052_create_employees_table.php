@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreign('hris_number')->references('hris_number')->on('users');
             $table->string('last_name');
             $table->string('first_name');
-            $table->string('middle_name');
+            $table->string('middle_name')->nullable();
             $table->foreignId('department_id')->constrained('departments');
             $table->enum('appointment_status', ['pbp', 'npp']);
             $table->boolean('employment_status')->default(true);

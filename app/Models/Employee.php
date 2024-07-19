@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AppointmentStatus;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -31,6 +32,10 @@ class Employee extends Model
         'identity_photo_path',
     ];
 
+    protected $casts = [
+        'appointment_status' => AppointmentStatus::class,
+    ];
+
     protected function firstName(): Attribute
     {
         return Attribute::make(
@@ -48,13 +53,14 @@ class Employee extends Model
     protected function middleName(): Attribute
     {
         return Attribute::make(
-            get: fn (string $value) => Str::title($value),
+            get: fn ($value) => ($value) ? Str::title($value) : null,
         );
     }
 
     public function getFullNameAttribute()
     {
-        return ucwords("{$this->last_name}, {$this->first_name} ".substr($this->middle_name, 0, 1).".");
+        $middle_initial = ($this->middle_name) ? " ".substr($this->middle_name, 0, 1)."." : '';
+        return ucwords("{$this->last_name}, {$this->first_name}{$middle_initial}");
     }
 
     public function user(): HasOne

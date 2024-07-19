@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('hris_number');
             $table->foreign('hris_number')->references('hris_number')->on('employees');
             $table->time('time_in');
-            $table->string('mov');
+            $table->string('mov')->nullable();
             $table->enum('status', ['pending', 'approved', 'disapproved'])->default('pending');
             $table->string('created_by');
             $table->foreign('created_by')->references('hris_number')->on('employees');

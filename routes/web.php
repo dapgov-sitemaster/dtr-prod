@@ -20,6 +20,21 @@ Route::middleware('auth')->group(function() {
 
     Route::prefix('employee')->group(function() {
         Route::get('/time-entries', App\Livewire\Employee\TimeEntries::class)->name('employee.time-entries');
+        Route::get('/dtr-report', App\Livewire\Employee\DtrReport::class)->name('employee.dtr-report');
+    });
+
+    // Admin Coord modules
+
+    Route::prefix('admin')->group(function() {
+        Route::get('/official-time', App\Livewire\AdminCoord\OfficialTime::class)->name('admin.official-time');
+        // Route::get('/dtr-report', App\Livewire\Employee\DtrReport::class)->name('employee.dtr-report');
+    });
+
+    // HR Admin modules
+
+    Route::prefix('hr-admin')->group(function() {
+        Route::get('/master-list', App\Livewire\HrAdmin\EmployeeMasterlist::class)->name('hr-admin.master-list');
+        // Route::get('/dtr-report', App\Livewire\Employee\DtrReport::class)->name('employee.dtr-report');
     });
 
     // Route::get('/user/identity-photo', App\Livewire\Profile\IdentityPhoto::class)->name('user.photo');

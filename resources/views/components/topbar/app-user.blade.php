@@ -16,7 +16,7 @@
             <x-slot name="content">
                 <!-- Account Management -->
                 <div class="block px-4 py-2 text-xs text-gray-400">
-                    {{ __('Manage Account') }}
+                    {{ __('User Menu') }}
                 </div>
 
                 <div class="border-t border-gray-200 dark:border-gray-600"></div>

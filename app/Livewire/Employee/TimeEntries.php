@@ -17,7 +17,6 @@ class TimeEntries extends Component implements HasForms, HasTable
 {
     // use WithPagination;
     use InteractsWithTable, InteractsWithForms;
-    public $yearmonth;
 
     #[Title('| My Daily Time Entries')]
     public function render()
@@ -36,11 +35,6 @@ class TimeEntries extends Component implements HasForms, HasTable
         //                         // })
         //                         ->latest('time_start')->paginate(6)
         // ]);
-    }
-
-    public function mount()
-    {
-        $this->yearmonth = now()->format('Y-m');
     }
 
     public function table(Table $table): Table
