@@ -12,7 +12,7 @@
                         @enderror
                         <div>
                             <x-label for="email" value="{{ __('Email') }}" />
-                            <x-input wire:model='email' id="email" class="block mt-1 w-full" type="email" name="email"
+                            <x-input wire:model='email' wire:keydown.enter='login' id="email" class="block mt-1 w-full" type="email" name="email"
                                 :value="old('email')" required autofocus autocomplete="email" />
                             @error('email')
                                 <x-input-error for="email" class="m-1 text-xs" >{{ $message }} </x-input-error>
@@ -21,7 +21,7 @@
 
                         <div class="my-4">
                             <x-label for="password" value="{{ __('Password') }}" />
-                            <x-input wire:model='password' id="password" class="block mt-1 w-full" type="password" name="password"
+                            <x-input wire:model='password' wire:keydown.enter='login' id="password" class="block mt-1 w-full" type="password" name="password"
                                 required autocomplete="current-password" />
                             @error('password')
                                 <x-input-error for="password" class="m-1 text-xs" >{{ $message }} </x-input-error>

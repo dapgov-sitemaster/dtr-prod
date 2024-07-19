@@ -24,6 +24,11 @@ class TimeEntry extends Model
         'tag',
     ];
 
+    protected $casts = [
+        'time_start' => 'datetime',
+        'time_end' => 'datetime',
+    ];
+
     public function employee()
     {
         return $this->hasOne(Employee::class, 'hris_number', 'hris_number');

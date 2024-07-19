@@ -16,5 +16,11 @@ Route::middleware('auth')->group(function() {
 
     Route::get('/profile/pdf/qr-code', [QrCodeController::class, 'employee'])->name('pdf.empqrcode');
 
+    // Employee modules
+
+    Route::prefix('employee')->group(function() {
+        Route::get('/time-entries', App\Livewire\Employee\TimeEntries::class)->name('employee.time-entries');
+    });
+
     // Route::get('/user/identity-photo', App\Livewire\Profile\IdentityPhoto::class)->name('user.photo');
 });

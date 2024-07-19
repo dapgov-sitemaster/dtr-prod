@@ -36,7 +36,7 @@ class AttendanceController extends Controller
 
             }
             else {
-                $schedule = Event::where('hris_number', $employee->hris_number)->whereDate('datetime_start', now()->format('Y-m-d'))->where('description', 'Work From Home (Hybrid)')->first();
+                $schedule = Event::where('hris_number', $employee->hris_number)->whereDate('start', now()->format('Y-m-d'))->where('description', 'Work From Home (Hybrid)')->first();
 
                 if($schedule) {
                     return response()->json([
@@ -44,20 +44,27 @@ class AttendanceController extends Controller
                     ], 422);
                 }
 
-                $official_time = ($employee->official_time) ? $employee->official_time->time_in : date('H:i:s', strtotime('08:00:00'));
+                $official_time = (!$employee->official_time->isEmpty()) ? $employee->official_time->time_in : date('H:i:s', strtotime('08:00:00'));
                 $timestart = now();
 
-                $time_entry = new TimeEntry();
-                $time_entry->hris_number = $employee->hris_number;
-                $time_entry->time_start = $timestart;
-                $time_entry->department_id = $employee->department_id;
-                $time_entry->official_time = $official_time;
-                $time_entry->tag = 'ROS';
-                $time_entry->timekeeper_id = auth()->user()->id;
-                $time_entry->save();
+                $latest = TimeEntry::where('hris_number', $request->hris)->whereDate('time_start', now()->format('Y-m-d'))->latest()->first();
 
-                return response()->json(['message' => ''], 200);
+                if($latest->time_end) {
+                    $time_entry = new TimeEntry();
+                    $time_entry->hris_number = $employee->hris_number;
+                    $time_entry->time_start = $timestart;
+                    $time_entry->department_id = $employee->department_id;
+                    $time_entry->official_time = $official_time;
+                    $time_entry->tag = 'ROS';
+                    $time_entry->timekeeper_id = auth()->user()->id;
+                    $time_entry->save();
+                }
+                else {
+                    $latest->time_end = $timestart;
+                    $latest->save();
+                }
 
+                return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'time_only' => $timestart->copy()->format('g:i A')], 200);
             }
         } catch (\Throwable $th) {
             return response()->json(['message' => 'HRIS could not be found. QR Code is not valid!'], 422);

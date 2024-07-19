@@ -34,17 +34,18 @@
             <li>
                 <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
             </li>
-            {{-- <x-sidebar.group>
-                <x-sidebar.item tooltip="ICT Equipment" :url="route('equipment.index')" :active="request()->routeIs('equipment.*')">
+            <x-sidebar.group>
+                <x-sidebar.item tooltip="My Daily Time Entries" :url="route('employee.time-entries')" :active="request()->routeIs('employee.time-entries')">
                     <x-filament::icon
-                        icon="heroicon-m-cpu-chip"
+                        icon="heroicon-m-clock"
                         class="w-6 shrink-0"
                     />
                     <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
-                        ICT Equipment
+                        My Daily Time Entries
                     </div>
                 </x-sidebar.item>
             </x-sidebar.group>
+            {{--
             <li>
                 <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
             </li>

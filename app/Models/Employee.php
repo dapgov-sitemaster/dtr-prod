@@ -69,6 +69,6 @@ class Employee extends Model
 
     public function official_time(): HasMany
     {
-        return $this->hasMany(OfficialTime::class)->latest();
+        return $this->hasMany(OfficialTime::class, 'hris_number', 'hris_number')->latest();
     }
 }
