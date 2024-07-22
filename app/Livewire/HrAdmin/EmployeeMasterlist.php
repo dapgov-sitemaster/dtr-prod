@@ -55,20 +55,18 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                     ->label('Appointment Status')
                     ->badge()
                     ->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('user.role')
+                    ->label('Role')
+                    ->badge()
+                    ->sortable(),
             ])
             ->headerActions([
                 \Filament\Tables\Actions\CreateAction::make('create-employee')
-                    // ->successNotification(
-                    //     Notification::make()
-                    //         ->title('Employee added Successfully!')
-                    //         ->body('New employee has been added to the Masterlist!')
-                    //         ->success()
-                    //         ->color('success')
-                    // )
                     ->icon('heroicon-m-user-plus')
                     ->label('Add new Employee')
                     ->modalHeading('Add new Employee')
                     ->modalIcon('heroicon-o-user-plus')
+                    ->createAnother(false)
                     ->slideOver()
                     // ->model(Post::class)
                     ->form([
@@ -129,8 +127,8 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                             ]),
                         // ...
                     ])
-                    ->action(function(array $data, string $model): Model {
-                        $user = $model::create([
+                    ->action(function(array $data): Model {
+                        $user = User::create([
                             'hris_number' => $data['hris_number'],
                             'email' => $data['email'],
                             'password' => Hash::make('dap12345'),

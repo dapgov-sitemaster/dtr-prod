@@ -59,8 +59,8 @@ class Employee extends Model
 
     public function getFullNameAttribute()
     {
-        $middle_initial = ($this->middle_name) ? " ".substr($this->middle_name, 0, 1)."." : '';
-        return ucwords("{$this->last_name}, {$this->first_name}{$middle_initial}");
+        $middle_initial = ($this->middle_name) ?  substr($this->middle_name, 0, 1)."." : '';
+        return ucwords("{$this->last_name}, {$this->first_name} {$middle_initial}");
     }
 
     public function user(): HasOne
@@ -73,7 +73,12 @@ class Employee extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function official_time(): HasMany
+    public function official_time(): HasOne
+    {
+        return $this->hasOne(OfficialTime::class, 'hris_number', 'hris_number')->where('status', 'approved')->latest();
+    }
+
+    public function official_times(): HasMany
     {
         return $this->hasMany(OfficialTime::class, 'hris_number', 'hris_number')->latest();
     }

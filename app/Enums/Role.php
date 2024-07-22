@@ -3,14 +3,16 @@
 namespace App\Enums;
 
 use Filament\Support\Contracts\HasLabel;
+use Filament\Support\Contracts\HasColor;
 
-enum Role: string implements HasLabel
+enum Role: string implements HasLabel, HasColor
 {
     case EMPLOYEE = 'employee';
     case ADMINCOORD = 'admincoord';
     case CENTERADMINCOORD = 'centeradmincoord';
     case HRADMIN = 'hradmin';
-    // case TIMEKEEPER = 'timekeeper';
+    case TIMEKEEPER = 'timekeeper';
+    case SUPERADMIN = 'superadmin';
 
     public function getLabel(): ?string
     {
@@ -19,15 +21,20 @@ enum Role: string implements HasLabel
             self::ADMINCOORD => 'Admin Coordinator',
             self::CENTERADMINCOORD => 'Center Admin Coordinator',
             self::HRADMIN => 'HR Administrator',
-            // self::TIMEKEEPER => 'Timekeeper',
+            self::TIMEKEEPER => 'Timekeeper',
+            self::SUPERADMIN => 'SuperAdmin',
         };
     }
 
-    // public function getColor(): string|array|null
-    // {
-    //     return match ($this) {
-    //         self::PBP => 'info',
-    //         self::NPP => 'gray',
-    //     };
-    // }
+    public function getColor(): string|array|null
+    {
+        return match ($this) {
+            self::EMPLOYEE => 'gray',
+            self::ADMINCOORD => 'success',
+            self::CENTERADMINCOORD => 'success',
+            self::HRADMIN => 'primary',
+            self::TIMEKEEPER => 'warning',
+            self::SUPERADMIN => 'danger',
+        };
+    }
 }
