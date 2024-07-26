@@ -66,6 +66,15 @@
                         Official Time
                     </div>
                 </x-sidebar.item>
+                <x-sidebar.item tooltip="Event Calendar" :url="route('admin.event-calendar')" :active="request()->routeIs('admin.event-calendar')">
+                    <x-filament::icon
+                        icon="heroicon-m-calendar-days"
+                        class="w-6 shrink-0"
+                    />
+                    <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
+                        Event Calendar
+                    </div>
+                </x-sidebar.item>
             </x-sidebar.group>
             <li>
                 <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>

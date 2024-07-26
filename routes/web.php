@@ -27,6 +27,7 @@ Route::middleware('auth')->group(function() {
 
     Route::prefix('admin')->group(function() {
         Route::get('/official-time', App\Livewire\AdminCoord\OfficialTime::class)->name('admin.official-time');
+        Route::get('/event-calendar', App\Livewire\AdminCoord\EventCalendar::class)->name('admin.event-calendar');
         // Route::get('/dtr-report', App\Livewire\Employee\DtrReport::class)->name('employee.dtr-report');
     });
 
