@@ -69,10 +69,11 @@ class OfficialTime extends Component implements HasForms, HasTable
             ->actions([
                 \Filament\Tables\Actions\Action::make('view-request')
                     ->button()
+                    ->modal()
                     ->modalWidth('lg')
                     ->modalHeading(function($record) {
                         $name = (str($record->first_name)->endsWith('s')) ? $record->first_name."'" : $record->first_name."'s";
-                        return 'Current status of '.str($name)->headline()." change request of official time";
+                        return 'Current status of '.str($name)->headline()." change request of Official Time";
                     })
                     ->hidden(function($record) {
                         $official_time = ModelsOfficialTime::where('hris_number', $record->hris_number)->first();
@@ -83,31 +84,10 @@ class OfficialTime extends Component implements HasForms, HasTable
                         }
                         return true;
                     })
-                    ->record(function($record) {
-                        dd(ModelsOfficialTime::where('hris_number', $record->hris_number)->where('status', 'pending')->first());
-                        return ModelsOfficialTime::where('hris_number', $record->hris_number)->where('status', 'pending')->first();
+                    ->modalContent(function($record): \Illuminate\Contracts\View\View {
+                        return view('components.filament.pages.view-request', ['hris_number' => $record->hris_number]);
                     })
-                    // ->mutateRecordDataUsing(function($data) {
-                    //     dd($data);
-                    //     // $official_time = ModelsOfficialTime::where('hris_number', $record->hris_number)->first();
-                    //     // dd($official_time);
-                    //     // return [
-                    //     //     'hris_number',
-                    //     //     'full_name',
-                    //     //     'request_status',
-                    //     // ];
-                    // })
-                    ->infolist([
-                        \Filament\Infolists\Components\TextEntry::make('hris_number'),
-                        \Filament\Infolists\Components\TextEntry::make('full_name'),
-                        \Filament\Infolists\Components\TextEntry::make('official_time.status')
-                            ->badge()
-                            ->color(fn (string $state): string => match ($state) {
-                                'pending' => 'gray',
-                                'approved' => 'success',
-                                'disapproved' => 'danger',
-                            }),
-                    ]),
+                    ->modalSubmitAction(false),
                 \Filament\Tables\Actions\Action::make('set-time')
                     ->button()
                     ->modalWidth('sm')
