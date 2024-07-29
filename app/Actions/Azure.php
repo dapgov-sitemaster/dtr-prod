@@ -9,35 +9,34 @@ class Azure
 {
     public function get($path = null)
     {
-        $endpoint = env('AZURE_STORAGE_API_ENDPOINT');
-        $sas_token = env('AZURE_STORAGE_SAS_TOKEN');
-
-        $url = $endpoint . $path . $sas_token;
-
-        $client = new Client();
-
         try {
-            $response = $client->get($url, [
-                'headers' => [
-                    'x-ms-version' => '2020-08-04',
-                ]
-            ]);
-            $imageData = $response->getBody()->getContents();
-            $imageBase64 = base64_encode($imageData);
+            $endpoint = env('AZURE_STORAGE_API_ENDPOINT');
+            $sas_token = env('AZURE_STORAGE_SAS_TOKEN');
 
-            return $imageBase64;
+            $url = $endpoint . $path . $sas_token;
+            // $client = new Client();
+            // $response = $client->get($url, [
+            //     'headers' => [
+            //         'x-ms-version' => '2020-08-04',
+            //     ]
+            // ]);
+            // $imageData = $response->getBody()->getContents();
+            // $imageBase64 = base64_encode($imageData);
+
+            // return $imageBase64;
+            $response = Http::get($url);
+
+            if ($response->successful()) {
+                $imageBase64 = base64_encode($response->body());
+                return $imageBase64;
+            } else {
+                $error = $response->status() . ' ' . $response->body();
+                return $error;
+            }
         }
         catch(\Exception $e) {
             dd($e->getMessage());
         }
-        // $response = Http::get($url);
-
-        // if ($response->successful()) {
-        //     return $response->body();
-        // } else {
-        //     $error = $response->status() . ' ' . $response->body();
-        //     return $error;
-        // }
     }
 
     public function put(string $path = null, $file, string $filename = null)

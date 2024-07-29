@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Events;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -25,9 +26,20 @@ class Event extends Model
         'created_by',
     ];
 
+    protected $casts = [
+        'tag' => Events::class,
+        'start' => 'datetime',
+        'end' => 'datetime',
+    ];
+
     public function employee()
     {
         return $this->hasOne(Employee::class, 'hris_number', 'hris_number');
+    }
+
+    public function official_time()
+    {
+        return $this->hasOne(OfficialTime::class, 'hris_number', 'hris_number')->where('status', 'approved')->latest();
     }
 
     public function created_by()
