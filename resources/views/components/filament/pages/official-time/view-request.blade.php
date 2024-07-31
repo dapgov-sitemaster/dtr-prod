@@ -1,15 +1,14 @@
 <div>
     @php
-        $request = App\Models\OfficialTime::where('hris_number', $hris_number)->where('status', '<>', 'approved')->latest()->first();
-        $time_in = Carbon\Carbon::parse($request->time_in);
+        $time_in = Carbon\Carbon::parse($record->time_in);
     @endphp
     <div class="mb-4">
         <div class="font-bold text-sm">HRIS Number</div>
-        <div>{{ $request->hris_number }}</div>
+        <div>{{ $record->hris_number }}</div>
     </div>
     <div class="my-4">
         <div class="font-bold text-sm">Name</div>
-        <div>{{ $request->employee->full_name }}</div>
+        <div>{{ $record->employee->full_name }}</div>
     </div>
     <div class="my-4">
         <div class="font-bold text-sm">Requested Official Time</div>
@@ -17,9 +16,9 @@
     </div>
     <div class="my-4">
         <div class="font-bold text-sm">Status</div>
-        @if($request->status === "pending")
+        @if($record->status === "pending")
         <div>Change request is still in process. Kindly wait for the approval from HR Admin.</div>
-        @elseif($request->status === "disapproved")
+        @elseif($record->status === "disapproved")
         <div>Change request has been disapproved. You can submit again for approval to HR Admin.</div>
         @endif
     </div>

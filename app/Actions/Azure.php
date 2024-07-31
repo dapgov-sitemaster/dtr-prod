@@ -30,11 +30,9 @@ class Azure
                 $imageBase64 = base64_encode($response->body());
                 return $imageBase64;
             } else {
-                $error = $response->status() . ' ' . $response->body();
-                return $error;
+                return $response->status();
             }
-        }
-        catch(\Exception $e) {
+        } catch (\Exception $e) {
             dd($e->getMessage());
         }
     }
@@ -46,7 +44,7 @@ class Azure
         $url = $endpoint . $path . '/' . $filename . $sas_token;
 
         $ext = explode('.', $filename);
-        $cont_type = ($ext[1] == "pdf") ? "application/pdf" : 'image/'.$ext[1];
+        $cont_type = ($ext[1] == "pdf") ? "application/pdf" : 'image/' . $ext[1];
 
         $client = new Client();
         $response = $client->request('PUT', $url, [

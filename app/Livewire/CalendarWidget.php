@@ -8,7 +8,9 @@ use App\Models\Event;
 use Illuminate\Support\Str;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Saade\FilamentFullCalendar\Actions;
+use Filament\Notifications\Notification;
 use Saade\FilamentFullCalendar\Data\EventData;
 use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
 
@@ -34,7 +36,7 @@ class CalendarWidget extends FullCalendarWidget
             ->map(
                 fn (Event $event) => EventData::make()
                     ->id($event->id)
-                    ->title($event->employee->last_name. ', ' .Str::initials($event->employee->first_name))
+                    ->title($event->employee->last_name . ', ' . Str::initials($event->employee->first_name))
                     ->backgroundColor($event->tag->getColorT())
                     ->borderColor($event->tag->getColorT())
                     ->start($event->start)
@@ -69,9 +71,9 @@ class CalendarWidget extends FullCalendarWidget
                         ]);
                     }
                 )
-                ->mutateFormDataUsing(function(array $data, $record): array {
+                ->mutateFormDataUsing(function (array $data, $record): array {
                     $official_time = \App\Models\OfficialTime::where('hris_number', $data['hris_number'])->where('status', 'approved')->first();
-                    $time_start = ($official_time) ? \Carbon\Carbon::parse($data['starts_at'].' '.$official_time->time_in) : \Carbon\Carbon::parse($data['ends_at'].' '.'08:00:00');
+                    $time_start = ($official_time) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '08:00:00');
                     $time_end = $time_start->copy()->addHours(9);
                     // $description = Events::tryFrom($data['tag'])->getLabel();
                     $data['start'] = $time_start->format('Y-m-d H:i:s');
@@ -99,9 +101,9 @@ class CalendarWidget extends FullCalendarWidget
                         ]);
                     }
                 )
-                ->mutateFormDataUsing(function(array $data): array {
+                ->mutateFormDataUsing(function (array $data): array {
                     $official_time = \App\Models\OfficialTime::where('hris_number', $data['hris_number'])->where('status', 'approved')->first();
-                    $time_start = ($official_time) ? \Carbon\Carbon::parse($data['starts_at'].' '.$official_time->time_in) : \Carbon\Carbon::parse($data['ends_at'].' '.'08:00:00');
+                    $time_start = ($official_time) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '08:00:00');
                     $time_end = $time_start->copy()->addHours(9);
                     $description = Events::tryFrom($data['tag'])->getLabel();
                     $data['start'] = $time_start->format('Y-m-d H:i:s');
@@ -118,28 +120,64 @@ class CalendarWidget extends FullCalendarWidget
     protected function viewAction(): Actions\ViewAction
     {
         return Actions\ViewAction::make()
-            ->modalHeading(fn($record) => ($record->start->format('Y-m-d') == $record->end->format('Y-m-d')) ? 'Event Information ('. $record->start->format('M d, Y').')' : 'Event Information ('. $record->start->format('M d, Y'). ' - '. $record->end->format('M d, Y') .')')
+            ->modalHeading(fn ($record) => ($record->start->format('Y-m-d') == $record->end->format('Y-m-d')) ? 'Event Information (' . $record->start->format('M d, Y') . ')' : 'Event Information (' . $record->start->format('M d, Y') . ' - ' . $record->end->format('M d, Y') . ')')
             ->infolist([
                 \Filament\Infolists\Components\Grid::make([
-                        'sm' => 1,
-                        'xl' => 3,
-                    ])
+                    'sm' => 1,
+                    'xl' => 3,
+                ])
                     ->schema([
-                            \Filament\Infolists\Components\TextEntry::make('employee.full_name'),
-                            \Filament\Infolists\Components\TextEntry::make('official_time.time_in')
-                                ->formatStateUsing(function($state) {
-                                    return $state->format('g:i A'). ' - ' .$state->copy()->addHours(9)->format('g:i A');
-                                })
-                                ->placeholder('Not set'),
-                            \Filament\Infolists\Components\TextEntry::make('description'),
-                        ]),
+                        \Filament\Infolists\Components\TextEntry::make('employee.full_name')
+                            ->label('Employee Name'),
+                        \Filament\Infolists\Components\TextEntry::make('official_time.time_in')
+                            ->formatStateUsing(function ($state) {
+                                return $state->format('g:i A') . ' - ' . $state->copy()->addHours(9)->format('g:i A');
+                            })
+                            ->placeholder('Not set'),
+                        \Filament\Infolists\Components\TextEntry::make('description'),
+                        \Filament\Infolists\Components\TextEntry::make('mov')
+                            ->url(function ($record) {
+                                return route('admin.pdf.view-mov', ['id' => $record->id]);
+                            }, shouldOpenInNewTab: true)
+                            ->placeholder('No uploaded file')
+                            ->hidden(fn ($record): bool => $record->tag->value === 'wfh' || $record->tag->value === 'hwfh'),
+                    ]),
             ])
-            ->extraModalFooterActions([
-                \Filament\Actions\Action::make('test')
-                    ->requiresConfirmation()
-                    ->action(function () {
-                        // ...
-                    }),
+            ->modalFooterActions(fn (): array => [
+                \Filament\Actions\Action::make('UploadMov')
+                    ->modalHeading(function ($record) {
+                        $name = (str($record->employee->first_name)->endsWith('s')) ? $record->employee->first_name . "'" : $record->employee->first_name . "'s";
+                        return 'Upload MOV of ' . str($name)->headline() . " " . $record->tag->getLabel();
+                    })
+                    ->form([
+                        \Filament\Forms\Components\FileUpload::make('attachment')
+                            ->label('Upload MOV (optional)')
+                            ->acceptedFileTypes(['application/pdf', 'application/msword'])
+                            ->directory('event-movs')
+                            ->visibility('private'),
+                    ])
+                    ->action(function ($data, \App\Actions\Azure $azure, $record) {
+                        if ($record->mov) {
+                            $azure->delete($record->mov);
+                        }
+
+                        $file = Storage::disk('public')->get($data['attachment']);
+                        $file_explode = explode('/', $data['attachment']);
+                        $filename = $file_explode[1];
+                        $azure->put("movs", $file, $filename);
+                        Storage::disk('public')->delete($data['attachment']);
+
+                        $record->mov = 'movs/' . $filename;
+                        $record->save();
+
+                        Notification::make()
+                            ->title("Saved Successfully!")
+                            ->body("MOV uploaded successfully!")
+                            ->success()
+                            ->color('success')
+                            ->send();
+                    })
+                    ->hidden(fn ($record): bool => $record->tag->value === 'wfh' || $record->tag->value === 'hwfh')
             ]);
     }
 
@@ -167,11 +205,6 @@ class CalendarWidget extends FullCalendarWidget
                 ->native(false)
                 ->required()
                 ->columnSpanFull(),
-            \Filament\Forms\Components\FileUpload::make('mov')
-                ->label('Upload MOV (optional)')
-                ->acceptedFileTypes(['application/pdf', 'application/msword'])
-                ->directory('event-movs')
-                ->visibility('private'),
             Forms\Components\Grid::make()
                 ->schema([
                     Forms\Components\DatePicker::make('starts_at'),
