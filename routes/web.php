@@ -27,8 +27,13 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('admin')->group(function () {
         Route::get('/official-time', App\Livewire\AdminCoord\OfficialTime::class)->name('admin.official-time');
+
         Route::get('/event-calendar', App\Livewire\AdminCoord\EventCalendar::class)->name('admin.event-calendar');
         Route::get('/event-calendar/{event}/view-mov', App\Http\Controllers\Pdf\ShowMovController::class)->name('admin.pdf.view-mov');
+
+        Route::get('/daily-time-records', App\Livewire\AdminCoord\DailyTimeRecords::class)->name('admin.dtr');
+        Route::get('/daily-time-records/{hris_number}/time-entries', App\Livewire\AdminCoord\EmployeeTimeEntries::class)->name('admin.dtr.emp-time-entries');
+        Route::get('/daily-time-records/{hris_number}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'individual'])->name('admin.dtr.emp-dtr-report');
         // Route::get('/dtr-report', App\Livewire\Employee\DtrReport::class)->name('employee.dtr-report');
     });
 

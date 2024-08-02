@@ -75,6 +75,15 @@
                         Event Calendar
                     </div>
                 </x-sidebar.item>
+                <x-sidebar.item tooltip="Daily Time Records" :url="route('admin.dtr')" :active="request()->routeIs('admin.dtr.*')">
+                    <x-filament::icon
+                        icon="heroicon-m-document-text"
+                        class="w-6 shrink-0"
+                    />
+                    <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
+                        Daily Time Records
+                    </div>
+                </x-sidebar.item>
             </x-sidebar.group>
             <li>
                 <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>

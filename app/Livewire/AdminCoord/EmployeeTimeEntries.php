@@ -1,47 +1,37 @@
 <?php
 
-namespace App\Livewire\Employee;
+namespace App\Livewire\AdminCoord;
 
 use Livewire\Component;
+use App\Models\Employee;
 use App\Models\TimeEntry;
-use Livewire\Attributes\Title;
-use Livewire\WithPagination;
 use Filament\Tables\Table;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
 
-// class TimeEntries extends Component
-class TimeEntries extends Component implements HasForms, HasTable
+class EmployeeTimeEntries extends Component implements HasForms, HasTable
 {
-    // use WithPagination;
     use InteractsWithTable, InteractsWithForms;
 
-    #[Title('| My Daily Time Entries')]
+    public $employee;
+
+    public function mount($hris_number)
+    {
+        $this->employee = Employee::where('hris_number', $hris_number)->first();
+    }
+
     public function render()
     {
-        // $this->timeEntries();
-        return view('livewire.employee.time-entries');
-        // return view('livewire.employee.time-entries', [
-        //     'time_entries' => TimeEntry::query()
-        //                         ->where('hris_number', auth()->user()->hris_number)
-        //                         ->when($this->yearmonth, function($query) {
-        //                             $expl = explode('-', $this->yearmonth);
-        //                             $query->whereYear('time_start', $expl[0])->whereMonth('time_start', $expl[1]);
-        //                         })
-        //                         // ->when($this->month, function($query) {
-        //                         //     $query->whereYear('time_start', $this->year);
-        //                         // })
-        //                         ->latest('time_start')->paginate(6)
-        // ]);
+        return view('livewire.admin-coord.employee-time-entries');
     }
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                TimeEntry::where('hris_number', auth()->user()->hris_number)->latest()
+                TimeEntry::where('hris_number', $this->employee->hris_number)->latest()
             )
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('created_at')

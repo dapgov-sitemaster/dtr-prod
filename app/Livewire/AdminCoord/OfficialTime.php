@@ -44,7 +44,7 @@ class OfficialTime extends Component implements HasForms, HasTable
         ];
 
         return $table
-            ->query(Employee::with(['official_time' => fn (Builder $query) => $query->where('status', 'approved')])->where('department_id', auth()->user()->employee->department_id)->orderBy('last_name'))
+            ->query(Employee::with(['official_time' => fn ($query) => $query->where('status', 'approved')])->where('department_id', auth()->user()->employee->department_id)->orderBy('last_name'))
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('hris_number')
                     ->label('HRIS Number')
