@@ -21,7 +21,7 @@ class OfficialTime extends Component implements HasForms, HasTable
 {
     use InteractsWithTable, InteractsWithForms;
 
-    #[Title('| Employee Masterlist')]
+    #[Title('| Official Time')]
     public function render()
     {
         return view('livewire.admin-coord.official-time');

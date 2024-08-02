@@ -26,6 +26,8 @@ class ShowMovController extends Controller
             ];
             // dd($request->all());
             return response(base64_decode($response), 200, $headers);
+        } else {
+            abort(422);
         }
     }
 }

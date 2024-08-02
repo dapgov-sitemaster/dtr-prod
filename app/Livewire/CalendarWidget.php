@@ -25,10 +25,7 @@ class CalendarWidget extends FullCalendarWidget
      */
     public function fetchEvents(array $fetchInfo): array
     {
-        // You can use $fetchInfo to filter events by date.
-        // This method should return an array of event-like objects. See: https://github.com/saade/filament-fullcalendar/blob/3.x/#returning-events
-        // You can also return an array of EventData objects. See: https://github.com/saade/filament-fullcalendar/blob/3.x/#the-eventdata-class
-        return Event::query()
+        return $this->model::query()
             ->with('employee')
             ->whereDate('start', '>=', $fetchInfo['start'])
             ->whereDate('end', '<=', $fetchInfo['end'])
@@ -72,14 +69,12 @@ class CalendarWidget extends FullCalendarWidget
                     }
                 )
                 ->mutateFormDataUsing(function (array $data, $record): array {
-                    $official_time = \App\Models\OfficialTime::where('hris_number', $data['hris_number'])->where('status', 'approved')->first();
-                    $time_start = ($official_time) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '08:00:00');
-                    $time_end = $time_start->copy()->addHours(9);
-                    // $description = Events::tryFrom($data['tag'])->getLabel();
+                    $official_time = $record->official_time;
+                    $time_start = ($official_time) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
+                    $time_end = ($official_time) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
                     $data['start'] = $time_start->format('Y-m-d H:i:s');
                     $data['end'] = $time_end->format('Y-m-d H:i:s');
-                    // $data['description'] = $description;
-                    // $data['created_by'] = auth()->user()->hris_number;
+                    $data['description'] = $data['tag']->getLabel();
 
                     return $data;
                 }),
@@ -134,60 +129,65 @@ class CalendarWidget extends FullCalendarWidget
                                 return $state->format('g:i A') . ' - ' . $state->copy()->addHours(9)->format('g:i A');
                             })
                             ->placeholder('Not set'),
-                        \Filament\Infolists\Components\TextEntry::make('description'),
-                        \Filament\Infolists\Components\TextEntry::make('mov')
+                        \Filament\Infolists\Components\TextEntry::make('description')
+                            ->label('Type of Event'),
+                        \Filament\Infolists\Components\IconEntry::make('mov')
+                            ->label('Uploaded MOV')
+                            ->icon('heroicon-o-document-check')
+                            ->color('info')
                             ->url(function ($record) {
-                                return route('admin.pdf.view-mov', ['id' => $record->id]);
+                                if (!$record->mov) {
+                                    return null;
+                                }
+                                return route('admin.pdf.view-mov', ['event' => $record->id]);
                             }, shouldOpenInNewTab: true)
                             ->placeholder('No uploaded file')
                             ->hidden(fn ($record): bool => $record->tag->value === 'wfh' || $record->tag->value === 'hwfh'),
                     ]),
             ])
-            ->modalFooterActions(fn (): array => [
-                \Filament\Actions\Action::make('UploadMov')
-                    ->modalHeading(function ($record) {
-                        $name = (str($record->employee->first_name)->endsWith('s')) ? $record->employee->first_name . "'" : $record->employee->first_name . "'s";
-                        return 'Upload MOV of ' . str($name)->headline() . " " . $record->tag->getLabel();
-                    })
-                    ->form([
-                        \Filament\Forms\Components\FileUpload::make('attachment')
-                            ->label('Upload MOV (optional)')
-                            ->acceptedFileTypes(['application/pdf', 'application/msword'])
-                            ->directory('event-movs')
-                            ->visibility('private'),
-                    ])
-                    ->action(function ($data, \App\Actions\Azure $azure, $record) {
-                        if ($record->mov) {
-                            $azure->delete($record->mov);
-                        }
+            ->modalFooterActions(
+                fn (\Filament\Actions\ViewAction $action, FullCalendarWidget $livewire) => [
+                    \Filament\Actions\Action::make('upload-mov')
+                        ->label('Upload MOV')
+                        ->color('success')
+                        ->modalHeading(function ($record) {
+                            $name = (str($record->employee->first_name)->endsWith('s')) ? $record->employee->first_name . "'" : $record->employee->first_name . "'s";
+                            return 'Upload MOV of ' . str($name)->headline() . " " . $record->tag->getLabel();
+                        })
+                        ->form([
+                            \Filament\Forms\Components\FileUpload::make('attachment')
+                                ->label('Upload MOV (optional)')
+                                ->acceptedFileTypes(['application/pdf', 'application/msword'])
+                                ->directory('event-movs')
+                                ->visibility('private'),
+                        ])
+                        ->action(function ($data, \App\Actions\Azure $azure, $record) {
+                            if ($record->mov) {
+                                $azure->delete($record->mov);
+                            }
 
-                        $file = Storage::disk('public')->get($data['attachment']);
-                        $file_explode = explode('/', $data['attachment']);
-                        $filename = $file_explode[1];
-                        $azure->put("movs", $file, $filename);
-                        Storage::disk('public')->delete($data['attachment']);
+                            $file = Storage::disk('public')->get($data['attachment']);
+                            $file_explode = explode('/', $data['attachment']);
+                            $filename = $file_explode[1];
+                            $azure->put("movs", $file, $filename);
+                            Storage::disk('public')->delete($data['attachment']);
 
-                        $record->mov = 'movs/' . $filename;
-                        $record->save();
+                            $record->mov = 'movs/' . $filename;
+                            $record->save();
 
-                        Notification::make()
-                            ->title("Saved Successfully!")
-                            ->body("MOV uploaded successfully!")
-                            ->success()
-                            ->color('success')
-                            ->send();
-                    })
-                    ->hidden(fn ($record): bool => $record->tag->value === 'wfh' || $record->tag->value === 'hwfh')
-            ]);
+                            Notification::make()
+                                ->title("Saved Successfully!")
+                                ->body("MOV uploaded successfully!")
+                                ->success()
+                                ->color('success')
+                                ->send();
+                        })
+                        ->hidden(fn ($record): bool => $record->tag->value === 'wfh' || $record->tag->value === 'hwfh'),
+                    ...$livewire->getCachedModalActions(),
+                    $action->getModalCancelAction(),
+                ]
+            );
     }
-
-    // public function infolist(\Filament\Infolists\Infolist $infolist): \Filament\Infolists\Infolist
-    // {
-    //     return $infolist
-    //         ->schema([
-    //             \Filament\Infolists\Components\TextEntry::make('hris_number')
-    //         ]);
-    // }
 
     public function getFormSchema(): array
     {

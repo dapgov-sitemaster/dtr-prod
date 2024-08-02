@@ -9,7 +9,7 @@
 
             <x-slot name="trigger">
                 <button class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition">
-                    <img class="h-8 w-8 rounded-full object-cover" src="https://source.boringavatars.com/beam/120/{{ Auth::user()->email }}" alt="">
+                    <img class="h-8 w-8 rounded-full object-cover" src="https://ui-avatars.com/api/?name={{ auth()->user()->employee->first_name.' '.auth()->user()->employee->last_name }}&background=random" alt="">
                 </button>
             </x-slot>
 
