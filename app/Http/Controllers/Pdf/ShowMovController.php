@@ -6,19 +6,21 @@ use App\Models\Event;
 use App\Actions\Azure;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Mov;
 
 class ShowMovController extends Controller
 {
-    public function __invoke(Event $event, Azure $azure)
+    public function __invoke(Mov $mov, Azure $azure)
     {
-        $mov = $event->mov;
+        dd($mov);
         if ($mov) {
-            $response = $azure->get($mov);
+            $filename = $mov->filename;
+            $response = $azure->get($filename);
             if ($response == 404) {
                 abort(404);
             }
 
-            $name = explode('/', $mov);
+            $name = explode('/', $filename);
 
             $headers = [
                 'Content-Type' => 'application/pdf',

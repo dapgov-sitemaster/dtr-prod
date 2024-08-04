@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Enums\Events;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Event extends Model
 {
@@ -45,5 +47,10 @@ class Event extends Model
     public function created_by()
     {
         return $this->hasOne(Employee::class, 'hris_number', 'created_by');
+    }
+
+    public function mov(): MorphOne
+    {
+        return $this->morphOne(Mov::class, 'movable')->latestOfMany();
     }
 }

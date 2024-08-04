@@ -75,7 +75,7 @@
                         Event Calendar
                     </div>
                 </x-sidebar.item>
-                <x-sidebar.item tooltip="Daily Time Records" :url="route('admin.dtr')" :active="request()->routeIs('admin.dtr.*')">
+                <x-sidebar.item tooltip="Daily Time Records" :url="route('admin.dtr.index')" :active="request()->routeIs('admin.dtr.*')">
                     <x-filament::icon
                         icon="heroicon-m-document-text"
                         class="w-6 shrink-0"

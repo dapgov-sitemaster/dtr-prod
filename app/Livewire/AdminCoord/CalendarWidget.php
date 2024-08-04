@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\AdminCoord;
 
 use Filament\Forms;
 use App\Enums\Events;
@@ -139,7 +139,7 @@ class CalendarWidget extends FullCalendarWidget
                                 if (!$record->mov) {
                                     return null;
                                 }
-                                return route('admin.pdf.view-mov', ['event' => $record->id]);
+                                return route('admin.pdf.view-mov', ['mov' => $record->mov]);
                             }, shouldOpenInNewTab: true)
                             ->placeholder('No uploaded file')
                             ->hidden(fn ($record): bool => $record->tag->value === 'wfh' || $record->tag->value === 'hwfh'),
@@ -162,18 +162,19 @@ class CalendarWidget extends FullCalendarWidget
                                 ->visibility('private'),
                         ])
                         ->action(function ($data, \App\Actions\Azure $azure, $record) {
-                            if ($record->mov) {
-                                $azure->delete($record->mov);
-                            }
+                            // if ($record->mov) {
+                            //     $azure->delete($record->mov);
+                            // }
 
                             $file = Storage::disk('public')->get($data['attachment']);
                             $file_explode = explode('/', $data['attachment']);
                             $filename = $file_explode[1];
-                            $azure->put("movs", $file, $filename);
+                            // $azure->put("movs", $file, $filename);
                             Storage::disk('public')->delete($data['attachment']);
 
-                            $record->mov = 'movs/' . $filename;
-                            $record->save();
+                            $record->mov()->create(['filename' => 'movs/' . $filename]);
+                            // $record->mov = 'movs/' . $filename;
+                            // $record->save();
 
                             Notification::make()
                                 ->title("Saved Successfully!")

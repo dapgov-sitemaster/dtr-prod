@@ -3,8 +3,11 @@
 namespace App\Models;
 
 use App\Casts\TimeCast;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class OfficialTime extends Model
 {
@@ -18,7 +21,6 @@ class OfficialTime extends Model
     protected $fillable = [
         'hris_number',
         'time_in',
-        'mov',
         'status',
         'created_by',
     ];
@@ -27,13 +29,18 @@ class OfficialTime extends Model
         'time_in' => 'datetime',
     ];
 
-    public function employee()
+    public function employee(): BelongsTo
     {
-        return $this->hasOne(Employee::class, 'hris_number', 'hris_number');
+        return $this->belongsTo(Employee::class, 'hris_number', 'hris_number');
     }
 
-    public function created_by()
+    public function created_by(): HasOne
     {
         return $this->hasOne(Employee::class, 'hris_number', 'created_by');
+    }
+
+    public function movs(): MorphMany
+    {
+        return $this->morphMany(Mov::class, 'movable');
     }
 }

@@ -76,7 +76,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                         return 'Current status of ' . str($name)->headline() . " change request of Official Time";
                     })
                     ->hidden(function ($record) {
-                        $official_time = $record->official_times;
+                        $official_time = $record->latest_official_time;
                         if ($official_time) {
                             if ($official_time->status == 'pending') {
                                 return false;
@@ -85,7 +85,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                         return true;
                     })
                     ->modalContent(function ($record): \Illuminate\Contracts\View\View {
-                        return view('components.filament.pages.official-time.view-request', ['record' => $record->official_times]);
+                        return view('components.filament.pages.official-time.view-request', ['record' => $record->latest_official_time]);
                     })
                     ->modalSubmitAction(false),
                 \Filament\Tables\Actions\Action::make('set-time')
@@ -110,19 +110,21 @@ class OfficialTime extends Component implements HasForms, HasTable
                             ->hidden(fn ($record) => !$record->official_time)
                     ])
                     ->action(function ($record, $data, Azure $azure) {
-                        if (!$record->official_time) {
+                        if ($record->official_time) {
                             $file = Storage::disk('public')->get($data['attachment']);
                             $file_explode = explode('/', $data['attachment']);
                             $filename = $file_explode[1];
-                            $azure->put("movs", $file, $filename);
+                            // $azure->put("movs", $file, $filename);
                             Storage::disk('public')->delete($data['attachment']);
 
-                            $record->official_time()->create([
+                            $official_time = $record->official_time()->create([
                                 'hris_number' => $record->hris_number,
                                 'time_in' => $data['official_time'],
-                                'mov' => 'movs/' . $filename,
                                 'created_by' => auth()->user()->hris_number,
                             ]);
+
+                            $official_time->movs()->create(['filename' => 'movs/' . $filename]);
+
 
                             $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
 

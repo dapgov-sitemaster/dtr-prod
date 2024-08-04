@@ -5,7 +5,7 @@
             {{ auth()->user()->employee->department->center.'/'.auth()->user()->employee->department->office }} Event Calendar
         </div>
         <div class="mt-6">
-            @livewire(\App\Livewire\CalendarWidget::class, [], key(str()->random()))
+            @livewire(\App\Livewire\AdminCoord\CalendarWidget::class, [], key(str()->random()))
         </div>
     </div>
 </div>
