@@ -21,6 +21,7 @@ class Report extends Model
         'official_time',
         'office',
         'appointment_status',
+        'time_entry_type',
     ];
 
     public function employee()

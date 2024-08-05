@@ -97,9 +97,9 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                                     ->columnSpanFull(),
 
                                 \Filament\Forms\Components\Grid::make([
-                                        'default' => 1,
-                                        'xl'    => 3,
-                                    ])
+                                    'default' => 1,
+                                    'xl'    => 3,
+                                ])
                                     ->schema([
                                         \Filament\Forms\Components\TextInput::make('last_name')
                                             ->label('Last Name')
@@ -121,13 +121,18 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                                     ->native(false)
                                     ->required(),
                                 \Filament\Forms\Components\Select::make('role')
-                                    ->options(Role::class)
+                                    ->options(function () {
+                                        return collect(Role::cases())
+                                            ->filter(fn ($case) => $case !== Role::SUPERADMIN)
+                                            ->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])
+                                            ->toArray();
+                                    })
                                     ->native(false)
                                     ->required(),
                             ]),
                         // ...
                     ])
-                    ->action(function(array $data): Model {
+                    ->action(function (array $data): Model {
                         $user = User::create([
                             'hris_number' => $data['hris_number'],
                             'email' => $data['email'],
@@ -145,10 +150,10 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                             'department_id' => $data['department_id'],
                         ]);
 
-                        $name = (str($user->employee->first_name)->endsWith('s')) ? $user->employee->first_name."'" : $user->employee->first_name."'s";
+                        $name = (str($user->employee->first_name)->endsWith('s')) ? $user->employee->first_name . "'" : $user->employee->first_name . "'s";
                         Notification::make()
                             ->title("Saved Successfully!")
-                            ->body($name." information has been saved!")
+                            ->body($name . " information has been saved!")
                             ->success()
                             ->color('success')
                             ->send();
@@ -157,101 +162,107 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
             ])
             ->actions([
                 // \Filament\Tables\Actions\ActionGroup::make([
-                    \Filament\Tables\Actions\EditAction::make('edit-employee')
-                        ->slideOver()
-                        ->modalHeading(function($record) {
-                            $name = (str($record->first_name)->endsWith('s')) ? $record->first_name."'" : $record->first_name."'s";
-                            return 'Edit '.str($name)->headline()." information";
-                        })
-                        ->modalIcon('heroicon-o-pencil-square')
-                        // ->mutateFormDataUsing(function (array $data, $record): array {
-                        //     dd($data);
-                        //     $data['email'] = $record->first_name;
+                \Filament\Tables\Actions\EditAction::make('edit-employee')
+                    ->slideOver()
+                    ->modalHeading(function ($record) {
+                        $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
+                        return 'Edit ' . str($name)->headline() . " information";
+                    })
+                    ->modalIcon('heroicon-o-pencil-square')
+                    // ->mutateFormDataUsing(function (array $data, $record): array {
+                    //     dd($data);
+                    //     $data['email'] = $record->first_name;
 
-                        //     return $data;
-                        // })
-                        ->fillForm(function(Employee $employee): array {
-                            return [
-                                'email' => $employee->user->email,
-                                'department_id' => $employee->department_id,
-                                'last_name' => $employee->last_name,
-                                'first_name' => $employee->first_name,
-                                'middle_name' => $employee->middle_name,
-                                'appointment_status' => $employee->appointment_status,
-                                'role' => $employee->user->role,
-                            ];
-                        })
-                        ->form([
-                            \Filament\Forms\Components\Section::make()
-                                ->columns([
-                                    'sm' => 1,
-                                    'xl' => 2,
+                    //     return $data;
+                    // })
+                    ->fillForm(function (Employee $employee): array {
+                        return [
+                            'email' => $employee->user->email,
+                            'department_id' => $employee->department_id,
+                            'last_name' => $employee->last_name,
+                            'first_name' => $employee->first_name,
+                            'middle_name' => $employee->middle_name,
+                            'appointment_status' => $employee->appointment_status,
+                            'role' => $employee->user->role,
+                        ];
+                    })
+                    ->form([
+                        \Filament\Forms\Components\Section::make()
+                            ->columns([
+                                'sm' => 1,
+                                'xl' => 2,
+                            ])
+                            ->schema([
+                                \Filament\Forms\Components\TextInput::make('email')
+                                    ->placeholder('Enter DAP Email Address')
+                                    ->email()
+                                    ->autocomplete(false)
+                                    ->required(),
+                                \Filament\Forms\Components\Select::make('department_id')
+                                    ->label('Department')
+                                    ->options(Department::all()->pluck('description', 'id'))
+                                    ->native(false)
+                                    ->searchable()
+                                    ->required(),
+
+                                \Filament\Forms\Components\Grid::make([
+                                    'default' => 1,
+                                    'xl'    => 3,
                                 ])
-                                ->schema([
-                                    \Filament\Forms\Components\TextInput::make('email')
-                                        ->placeholder('Enter DAP Email Address')
-                                        ->email()
-                                        ->autocomplete(false)
-                                        ->required(),
-                                    \Filament\Forms\Components\Select::make('department_id')
-                                        ->label('Department')
-                                        ->options(Department::all()->pluck('description', 'id'))
-                                        ->native(false)
-                                        ->searchable()
-                                        ->required(),
+                                    ->schema([
+                                        \Filament\Forms\Components\TextInput::make('last_name')
+                                            ->label('Last Name')
+                                            ->placeholder('Enter Last Name')
+                                            ->autocomplete(false)
+                                            ->required(),
+                                        \Filament\Forms\Components\TextInput::make('first_name')
+                                            ->label('First Name')
+                                            ->placeholder('Enter First Name')
+                                            ->autocomplete(false)
+                                            ->required(),
+                                        \Filament\Forms\Components\TextInput::make('middle_name')
+                                            ->label('Middle Name')
+                                            ->placeholder('Enter Middle Name')
+                                            ->autocomplete(false),
+                                    ]),
+                                \Filament\Forms\Components\Select::make('appointment_status')
+                                    ->options(AppointmentStatus::class)
+                                    ->native(false)
+                                    ->required(),
+                                \Filament\Forms\Components\Select::make('role')
+                                    ->options(function () {
+                                        return collect(Role::cases())
+                                            ->filter(fn ($case) => $case !== Role::SUPERADMIN)
+                                            ->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])
+                                            ->toArray();
+                                    })
+                                    ->native(false)
+                                    ->hidden(fn ($record) => ($record->user->role->value === 'superadmin'))
+                                    ->required(),
+                            ]),
+                    ])
+                    ->action(function ($data, Employee $employee) {
 
-                                    \Filament\Forms\Components\Grid::make([
-                                            'default' => 1,
-                                            'xl'    => 3,
-                                        ])
-                                        ->schema([
-                                            \Filament\Forms\Components\TextInput::make('last_name')
-                                                ->label('Last Name')
-                                                ->placeholder('Enter Last Name')
-                                                ->autocomplete(false)
-                                                ->required(),
-                                            \Filament\Forms\Components\TextInput::make('first_name')
-                                                ->label('First Name')
-                                                ->placeholder('Enter First Name')
-                                                ->autocomplete(false)
-                                                ->required(),
-                                            \Filament\Forms\Components\TextInput::make('middle_name')
-                                                ->label('Middle Name')
-                                                ->placeholder('Enter Middle Name')
-                                                ->autocomplete(false),
-                                        ]),
-                                    \Filament\Forms\Components\Select::make('appointment_status')
-                                        ->options(AppointmentStatus::class)
-                                        ->native(false)
-                                        ->required(),
-                                    \Filament\Forms\Components\Select::make('role')
-                                        ->options(Role::class)
-                                        ->native(false)
-                                        ->required(),
-                                ]),
-                        ])
-                        ->action(function($data, Employee $employee) {
+                        $employee->department_id = $data['department_id'];
+                        $employee->last_name = $data['last_name'];
+                        $employee->first_name = $data['first_name'];
+                        $employee->middle_name = $data['middle_name'];
+                        $employee->appointment_status = $data['appointment_status'];
+                        $employee->save();
 
-                            $employee->department_id = $data['department_id'];
-                            $employee->last_name = $data['last_name'];
-                            $employee->first_name = $data['first_name'];
-                            $employee->middle_name = $data['middle_name'];
-                            $employee->appointment_status = $data['appointment_status'];
-                            $employee->save();
+                        $employee->user->email = $data['email'];
+                        $employee->user->role = $data['role'];
+                        $employee->user->save();
 
-                            $employee->user->email = $data['email'];
-                            $employee->user->role = $data['role'];
-                            $employee->user->save();
+                        $name = (str($employee->first_name)->endsWith('s')) ? $employee->first_name . "'" : $employee->first_name . "'s";
 
-                            $name = (str($employee->first_name)->endsWith('s')) ? $employee->first_name."'" : $employee->first_name."'s";
-
-                            Notification::make()
-                                ->title("Saved Successfully!")
-                                ->body($name." information has been saved!")
-                                ->success()
-                                ->color('success')
-                                ->send();
-                        }),
+                        Notification::make()
+                            ->title("Saved Successfully!")
+                            ->body($name . " information has been saved!")
+                            ->success()
+                            ->color('success')
+                            ->send();
+                    }),
                 // ])
             ])
             ->filters([
@@ -263,5 +274,4 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                     ]),
             ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent);
     }
-
 }

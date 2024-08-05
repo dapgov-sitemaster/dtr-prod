@@ -76,17 +76,34 @@ class OfficialTime extends Component implements HasForms, HasTable
                         return 'Current status of ' . str($name)->headline() . " change request of Official Time";
                     })
                     ->hidden(function ($record) {
-                        $official_time = $record->latest_official_time;
-                        if ($official_time) {
-                            if ($official_time->status == 'pending') {
+                        if ($record->latest_official_time) {
+                            if ($record->latest_official_time->status == 'pending') {
                                 return false;
                             }
                         }
                         return true;
                     })
-                    ->modalContent(function ($record): \Illuminate\Contracts\View\View {
-                        return view('components.filament.pages.official-time.view-request', ['record' => $record->latest_official_time]);
-                    })
+                    ->infolist([
+                        \Filament\Infolists\Components\TextEntry::make('hris_number')
+                            ->label('HRIS Number'),
+                        \Filament\Infolists\Components\TextEntry::make('full_name')
+                            ->label('Full Name'),
+                        \Filament\Infolists\Components\TextEntry::make('latest_official_time.time_in')
+                            ->label('Requested Official Time')
+                            ->formatStateUsing(function ($state) {
+                                $parsed = Carbon::parse($state);
+                                return $parsed->format('g:i A') . ' - ' . $parsed->copy()->addHours(9)->format('g:i A');
+                            }),
+                        \Filament\Infolists\Components\TextEntry::make('latest_official_time.status')
+                            ->label('Status')
+                            ->formatStateUsing(function ($state) {
+                                if ($state === 'pending') {
+                                    return 'Change request is still in process. Kindly wait for the approval from HR Admin.';
+                                } else if ($state === 'disapproved') {
+                                    return 'Change request has been disapproved. You can submit again for approval to HR Admin.';
+                                }
+                            }),
+                    ])
                     ->modalSubmitAction(false),
                 \Filament\Tables\Actions\Action::make('set-time')
                     ->button()
@@ -95,7 +112,14 @@ class OfficialTime extends Component implements HasForms, HasTable
                         $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
                         return 'Set ' . str($name)->headline() . " official time";
                     })
-                    ->hidden(fn ($record) => $record->official_time)
+                    ->hidden(function ($record): bool {
+                        if ($record->latest_official_time) {
+                            if ($record->latest_official_time->status === 'pending') {
+                                return true;
+                            }
+                        }
+                        return false;
+                    })
                     ->form([
                         \Filament\Forms\Components\Select::make('official_time')
                             ->label('Official Time')
