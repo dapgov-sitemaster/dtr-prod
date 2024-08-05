@@ -17,14 +17,14 @@ class GenerateReport
         // $employee = Employee::where('hris_number', $hris_number)->first();
         $official_time = ($employee->official_time) ? $employee->official_time->time_in->format('H:i:s') : '08:00:00';
         $dates = CarbonPeriod::create($date_from, $date_to)->toArray();
-
+        array_pop($dates);
         $checkDtr = Report::query()
             ->where('hris_number', $employee->hris_number)
             ->whereBetween('time_start', [$date_from, $date_to])
             // ->whereDate('time_start', '>=', $date_from)->whereDate('time_start', '<=', $date_to)
             ->get();
 
-        if ($checkDtr) {
+        if ($checkDtr->isNotEmpty()) {
             return $checkDtr;
         } else {
             $time_entries = TimeEntry::query()
