@@ -12,7 +12,6 @@ class ShowMovController extends Controller
 {
     public function __invoke(Mov $mov, Azure $azure)
     {
-        dd($mov);
         if ($mov) {
             $filename = $mov->filename;
             $response = $azure->get($filename);

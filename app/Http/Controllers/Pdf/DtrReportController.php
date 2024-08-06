@@ -20,10 +20,28 @@ class DtrReportController extends Controller
     {
         $employee = Employee::where('hris_number', $hris_number)->first();
         if ($employee) {
-            $date_from = Carbon::parse($request->get('date_from'));
-            $date_to = Carbon::parse($request->get('date_to'));
+            $appointment_status = $employee->appointment_status->value;
+            $yearmonth = $request->get('yearmonth');
+            $cutoff = $request->get('cutoff');
+            $date_from = null;
+            $date_to = null;
+
+            if ($appointment_status == 'pbp') {
+                $date_from = ($cutoff == 1) ? $yearmonth . '-01' : $yearmonth . '-16';
+                $date_to = ($cutoff == 1) ? $yearmonth . '-15' : $yearmonth . '-' . date('t', strtotime($yearmonth . '-' . '01'));
+            } else if ($appointment_status == 'npp') {
+                $yearmonth_ex = explode('-', $yearmonth);
+                $prevMonth = (int) $yearmonth_ex[1] - 1;
+
+                $date_from = ($cutoff == 1) ? $yearmonth_ex[0] . '-' . $prevMonth . '-26' : $yearmonth . '-11';
+                $date_to = ($cutoff == 1) ? $yearmonth . '-10' : $yearmonth . '-25';
+            }
+
+            $date_from = Carbon::parse($date_from);
+            $date_to = Carbon::parse($date_to);
             $dtr_report = $generate->handle($employee, $date_from->format('Y-m-d'), $date_to->copy()->addDay()->format('Y-m-d'));
             $processed = $process->handle($employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->copy()->addDay()->format('Y-m-d'));
+
 
             $employee['reports'] = $processed['reports'];
             $employee['total'] = $processed['total'];

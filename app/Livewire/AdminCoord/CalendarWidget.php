@@ -98,8 +98,9 @@ class CalendarWidget extends FullCalendarWidget
                 )
                 ->mutateFormDataUsing(function (array $data): array {
                     $official_time = \App\Models\OfficialTime::where('hris_number', $data['hris_number'])->where('status', 'approved')->first();
-                    $time_start = ($official_time) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '08:00:00');
-                    $time_end = $time_start->copy()->addHours(9);
+                    $time_start = ($official_time) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
+                    // $time_end = $time_start->copy()->addHours(9);
+                    $time_end = ($official_time) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
                     $description = Events::tryFrom($data['tag'])->getLabel();
                     $data['start'] = $time_start->format('Y-m-d H:i:s');
                     $data['end'] = $time_end->format('Y-m-d H:i:s');

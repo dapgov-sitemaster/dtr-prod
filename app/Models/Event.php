@@ -51,6 +51,6 @@ class Event extends Model
 
     public function mov(): MorphOne
     {
-        return $this->morphOne(Mov::class, 'movable')->latestOfMany();
+        return $this->morphOne(Mov::class, 'movable');
     }
 }

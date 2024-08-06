@@ -63,10 +63,35 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                         ->labeledFrom('md')
                         ->url(fn ($record) => route('admin.dtr.emp-time-entries', ['hris_number' => $record->hris_number])),
                     \Filament\Tables\Actions\Action::make('generate-report')
+                        ->modalHeading(function ($record) {
+                            $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
+                            return 'Generate DTR Report of ' . str($name)->headline();
+                        })
                         ->color('secondary')
                         ->icon('heroicon-m-document-arrow-down')
                         ->labeledFrom('md')
-                        ->url(fn ($record) => route('admin.dtr.emp-dtr-report', ['hris_number' => $record->hris_number, 'date_from' => '2024-07-01', 'date_to' => '2024-07-15'])),
+                        ->form([
+                            \Filament\Forms\Components\TextInput::make('yearmonth')
+                                ->label('Select Year and Month')
+                                ->type('month')
+                                ->default(now()->format('Y-m'))
+                                ->required(),
+                            \Filament\Forms\Components\Select::make('cutoff')
+                                ->label('Select Cut-off')
+                                ->options([1 => "First Cut-off", 2 => "Second Cut-off"])
+                                ->native(false)
+                                ->required()
+                                ->columnSpanFull(),
+                        ])
+                        ->action(function ($data, $record) {
+                            // $livewire->redirectRoute('admin.dtr.emp-dtr-report', ['hris_number' => $record->hris_number, 'date_from' => '2024-07-01', 'date_to' => '2024-07-15']);
+                            return redirect()->route('admin.dtr.emp-dtr-report', ['hris_number' => $record->hris_number, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff']]);
+                        })
+                    // ->url(function ($data) {
+                    //     dd($data);
+                    // })
+                    // ->url(fn ($record) => route('admin.dtr.emp-dtr-report', ['hris_number' => $record->hris_number, 'date_from' => '2024-07-01', 'date_to' => '2024-07-15']))
+                    // ->openUrlInNewTab(),
 
                 ])
                     ->dropdownPlacement('top-start')

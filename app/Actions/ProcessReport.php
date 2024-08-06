@@ -14,11 +14,13 @@ class ProcessReport
         $dates = CarbonPeriod::create($date_from, $date_to)->toArray();
         array_pop($dates);
         $events = Event::query()
+            ->with('mov')
             ->whereIn('tag', ['fc', 'holiday', 'suspended'])
             ->whereBetween('start', [$date_from, $date_to])
             ->get();
 
         $schedules = Event::query()
+            ->with('mov')
             ->where('hris_number', $employee->hris_number)
             ->whereBetween('start', [$date_from, $date_to])
             ->get();
@@ -35,21 +37,12 @@ class ProcessReport
             $schedule = clone $schedules->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
             // $holiday = clone $events->where('tag', 'holiday')->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
 
-            // $testo = [];
-            // foreach ($schedule as $sched) {
-            //     $testo[] = [
-            //         $sched->tag->value,
-            //         ($sched->mov) ? route('admin.pdf.view-mov', ['mov' => $sched->mov]) : ''
-            //     ];
-            // }
-            // $testo = $schedule->map(function($item) {
-            //     return
-            // });
-            // info($schedule->pluck('tag', 'mov.id')->all());
 
-            $remarks = collect()->merge($schedule->pluck('tag', 'mov.filename'))->merge($flag->pluck('tag'))->merge($suspended->pluck('tag'))->map(fn ($item) => $item->value);
+            $schedule_remarks = $schedule->map(fn ($item) => ['value' => ($item->mov) ? '<a href="' . route('admin.dtr.pdf.view-mov', ['mov' => $item->mov?->id]) . '" target="_blank">' . strtoupper($item->tag->value) . '</a>' : strtoupper($item->tag->value)])->toArray();
+            $flag_remarks = $flag->map(fn ($item) => ['value' => ($item->mov) ? '<a href="' . route('admin.dtr.pdf.view-mov', ['mov' => $item->mov?->id]) . '" target="_blank">' . strtoupper($item->tag->value) . '</a>' : strtoupper($item->tag->value)])->toArray();
+            $suspended_remarks = $suspended->map(fn ($item) => ['value' => ($item->mov) ? '<a href="' . route('admin.dtr.pdf.view-mov', ['mov' => $item->mov?->id]) . '" target="_blank">' . strtoupper($item->tag->value) . '</a>' : strtoupper($item->tag->value)])->toArray();
+            $remarks = collect()->merge($schedule_remarks)->merge($flag_remarks)->merge($suspended_remarks);
 
-            info($remarks);
             $tardy = null;
             $undertime = null;
             $time_in = null;

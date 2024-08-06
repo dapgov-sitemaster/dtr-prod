@@ -92,7 +92,7 @@
                     <td>
                         <span class="font-semibold">Official Time</span>:
                         {{
-                            ($employee->official_time) ? $employee->official_time->time_in->format('g:i A'). ' - ' .$employee->official_time->copy()->addHours(9)->time_in->format('g:i A') : date('g:i A', strtotime('08:00')). ' - '.date('g:i A', strtotime('17:00'))
+                            ($employee->official_time) ? $employee->official_time->time_in->format('g:i A'). ' - ' .$employee->official_time->time_in->copy()->addHours(9)->format('g:i A') : date('g:i A', strtotime('08:00')). ' - '.date('g:i A', strtotime('17:00'))
                         }}
                         / <span class="font-semibold">Flag</span>: 8:30 AM - 5:30 PM
                     </td>
@@ -174,13 +174,7 @@
                             </td>
                             {{-- REMARKS --}}
                             <td class="border text-center">
-                                @foreach ($report['remarks'] as $key => $value)
-                                    @if($key == "")
-                                        {{ strtoupper($value) }}
-                                    @else
-                                        <a href="{{ route('admin.dtr.pdf.view-mov', ['mov' => $key]) }}" target="_blank">{{ strtoupper($value) }}</a>
-                                    @endif
-                                @endforeach
+                                {!! $report['remarks']->pluck('value')->implode(',') !!}
                             </td>
                         </tr>
                     @endforeach
