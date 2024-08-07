@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('events', function (Blueprint $table) {
             $table->id();
-            $table->string('hris_number');
+            $table->string('hris_number')->nullable();
             $table->foreign('hris_number')->references('hris_number')->on('employees');
             $table->dateTime('start');
             $table->dateTime('end')->nullable();

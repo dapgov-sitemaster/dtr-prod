@@ -12,6 +12,9 @@ enum Events: string implements HasLabel, HasColor
     case ALA = 'ala';
     case OB = 'ob';
     case CDO = 'cdo';
+    case SUS = 'suspended';
+    case HOL = 'holiday';
+    case FLAG = 'flag';
 
     public function getLabel(): ?string
     {
@@ -21,6 +24,9 @@ enum Events: string implements HasLabel, HasColor
             self::ALA => 'Official Leave',
             self::OB => 'Official Business',
             self::CDO => 'Compensatory Day-off',
+            self::SUS => 'Work Suspension',
+            self::HOL => 'Holiday',
+            self::FLAG => 'Flag Ceremony',
         };
     }
 
@@ -29,9 +35,12 @@ enum Events: string implements HasLabel, HasColor
         return match ($this) {
             self::WFH => 'info',
             self::HWFH => 'info',
-            self::ALA => 'success',
+            self::ALA => 'warning',
             self::OB => 'gray',
-            self::CDO => 'success',
+            self::CDO => 'warning',
+            self::SUS => 'success',
+            self::HOL => 'success',
+            self::FLAG => 'success',
         };
     }
 
@@ -42,7 +51,19 @@ enum Events: string implements HasLabel, HasColor
             self::HWFH => '#2E3192',
             self::ALA => 'orange',
             self::OB => 'darkgray',
-            self::CDO => 'green',
+            self::CDO => 'orange',
+            self::SUS => 'green',
+            self::HOL => 'green',
+            self::FLAG => 'green',
         };
+    }
+
+    public static function parse(Events | string | null $value): ?self
+    {
+        if ($value instanceof self) {
+            return $value;
+        }
+
+        return self::tryFrom($value);
     }
 }

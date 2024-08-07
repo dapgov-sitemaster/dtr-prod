@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\Str;
 use Filament\Support\Colors\Color;
 use Illuminate\Support\Stringable;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Filament\Support\Facades\FilamentColor;
 
@@ -23,17 +24,21 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Stringable::macro('initials', function(){
+        Gate::define('special-events', function (\App\Models\User $user) {
+            return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::HRADMIN;
+        });
+
+        Stringable::macro('initials', function () {
             $words = preg_split("/\s+/", $this);
             $initials = "";
 
             foreach ($words as $w) {
-              $initials .= $w[0];
+                $initials .= $w[0];
             }
 
             return new static($initials);
         });
-        Str::macro('initials', function(string $string){
+        Str::macro('initials', function (string $string) {
             return (string) (new Stringable($string))->initials();
         });
 
@@ -42,17 +47,17 @@ class AppServiceProvider extends ServiceProvider
             'gray' => Color::Zinc,
             'info' => Color::Blue,
             'primary' => [
-                '50'=> '237, 243, 255',
-                '100'=> '222, 232, 255',
-                '200'=> '196, 212, 255',
-                '300'=> '161, 183, 255',
-                '400'=> '123, 144, 254',
-                '500'=> '92, 105, 248',
-                '600'=> '62, 64, 237',
-                '700'=> '50, 49, 209',
-                '800'=> '42, 42, 169',
-                '900'=> '46, 49, 146',
-                '950'=> '25, 25, 77',
+                '50' => '237, 243, 255',
+                '100' => '222, 232, 255',
+                '200' => '196, 212, 255',
+                '300' => '161, 183, 255',
+                '400' => '123, 144, 254',
+                '500' => '92, 105, 248',
+                '600' => '62, 64, 237',
+                '700' => '50, 49, 209',
+                '800' => '42, 42, 169',
+                '900' => '46, 49, 146',
+                '950' => '25, 25, 77',
             ],
             'secondary' => [
                 '50' => '254, 254, 232',

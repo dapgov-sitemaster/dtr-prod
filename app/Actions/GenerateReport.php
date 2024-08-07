@@ -17,7 +17,7 @@ class GenerateReport
         $official_time = ($employee->official_time) ? $employee->official_time->time_in->format('H:i:s') : '08:00:00';
         $period = CarbonPeriod::create($date_from, $date_to)->toArray();
         $dates = [];
-        array_pop($dates);
+        array_pop($period);
         $checkDtr = Report::query()
             ->select('time_start')
             ->where('hris_number', $employee->hris_number)
@@ -35,36 +35,38 @@ class GenerateReport
             $dates = $period;
         }
 
-        $time_entries = TimeEntry::query()
-            ->where('hris_number', $employee->hris_number)
-            ->whereBetween(DB::raw('DATE(time_start)'), [$dates[0]->format('Y-m-d'), $dates[count($dates) - 1]->format('Y-m-d')])
-            ->get();
+        if ($dates) {
+            $time_entries = TimeEntry::query()
+                ->where('hris_number', $employee->hris_number)
+                ->whereBetween(DB::raw('DATE(time_start)'), [$dates[0]->format('Y-m-d'), $dates[count($dates) - 1]->format('Y-m-d')])
+                ->get();
 
-        if ($time_entries) {
-            foreach ($dates as $date) {
-                $day_entry = clone $time_entries->whereBetween('time_start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
+            if ($time_entries) {
+                foreach ($dates as $date) {
+                    $day_entry = clone $time_entries->whereBetween('time_start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
 
-                if ($day_entry->isNotEmpty()) {
-                    $time_start = null;
-                    $time_end = null;
+                    if ($day_entry->isNotEmpty()) {
+                        $time_start = null;
+                        $time_end = null;
 
-                    if ($day_entry->count() == 1) {
-                        $time_start = $day_entry[0]->time_start;
-                        $time_end = $day_entry[0]->time_end;
-                    } else {
-                        $time_start = $day_entry->first()->time_start;
-                        $time_end = ($day_entry->last()->time_end) ? $day_entry->last()->time_end : $day_entry->last()->time_start;
+                        if ($day_entry->count() == 1) {
+                            $time_start = $day_entry[0]->time_start;
+                            $time_end = $day_entry[0]->time_end;
+                        } else {
+                            $time_start = $day_entry->first()->time_start;
+                            $time_end = ($day_entry->last()->time_end) ? $day_entry->last()->time_end : $day_entry->last()->time_start;
+                        }
+
+                        Report::create([
+                            'hris_number' => $employee->hris_number,
+                            'time_start' => $time_start,
+                            'time_end' => $time_end,
+                            'official_time' => $official_time,
+                            'office' => $employee->department->description,
+                            'appointment_status' => $employee->appointment_status,
+                            'time_entry_type' => $day_entry->first()->tag,
+                        ]);
                     }
-
-                    Report::create([
-                        'hris_number' => $employee->hris_number,
-                        'time_start' => $time_start,
-                        'time_end' => $time_end,
-                        'official_time' => $official_time,
-                        'office' => $employee->department->description,
-                        'appointment_status' => $employee->appointment_status,
-                        'time_entry_type' => $day_entry->first()->tag,
-                    ]);
                 }
             }
         }

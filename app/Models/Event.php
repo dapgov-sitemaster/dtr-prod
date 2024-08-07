@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Event extends Model
@@ -34,17 +35,17 @@ class Event extends Model
         'end' => 'datetime',
     ];
 
-    public function employee()
+    public function employee(): HasOne
     {
         return $this->hasOne(Employee::class, 'hris_number', 'hris_number');
     }
 
-    public function official_time()
+    public function official_time(): HasOne
     {
         return $this->hasOne(OfficialTime::class, 'hris_number', 'hris_number')->where('status', 'approved')->latest();
     }
 
-    public function created_by()
+    public function created_by(): HasOne
     {
         return $this->hasOne(Employee::class, 'hris_number', 'created_by');
     }
