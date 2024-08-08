@@ -7,6 +7,7 @@ use Livewire\Component;
 use App\Models\Employee;
 use Filament\Tables\Table;
 use Livewire\Attributes\Title;
+use App\Enums\AppointmentStatus;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -95,6 +96,37 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
 
                 ])
                     ->dropdownPlacement('top-start')
+            ])
+            ->headerActions([
+                \Filament\Tables\Actions\Action::make('generate-bulk-report')
+                    ->modalHeading('Generate division/office DTR Report')
+                    ->label('Generate DTR Report')
+                    ->icon('heroicon-m-document-arrow-down')
+                    ->labeledFrom('md')
+                    ->form([
+                        \Filament\Forms\Components\Grid::make(3)
+                            ->schema([
+                                \Filament\Forms\Components\TextInput::make('yearmonth')
+                                    ->label('Select Year and Month')
+                                    ->type('month')
+                                    ->default(now()->format('Y-m'))
+                                    ->required(),
+                                \Filament\Forms\Components\Select::make('cutoff')
+                                    ->label('Select Cut-off')
+                                    ->options([1 => "First Cut-off", 2 => "Second Cut-off"])
+                                    ->native(false)
+                                    ->required(),
+                                \Filament\Forms\Components\Select::make('appointment_status')
+                                    ->label('Select Appointment Status')
+                                    ->options(AppointmentStatus::class)
+                                    ->native(false)
+                                    ->required(),
+                            ])
+                    ])
+                    ->action(function ($data) {
+                        // $livewire->redirectRoute('admin.dtr.emp-dtr-report', ['hris_number' => $record->hris_number, 'date_from' => '2024-07-01', 'date_to' => '2024-07-15']);
+                        return redirect()->route('admin.dtr.bulk-dtr-report', ['department' => auth()->user()->employee->department_id, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff'], 'appointment_status' => $data['appointment_status']]);
+                    })
             ]);
     }
 }

@@ -10,21 +10,18 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ProcessReport
 {
-    public function handle($employee, Collection $dtr, $date_from, $date_to): array
+    public function handle($employee, Collection $dtr, $date_from, $date_to, $events): array
     {
         $dates = CarbonPeriod::create($date_from, $date_to)->toArray();
         array_pop($dates);
-        $events = Event::query()
-            ->with('mov')
-            ->whereIn('tag', [Events::HOL, Events::SUS, Events::FLAG])
-            ->whereBetween('start', [$date_from, $date_to])
-            ->get();
 
-        $schedules = Event::query()
-            ->with('mov')
-            ->where('hris_number', $employee->hris_number)
-            ->whereBetween('start', [$date_from, $date_to])
-            ->get();
+        // $schedules = Event::query()
+        //     ->select('id', 'tag', 'start', 'hris_number')
+        //     ->with('mov:id,movable_id,movable_type')
+        //     ->where('hris_number', $employee->hris_number)
+        //     ->orWhere('hris_number', null)
+        //     ->whereBetween('start', [$date_from, $date_to])
+        //     ->get();
 
         $tardies = [];
         $undertimes = [];
@@ -33,16 +30,18 @@ class ProcessReport
 
         foreach ($dates as $date) {
             $time = clone $dtr->whereBetween('time_start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
+
             $flag = clone $events->where('tag', Events::FLAG)->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
             $holiday = clone $events->where('tag', Events::HOL)->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
             $suspended = clone $events->where('tag', Events::SUS)->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
-            $schedule = clone $schedules->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
+            $schedule = clone $events->where('hris_number', $employee->hris_number)->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
 
             $schedule_remarks = $schedule->map(fn ($item) => ['value' => ($item->mov) ? '<a href="' . route('admin.dtr.pdf.view-mov', ['mov' => $item->mov?->id]) . '" target="_blank">' . strtoupper($item->tag->value) . '</a>' : strtoupper($item->tag->value)])->toArray();
             $flag_remarks = $flag->map(fn ($item) => ['value' => strtoupper($item->tag->value)])->toArray();
             $suspended_remarks = $suspended->map(fn ($item) => ['value' => strtoupper($item->tag->value)])->toArray();
             $holiday_remarks = $holiday->map(fn ($item) => ['value' => strtoupper($item->tag->value)])->toArray();
             $remarks = collect()->merge($schedule_remarks)->merge($flag_remarks)->merge($suspended_remarks)->merge($holiday_remarks);
+            // $remarks = collect($schedule_remarks);
 
             $tardy = null;
             $undertime = null;

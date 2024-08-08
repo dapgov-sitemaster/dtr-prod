@@ -33,7 +33,8 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/daily-time-records', App\Livewire\AdminCoord\DailyTimeRecords::class)->name('admin.dtr.index');
         Route::get('/daily-time-records/{hris_number}/time-entries', App\Livewire\AdminCoord\EmployeeTimeEntries::class)->name('admin.dtr.emp-time-entries');
-        Route::get('/daily-time-records/{hris_number}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'individual'])->name('admin.dtr.emp-dtr-report');
+        Route::get('/daily-time-records/employee/{hris_number}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'individual'])->name('admin.dtr.emp-dtr-report');
+        Route::get('/daily-time-records/bulk/{department}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'bulk'])->name('admin.dtr.bulk-dtr-report');
         Route::get('/daily-time-records/{mov}/view-mov', App\Http\Controllers\Pdf\ShowMovController::class)->name('admin.dtr.pdf.view-mov');
         // Route::get('/dtr-report', App\Livewire\Employee\DtrReport::class)->name('employee.dtr-report');
     });
