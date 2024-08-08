@@ -98,6 +98,15 @@
                         Employee Masterlist
                     </div>
                 </x-sidebar.item>
+                <x-sidebar.item tooltip="Generate DTR Report" :url="route('hr-admin.generate-dtr-report.index')" :active="request()->routeIs('hr-admin.generate-dtr-report.*')">
+                    <x-filament::icon
+                        icon="heroicon-m-clipboard-document-list"
+                        class="w-6 shrink-0"
+                    />
+                    <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
+                        Generate DTR Report
+                    </div>
+                </x-sidebar.item>
             </x-sidebar.group>
             <li>
                 <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>

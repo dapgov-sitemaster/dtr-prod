@@ -21,6 +21,25 @@ use App\Http\Controllers\Controller;
 
 class DtrReportController extends Controller
 {
+    private function date_range($appointment_status, $cutoff, $yearmonth): array
+    {
+        $date_from = null;
+        $date_to = null;
+
+        if ($appointment_status == 'pbp') {
+            $date_from = ($cutoff == 1) ? $yearmonth . '-01' : $yearmonth . '-16';
+            $date_to = ($cutoff == 1) ? $yearmonth . '-15' : $yearmonth . '-' . date('t', strtotime($yearmonth . '-' . '01'));
+        } else if ($appointment_status == 'npp') {
+            $yearmonth_ex = explode('-', $yearmonth);
+            $prevMonth = (int) $yearmonth_ex[1] - 1;
+
+            $date_from = ($cutoff == 1) ? $yearmonth_ex[0] . '-' . $prevMonth . '-26' : $yearmonth . '-11';
+            $date_to = ($cutoff == 1) ? $yearmonth . '-10' : $yearmonth . '-25';
+        }
+
+        return ['date_from' => $date_from, 'date_to' => $date_to];
+    }
+
     public function individual($hris_number, Request $request, GenerateReport $generate, ProcessReport $process)
     {
         $employee = Employee::with(['official_time', 'department'])->where('hris_number', $hris_number)->first();
@@ -43,18 +62,6 @@ class DtrReportController extends Controller
                 ->whereBetween('start', [$date_from, $date_to])
                 ->get();
 
-            // $events = Event::query()
-            //     ->select('id', 'tag', 'start', 'hris_number')
-            //     ->orWhere('hris_number', NULL)
-            //     ->whereBetween('start', [$date_from, $date_to])
-            //     ->get();
-
-            // $employee_event = Event::query()
-            //     ->select('id', 'tag', 'start', 'hris_number')
-            //     ->where('hris_number', $employee->hris_number)
-            //     ->whereBetween('start', [$date_from, $date_to])
-            //     ->get();
-
             $dtr_report = $generate->handle($employee, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'));
             $processed = $process->handle($employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'), $events);
 
@@ -74,25 +81,6 @@ class DtrReportController extends Controller
         } else {
             abort(404);
         }
-    }
-
-    private function date_range($appointment_status, $cutoff, $yearmonth): array
-    {
-        $date_from = null;
-        $date_to = null;
-
-        if ($appointment_status == 'pbp') {
-            $date_from = ($cutoff == 1) ? $yearmonth . '-01' : $yearmonth . '-16';
-            $date_to = ($cutoff == 1) ? $yearmonth . '-15' : $yearmonth . '-' . date('t', strtotime($yearmonth . '-' . '01'));
-        } else if ($appointment_status == 'npp') {
-            $yearmonth_ex = explode('-', $yearmonth);
-            $prevMonth = (int) $yearmonth_ex[1] - 1;
-
-            $date_from = ($cutoff == 1) ? $yearmonth_ex[0] . '-' . $prevMonth . '-26' : $yearmonth . '-11';
-            $date_to = ($cutoff == 1) ? $yearmonth . '-10' : $yearmonth . '-25';
-        }
-
-        return ['date_from' => $date_from, 'date_to' => $date_to];
     }
 
     public function bulk(Department $department, Request $request, GenerateReport $generate, ProcessReport $process)

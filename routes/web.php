@@ -43,6 +43,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('hr-admin')->group(function () {
         Route::get('/master-list', App\Livewire\HrAdmin\EmployeeMasterlist::class)->name('hr-admin.master-list');
+        Route::get('/dtr-report', App\Livewire\HrAdmin\GenerateDtrReport::class)->name('hr-admin.generate-dtr-report.index');
         // Route::get('/dtr-report', App\Livewire\Employee\DtrReport::class)->name('employee.dtr-report');
     });
 
