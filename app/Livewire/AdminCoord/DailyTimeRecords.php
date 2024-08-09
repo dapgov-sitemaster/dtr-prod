@@ -72,17 +72,19 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                         ->icon('heroicon-m-document-arrow-down')
                         ->labeledFrom('md')
                         ->form([
-                            \Filament\Forms\Components\TextInput::make('yearmonth')
-                                ->label('Select Year and Month')
-                                ->type('month')
-                                ->default(now()->format('Y-m'))
-                                ->required(),
-                            \Filament\Forms\Components\Select::make('cutoff')
-                                ->label('Select Cut-off')
-                                ->options([1 => "First Cut-off", 2 => "Second Cut-off"])
-                                ->native(false)
-                                ->required()
-                                ->columnSpanFull(),
+                            \Filament\Forms\Components\Grid::make(2)
+                                ->schema([
+                                    \Filament\Forms\Components\TextInput::make('yearmonth')
+                                        ->label('Select Year and Month')
+                                        ->type('month')
+                                        ->default(now()->format('Y-m'))
+                                        ->required(),
+                                    \Filament\Forms\Components\Select::make('cutoff')
+                                        ->label('Select Cut-off')
+                                        ->options([1 => "First Cut-off", 2 => "Second Cut-off"])
+                                        ->native(false)
+                                        ->required(),
+                                ])
                         ])
                         ->action(function ($data, $record) {
                             // $livewire->redirectRoute('admin.dtr.emp-dtr-report', ['hris_number' => $record->hris_number, 'date_from' => '2024-07-01', 'date_to' => '2024-07-15']);

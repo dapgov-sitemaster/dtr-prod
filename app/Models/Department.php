@@ -21,6 +21,10 @@ class Department extends Model
         'office',
     ];
 
+    protected $appends = [
+        'description'
+    ];
+
     public function getDescriptionAttribute()
     {
         return "{$this->group}/{$this->center}/{$this->office}";

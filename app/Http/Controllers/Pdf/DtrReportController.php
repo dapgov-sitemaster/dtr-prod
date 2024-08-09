@@ -62,14 +62,14 @@ class DtrReportController extends Controller
                 ->whereBetween('start', [$date_from, $date_to])
                 ->get();
 
-            $dtr_report = $generate->handle($employee, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'));
-            $processed = $process->handle($employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'), $events);
+            $dtr_report = $generate->handle($employee, $date_from->format('Y-m-d'), $date_to->copy()->addDay()->format('Y-m-d'));
+            $processed = $process->handle($employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->copy()->addDay()->format('Y-m-d'), $events);
 
 
             $employee['reports'] = $processed['reports'];
             $employee['total'] = $processed['total'];
 
-            $title = 'DTR Report-' . $date_from->format('m/d/Y') . '-' . $date_to->format('m/d/Y') . ' (' . $employee->department->description . ').pdf';
+            $title = 'DTR Report-' . $date_from->format('m/d/Y') . '-' . $date_to->format('m/d/Y') . ' (' . $employee->hris_number . ').pdf';
             $pdf = App::make('dompdf.wrapper');
             $pdf->setOption(['dpi' => 100, 'defaultFont' => 'sans-serif']);
             $pdf->loadView('components.layouts.pdf.dtr-report', [
