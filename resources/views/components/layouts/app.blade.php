@@ -122,7 +122,7 @@
                                 </div>
                             </div>
                         </header>
-                        <div class="flex-1 w-full px-4 mx-auto md:px-6 lg:px-8">
+                        <div class="flex-1 w-full px-4 mx-auto md:px-14 lg:px-24">
 
                             <x-filament::modal slide-over id="generate-qr" icon-color="info" width="xl">
                                 <x-slot name="heading">

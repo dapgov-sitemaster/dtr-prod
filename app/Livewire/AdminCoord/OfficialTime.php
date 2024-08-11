@@ -3,9 +3,11 @@
 namespace App\Livewire\AdminCoord;
 
 use Carbon\Carbon;
+use App\Enums\Role;
 use App\Actions\Azure;
 use Livewire\Component;
 use App\Models\Employee;
+use App\Models\Department;
 use Filament\Tables\Table;
 use Livewire\Attributes\Title;
 use Filament\Forms\Contracts\HasForms;
@@ -43,8 +45,19 @@ class OfficialTime extends Component implements HasForms, HasTable
             '10:00:00' => '10:00 AM',
         ];
 
+        if (auth()->user()->role == Role::CENTERADMINCOORD) {
+            $departments = Department::where('center', auth()->user()->employee->department->center)->get()->pluck('id')->toArray();
+        } else {
+            $departments = [auth()->user()->employee->department_id];
+        }
+
         return $table
-            ->query(Employee::with(['official_time' => fn ($query) => $query->where('status', 'approved')])->where('department_id', auth()->user()->employee->department_id)->orderBy('last_name'))
+            ->query(
+                Employee::query()
+                    ->with(['official_time' => fn ($query) => $query->where('status', 'approved')])
+                    ->where('employment_status', true)
+                    ->whereIn('department_id', $departments)
+            )
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('hris_number')
                     ->label('HRIS Number')
@@ -52,8 +65,8 @@ class OfficialTime extends Component implements HasForms, HasTable
                     ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('full_name')
                     ->label('Name')
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(['first_name', 'last_name'])
+                    ->sortable(['first_name', 'last_name']),
                 \Filament\Tables\Columns\TextColumn::make('appointment_status')
                     ->label('Appointment Status')
                     ->badge()
@@ -176,6 +189,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                                 ->send();
                         }
                     })
-            ]);
+            ])
+            ->defaultSort('last_name', 'desc');
     }
 }

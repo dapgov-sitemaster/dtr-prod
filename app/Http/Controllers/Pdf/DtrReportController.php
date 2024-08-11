@@ -94,7 +94,7 @@ class DtrReportController extends Controller
             $department_query = [$department->id];
         } else if (auth()->user()->role == Role::CENTERADMINCOORD) {
             $title = $department->group . '/' . $department->center;
-            $department_query = Department::select('id')->where('center', $department->center)->get()->toArray();
+            $department_query = Department::select('id')->where('center', $department->center)->get()->pluck('id')->toArray();
         }
 
         $employees = Employee::query()

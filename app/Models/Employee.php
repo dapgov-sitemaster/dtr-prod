@@ -10,10 +10,12 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Employee extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -35,6 +37,22 @@ class Employee extends Model
     protected $casts = [
         'appointment_status' => AppointmentStatus::class,
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->useLogName('employee')
+            ->setDescriptionForEvent(function (string $eventName) {
+                return match ($eventName) {
+                    'created' => auth()->user()->employee->full_name . " has created a new employee: " . $this->full_name,
+                    'updated' => auth()->user()->employee->full_name . " has updated info of " . $this->full_name,
+                    default => auth()->user()->employee->full_name . " has {$eventName} a employee"
+                };
+            })
+            ->dontSubmitEmptyLogs();
+    }
 
     protected function firstName(): Attribute
     {
@@ -81,5 +99,15 @@ class Employee extends Model
     public function latest_official_time(): HasOne
     {
         return $this->hasOne(OfficialTime::class, 'hris_number', 'hris_number')->latest();
+    }
+
+    public function time_entries(): HasMany
+    {
+        return $this->hasMany(TimeEntry::class, 'hris_number', 'hris_number')->latest();
+    }
+
+    public function event(): HasOne
+    {
+        return $this->hasOne(Event::class, 'hris_number', 'hris_number')->latest();
     }
 }

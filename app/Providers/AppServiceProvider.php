@@ -28,6 +28,23 @@ class AppServiceProvider extends ServiceProvider
             return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::HRADMIN;
         });
 
+        Gate::define('has-wfh-schedule', function (\App\Models\User $user) {
+            $event = $user->employee->event()->whereDate('start', now()->format('Y-m-d'))->first();
+            if ($event?->tag == \App\Enums\Events::WFH) {
+                return true;
+            }
+            return false;
+            // return $user->employee->event()->whereDate('time_start', now()->format('Y-m-d'))->first()->tag == \App\Enums\Events::WFH;
+        });
+
+        Gate::define('isAdminCoordinator', function (\App\Models\User $user) {
+            return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::ADMINCOORD || $user->role == \App\Enums\Role::CENTERADMINCOORD;
+        });
+
+        Gate::define('isHrAdmin', function (\App\Models\User $user) {
+            return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::HRADMIN;
+        });
+
         Stringable::macro('initials', function () {
             $words = preg_split("/\s+/", $this);
             $initials = "";

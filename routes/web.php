@@ -21,11 +21,12 @@ Route::middleware('auth')->group(function () {
     Route::prefix('employee')->group(function () {
         Route::get('/time-entries', App\Livewire\Employee\TimeEntries::class)->name('employee.time-entries');
         Route::get('/dtr-report', App\Livewire\Employee\DtrReport::class)->name('employee.dtr-report');
+        Route::get('/work-from-home', App\Livewire\Employee\WorkFromHome::class)->middleware('haswfhsched')->name('employee.work-from-home');
     });
 
     // Admin Coord modules
 
-    Route::prefix('admin')->group(function () {
+    Route::prefix('admin')->middleware('checkrole:admincoord,centeradmincoord')->group(function () {
         Route::get('/official-time', App\Livewire\AdminCoord\OfficialTime::class)->name('admin.official-time');
 
         Route::get('/event-calendar', App\Livewire\AdminCoord\EventCalendar::class)->name('admin.event-calendar');
@@ -41,11 +42,14 @@ Route::middleware('auth')->group(function () {
 
     // HR Admin modules
 
-    Route::prefix('hr-admin')->group(function () {
+    Route::prefix('hr-admin')->middleware('checkrole:hradmin')->group(function () {
         Route::get('/master-list', App\Livewire\HrAdmin\EmployeeMasterlist::class)->name('hr-admin.master-list');
         Route::get('/dtr-report', App\Livewire\HrAdmin\GenerateDtrReport::class)->name('hr-admin.generate-dtr-report.index');
         Route::get('/dtr-report/employee/{hris_number}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'individual'])->name('hradmin.dtr.emp-dtr-report');
         Route::get('/dtr-report/bulk/{department}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'bulk'])->name('hradmin.dtr.bulk-dtr-report');
+        Route::get('/official-time/change-requests', App\Livewire\HrAdmin\OfficialTimeChangeRequest\Index::class)->name('hr-admin.official-time-change-req.index');
+        Route::get('/events', App\Livewire\HrAdmin\Events\Index::class)->name('hr-admin.events.index');
+        Route::get('/time-entries', App\Livewire\HrAdmin\TimeEntries::class)->name('hr-admin.time-entries.index');
         // Route::get('/dtr-report', App\Livewire\Employee\DtrReport::class)->name('employee.dtr-report');
     });
 

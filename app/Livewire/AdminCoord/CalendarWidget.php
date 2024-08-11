@@ -2,10 +2,12 @@
 
 namespace App\Livewire\AdminCoord;
 
+use App\Enums\Role;
 use Filament\Forms;
 use App\Enums\Events;
 use App\Models\Event;
 use Filament\Forms\Get;
+use App\Models\Department;
 use Illuminate\Support\Str;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Gate;
@@ -20,6 +22,7 @@ class CalendarWidget extends FullCalendarWidget
 {
     // protected static string $view = 'livewire.calendar-widget';
     public Model | string | null $model = Event::class;
+    public $departments;
 
     /**
      * FullCalendar will call this function whenever it needs new event data.
@@ -27,8 +30,18 @@ class CalendarWidget extends FullCalendarWidget
      */
     public function fetchEvents(array $fetchInfo): array
     {
+        if (auth()->user()->role == Role::CENTERADMINCOORD) {
+            $this->departments = Department::where('center', auth()->user()->employee->department->center)->get()->pluck('id')->toArray();
+        } else {
+            $this->departments = [auth()->user()->employee->department_id];
+        }
+
+        $departments = $this->departments;
+
         return $this->model::query()
-            ->with('employee')
+            ->with(['employee' => function ($query) use ($departments) {
+                $query->whereIn('department_id', $departments);
+            }])
             ->whereDate('start', '>=', $fetchInfo['start'])
             ->whereDate('end', '<=', $fetchInfo['end'])
             ->get()
@@ -130,6 +143,7 @@ class CalendarWidget extends FullCalendarWidget
 
                     $data['status'] = 'approved';
                     $data['created_by'] = auth()->user()->hris_number;
+
                     return $data;
                 }),
         ];
@@ -280,9 +294,9 @@ class CalendarWidget extends FullCalendarWidget
                 }),
             \Filament\Forms\Components\Select::make('hris_number')
                 ->label('Employee Name')
-                ->options(\App\Models\Employee::all()->pluck('full_name', 'hris_number'))
+                ->options(\App\Models\Employee::whereIn('department_id', $this->departments)->where('employment_status', true)->get()->pluck('full_name', 'hris_number'))
                 ->native(false)
-                ->searchable()
+                ->searchable(['first_name', 'last_name'])
                 ->required()
                 ->columnSpanFull()
                 ->hidden(fn (Get $get) => match (Events::parse($get('tag'))) {

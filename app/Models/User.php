@@ -9,10 +9,12 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, SoftDeletes, HasApiTokens;
+    use HasFactory, Notifiable, SoftDeletes, HasApiTokens, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -48,6 +50,23 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => Role::class,
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->useLogName('user')
+            ->setDescriptionForEvent(function (string $eventName) {
+                return match ($eventName) {
+                    'created' => auth()->user()->employee->full_name . " has created a new employee: " . $this->employee->full_name,
+                    'updated' => auth()->user()->employee->full_name . " has updated info of " . $this->employee->full_name,
+                    default => auth()->user()->employee->full_name . " has {$eventName} a employee"
+                };
+            })
+            ->dontSubmitEmptyLogs();
+        // Chain fluent methods for configuration options
     }
 
     public function employee()

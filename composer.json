@@ -12,7 +12,8 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "saade/filament-fullcalendar": "^3.0",
-        "simplesoftwareio/simple-qrcode": "2.0"
+        "simplesoftwareio/simple-qrcode": "2.0",
+        "spatie/laravel-activitylog": "^4.8"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.13",

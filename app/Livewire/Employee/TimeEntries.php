@@ -44,11 +44,11 @@ class TimeEntries extends Component implements HasForms, HasTable
                 TimeEntry::where('hris_number', auth()->user()->hris_number)->latest()
             )
             ->columns([
-                \Filament\Tables\Columns\TextColumn::make('created_at')
+                \Filament\Tables\Columns\TextColumn::make('date')
                     ->label('Date')
-                    ->formatStateUsing(fn ($state) => $state->format('Y-m-d'))
-                    ->searchable()
-                    ->sortable(),
+                    ->getStateUsing(fn ($record) => $record->time_start->format('Y-m-d'))
+                    ->searchable(['time_start'])
+                    ->sortable(['time_start']),
                 \Filament\Tables\Columns\TextColumn::make('time_start')
                     ->label('Time In')
                     ->formatStateUsing(fn ($state) => $state->format('g:i A'))

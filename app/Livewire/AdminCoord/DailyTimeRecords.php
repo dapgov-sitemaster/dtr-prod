@@ -3,13 +3,16 @@
 namespace App\Livewire\AdminCoord;
 
 use Carbon\Carbon;
+use App\Enums\Role;
 use Livewire\Component;
 use App\Models\Employee;
+use App\Models\Department;
 use Filament\Tables\Table;
 use Livewire\Attributes\Title;
 use App\Enums\AppointmentStatus;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Contracts\HasTable;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
 
@@ -17,7 +20,18 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
 {
     use InteractsWithTable, InteractsWithForms;
 
+    public $departments;
+
     #[Title('| Daily Time Records')]
+    public function mount()
+    {
+        if (auth()->user()->role == Role::CENTERADMINCOORD) {
+            $this->departments = Department::where('center', auth()->user()->employee->department->center)->get()->pluck('id')->toArray();
+        } else {
+            $this->departments = [auth()->user()->employee->department_id];
+        }
+    }
+
     public function render()
     {
         return view('livewire.admin-coord.daily-time-records');
@@ -29,8 +43,8 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
             ->query(
                 Employee::query()
                     ->with(['official_time' => fn ($query) => $query->where('status', 'approved')])
-                    ->where('department_id', auth()->user()->employee->department_id)
-                    ->orderBy('last_name')
+                    ->where('employment_status', true)
+                    ->whereIn('department_id', $this->departments)
             )
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('hris_number')
@@ -40,8 +54,12 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                     ->visibleFrom('md'),
                 \Filament\Tables\Columns\TextColumn::make('full_name')
                     ->label('Name')
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(query: function ($query, string $search): Builder {
+                        return $query
+                            ->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    })
+                    ->sortable(['first_name', 'last_name']),
                 \Filament\Tables\Columns\TextColumn::make('appointment_status')
                     ->label('Appointment Status')
                     ->badge()
@@ -87,8 +105,9 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                                 ])
                         ])
                         ->action(function ($data, $record) {
+                            $this->generate('individual', ['hris_number' => $record->hris_number, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff']]);
                             // $livewire->redirectRoute('admin.dtr.emp-dtr-report', ['hris_number' => $record->hris_number, 'date_from' => '2024-07-01', 'date_to' => '2024-07-15']);
-                            return redirect()->route('admin.dtr.emp-dtr-report', ['hris_number' => $record->hris_number, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff']]);
+                            // return redirect()->route('admin.dtr.emp-dtr-report', ['hris_number' => $record->hris_number, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff']]);
                         })
                     // ->url(function ($data) {
                     //     dd($data);
@@ -126,9 +145,23 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                             ])
                     ])
                     ->action(function ($data) {
+                        $this->generate('office', ['office_id' => auth()->user()->employee->department_id, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff'], 'appointment_status' => $data['appointment_status']]);
                         // $livewire->redirectRoute('admin.dtr.emp-dtr-report', ['hris_number' => $record->hris_number, 'date_from' => '2024-07-01', 'date_to' => '2024-07-15']);
-                        return redirect()->route('admin.dtr.bulk-dtr-report', ['department' => auth()->user()->employee->department_id, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff'], 'appointment_status' => $data['appointment_status']]);
+                        // return redirect()->route('admin.dtr.bulk-dtr-report', ['department' => auth()->user()->employee->department_id, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff'], 'appointment_status' => $data['appointment_status']]);
                     })
-            ]);
+            ])
+            ->defaultSort('last_name', 'desc');
+    }
+
+    public function generate($type, $data)
+    {
+        if ($type == 'individual') {
+            // $data = $this->individualForm->getState();
+            $this->dispatch('redirectToDtrReport', dtrtype: 'employee', hris_number: $data['hris_number'], yearmonth: $data['yearmonth'], cutoff: $data['cutoff']);
+        } else if ($type == 'office') {
+            // $data = $this->bulkForm->getState();
+            $this->dispatch('redirectToDtrReport', dtrtype: 'bulk', office_id: $data['office_id'], yearmonth: $data['yearmonth'], cutoff: $data['cutoff'], appointment_status: $data['appointment_status']);
+            // return redirect()->route('admin.dtr.bulk-dtr-report', ['department' => $data['office_id'], 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff'], 'appointment_status' => $data['appointment_status']]);
+        }
     }
 }

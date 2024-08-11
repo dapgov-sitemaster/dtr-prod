@@ -1,56 +1,55 @@
 <?php
 
-namespace App\Livewire\AdminCoord;
+namespace App\Livewire\HrAdmin;
 
 use Livewire\Component;
-use App\Models\Employee;
 use App\Models\TimeEntry;
 use Filament\Tables\Table;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Computed;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Resources\Components\Tab;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
 
-class EmployeeTimeEntries extends Component implements HasForms, HasTable
+class TimeEntries extends Component implements HasForms, HasTable
 {
     use InteractsWithTable, InteractsWithForms;
 
-    public $employee;
-
-    #[Title('| Employee Time Entries')]
-    public function mount($hris_number)
-    {
-        $this->employee = Employee::where('hris_number', $hris_number)->first();
-    }
-
+    #[Title('| Time Entries')]
     public function render()
     {
-        return view('livewire.admin-coord.employee-time-entries');
+        return view('livewire.hr-admin.time-entries');
     }
 
     public function table(Table $table): Table
     {
         return $table
-            ->query(
-                TimeEntry::where('hris_number', $this->employee->hris_number)->latest()
-            )
+            ->query(TimeEntry::latest())
             ->columns([
+                \Filament\Tables\Columns\TextColumn::make('hris_number')
+                    ->label('HRIS Number')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable()
+                    ->copyMessage('HRIS Number copied')
+                    ->copyMessageDuration(1500),
+                \Filament\Tables\Columns\TextColumn::make('employee.full_name')
+                    ->label('Name')
+                    ->searchable(['first_name', 'last_name'])
+                    ->sortable(['first_name', 'last_name']),
                 \Filament\Tables\Columns\TextColumn::make('date')
                     ->label('Date')
-                    ->getStateUsing(fn ($record) => $record->time_start->format('Y-m-d'))
+                    ->getStateUsing(fn ($record) => $record->time_start->format('M d, Y'))
                     ->searchable()
                     ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('time_start')
                     ->label('Time In')
-                    ->formatStateUsing(fn ($state) => $state->format('g:i A'))
-                    ->searchable()
-                    ->sortable(),
+                    ->formatStateUsing(fn ($state) => $state->format('g:i A')),
                 \Filament\Tables\Columns\TextColumn::make('time_end')
                     ->label('Time Out')
-                    ->formatStateUsing(fn ($state) => $state->format('g:i A'))
-                    ->searchable()
-                    ->sortable(),
+                    ->formatStateUsing(fn ($state) => $state->format('g:i A')),
                 \Filament\Tables\Columns\TextColumn::make('tag')
                     ->label('Type of Time Entry')
                     ->formatStateUsing(fn ($state) => ($state === 'ros') ? 'Report On-site' : 'Work from Home')

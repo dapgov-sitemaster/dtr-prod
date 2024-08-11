@@ -9,10 +9,12 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Event extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -34,6 +36,16 @@ class Event extends Model
         'start' => 'datetime',
         'end' => 'datetime',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->useLogName('event')
+            ->setDescriptionForEvent(fn (string $eventName) => auth()->user()->employee->full_name . " has {$eventName} an event")
+            ->dontSubmitEmptyLogs();
+    }
 
     public function employee(): HasOne
     {

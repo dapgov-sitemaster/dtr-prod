@@ -17,6 +17,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
 
@@ -41,24 +42,26 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                     ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('full_name')
                     ->label('Name')
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(query: function ($query, string $search): Builder {
+                        return $query
+                            ->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    })
+                    ->sortable(['first_name', 'last_name']),
                 \Filament\Tables\Columns\TextColumn::make('department.description')
                     ->label('Department')
-                    ->searchable()
-                    ->sortable(),
+                    // ->formatStateUsing(fn ($record) => $record->department->description)
+                    ->searchable(['group', 'center', 'office'])
+                    ->sortable(['group', 'center', 'office']),
                 \Filament\Tables\Columns\TextColumn::make('official_time.time_in')
                     ->label('Official Time')
-                    ->searchable()
-                    ->sortable(),
+                    ->dateTime('g:i A'),
                 \Filament\Tables\Columns\TextColumn::make('appointment_status')
                     ->label('Appointment Status')
-                    ->badge()
-                    ->sortable(),
+                    ->badge(),
                 \Filament\Tables\Columns\TextColumn::make('user.role')
                     ->label('Role')
-                    ->badge()
-                    ->sortable(),
+                    ->badge(),
             ])
             ->headerActions([
                 \Filament\Tables\Actions\CreateAction::make('create-employee')
@@ -151,6 +154,7 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                         ]);
 
                         $name = (str($user->employee->first_name)->endsWith('s')) ? $user->employee->first_name . "'" : $user->employee->first_name . "'s";
+
                         Notification::make()
                             ->title("Saved Successfully!")
                             ->body($name . " information has been saved!")
@@ -266,12 +270,13 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                 // ])
             ])
             ->filters([
-                \Filament\Tables\Filters\Filter::make('yearmonth')
-                    ->form([
-                        \Filament\Forms\Components\Select::make('department')
-                            ->label('Select Department')
-                            ->options(Department::all()->pluck('description', 'id')),
-                    ]),
+                \Filament\Tables\Filters\SelectFilter::make('department_id')
+                    ->label('Select Department')
+                    ->multiple()
+                    ->preload()
+                    ->options(Department::all()->pluck('description', 'id'))
+                    ->searchable()
+                    ->native(false),
             ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent);
     }
 }

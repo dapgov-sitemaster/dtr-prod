@@ -53,6 +53,25 @@
                     </div>
                 </x-sidebar.item>
             </x-sidebar.group>
+
+            @can('has-wfh-schedule')
+            <li>
+                <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
+            </li>
+            <x-sidebar.group>
+                <x-sidebar.item tooltip="Work from Home" :url="route('employee.work-from-home')" :active="request()->routeIs('employee.work-from-home')">
+                    <x-filament::icon
+                        icon="heroicon-m-computer-desktop"
+                        class="w-6 shrink-0"
+                    />
+                    <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
+                        Work from Home
+                    </div>
+                </x-sidebar.item>
+            </x-sidebar.group>
+            @endcan
+
+            @can('isAdminCoordinator')
             <li>
                 <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
             </li>
@@ -85,6 +104,8 @@
                     </div>
                 </x-sidebar.item>
             </x-sidebar.group>
+            @endcan
+            @can('isHrAdmin')
             <li>
                 <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
             </li>
@@ -107,7 +128,35 @@
                         Generate DTR Report
                     </div>
                 </x-sidebar.item>
+                <x-sidebar.item tooltip="Event Calendar" :url="route('hr-admin.events.index')" :active="request()->routeIs('hr-admin.events.*')">
+                    <x-filament::icon
+                        icon="heroicon-m-calendar-days"
+                        class="w-6 shrink-0"
+                    />
+                    <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
+                        Event Calendar
+                    </div>
+                </x-sidebar.item>
+                <x-sidebar.item tooltip="Official Time - Change Requests" :url="route('hr-admin.official-time-change-req.index')" :active="request()->routeIs('hr-admin.official-time-change-req.*')">
+                    <x-filament::icon
+                        icon="heroicon-m-cog"
+                        class="w-6 shrink-0"
+                    />
+                    <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
+                        Official Time - Change Requests
+                    </div>
+                </x-sidebar.item>
+                <x-sidebar.item tooltip="Time Entries" :url="route('hr-admin.time-entries.index')" :active="request()->routeIs('hr-admin.time-entries.*')">
+                    <x-filament::icon
+                        icon="heroicon-m-clock"
+                        class="w-6 shrink-0"
+                    />
+                    <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
+                        Time Entries
+                    </div>
+                </x-sidebar.item>
             </x-sidebar.group>
+            @endcan
             <li>
                 <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
             </li>
