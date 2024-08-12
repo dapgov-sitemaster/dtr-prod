@@ -5,17 +5,18 @@ namespace App\Livewire\AdminCoord;
 use Carbon\Carbon;
 use App\Enums\Role;
 use App\Actions\Azure;
-use App\Enums\ScheduleType;
 use Filament\Forms\Get;
 use Livewire\Component;
 use App\Models\Employee;
 use App\Models\Department;
 use Filament\Tables\Table;
+use App\Enums\ScheduleType;
 use Livewire\Attributes\Title;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Support\Facades\Storage;
 use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Collection;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
 use App\Models\OfficialTime as ModelsOfficialTime;
@@ -85,6 +86,66 @@ class OfficialTime extends Component implements HasForms, HasTable
                     })
                     ->placeholder('Not set')
                     ->sortable(),
+            ])
+            ->bulkActions([
+                \Filament\Tables\Actions\BulkAction::make('set-bulk-time')
+                    ->label('Bulk set of Official Time')
+                    ->button()
+                    ->modalWidth('sm')
+                    ->modalHeading('Set Official Time of all the selected.')
+                    ->form([
+                        \Filament\Forms\Components\Select::make('schedule_type')
+                            ->label('Schedule Type')
+                            ->options(ScheduleType::class)
+                            ->native(false)
+                            ->reactive()
+                            ->required(),
+                        \Filament\Forms\Components\Select::make('official_time')
+                            ->label('Official Time')
+                            ->options($time)
+                            ->native(false)
+                            ->required()
+                            ->hidden(fn (Get $get) => $get('schedule_type') != ScheduleType::FIXED->value),
+                        \Filament\Forms\Components\FileUpload::make('attachment')
+                            ->acceptedFileTypes(['application/pdf', 'application/msword'])
+                            ->required()
+                            ->directory('officialtime-movs')
+                            ->visibility('private')
+                        // ->hidden(fn ($record) => !$record->official_time)
+                    ])
+                    ->action(function (Collection $records, $data, Azure $azure) {
+                        $file = Storage::disk('public')->get($data['attachment']);
+                        $file_explode = explode('/', $data['attachment']);
+                        $filename = $file_explode[1];
+                        // $azure->put("movs", $file, $filename);
+                        Storage::disk('public')->delete($data['attachment']);
+
+                        foreach ($records as $record) {
+                            if ($data['schedule_type'] == ScheduleType::FULLFLEXI->value) {
+                                $official_time = $record->official_time()->create([
+                                    'hris_number' => $record->hris_number,
+                                    'type' => $data['schedule_type'],
+                                    'created_by' => auth()->user()->hris_number,
+                                ]);
+                            } else if ($data['schedule_type'] == ScheduleType::FIXED->value) {
+                                $official_time = $record->official_time()->create([
+                                    'hris_number' => $record->hris_number,
+                                    'time_in' => $data['official_time'],
+                                    'type' => $data['schedule_type'],
+                                    'created_by' => auth()->user()->hris_number,
+                                ]);
+                            }
+
+                            $official_time->movs()->create(['filename' => 'movs/' . $filename]);
+                        }
+
+                        Notification::make()
+                            ->title("Saved Successfully!")
+                            ->body($records->count() . " Official Time change request has been submitted. Please wait for the HR to evaluate!")
+                            ->success()
+                            ->color('success')
+                            ->send();
+                    })
             ])
             ->actions([
                 \Filament\Tables\Actions\Action::make('view-request')

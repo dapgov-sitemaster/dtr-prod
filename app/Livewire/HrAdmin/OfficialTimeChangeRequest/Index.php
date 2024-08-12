@@ -10,6 +10,8 @@ use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Blade;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Contracts\HasTable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Collection;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
 
@@ -53,6 +55,33 @@ class Index extends Component implements HasForms, HasTable
                     })
                     ->sortable(),
             ])
+            ->bulkActions([
+                \Filament\Tables\Actions\BulkAction::make('evaluate-bulk-request')
+                    ->label('Evaluate all selected Request')
+                    ->modalHeading('Evaluate all selected Request')
+                    // ->icon('heroicon-m-document-magnifying-glass')
+                    ->button()
+                    ->action(fn (OfficialTime $record) => $record->advance())
+                    // ->modalContent(fn (OfficialTime $record) => view(
+                    //     'livewire.hr-admin.official-time-change-request.evaluation',
+                    //     ['record' => $record],
+                    // ))
+                    ->modalWidth(\Filament\Support\Enums\MaxWidth::SevenExtraLarge)
+                    ->modalContent(function (Collection $records) {
+                        // dd($records->pluck('hris_number')->values()->toArray());
+                        $ids = $records->pluck('id')->values()->toJson();
+                        return new HtmlString(Blade::render('@livewire(\'hr-admin.official-time-change-request.evaluation\',["type" => "bulk", "data" => ["ids" => ' . $ids . ']])'));
+                    })
+                    ->modalSubmitAction(false)
+                // ->hidden(function (Collection $records) {
+                //     $ids = $records->filter(fn ($item) => $item->status == "pending")->pluck('id')->values();
+                //     return $ids->count() == 0;
+                // })
+            ])
+            ->checkIfRecordIsSelectableUsing(function (Model $record): bool {
+                return $record->status == "pending";
+            })
+            ->selectCurrentPageOnly()
             ->actions([
                 \Filament\Tables\Actions\Action::make('evaluate-request')
                     ->modalHeading('Evaluate Request')
@@ -65,9 +94,10 @@ class Index extends Component implements HasForms, HasTable
                     // ))
                     ->modalWidth(\Filament\Support\Enums\MaxWidth::SevenExtraLarge)
                     ->modalContent(function ($record) {
-                        return new HtmlString(Blade::render('@livewire(\'hr-admin.official-time-change-request.evaluation\',["id" => ' . $record->id . ', "hris_number" => ' . $record->hris_number . '])'));
+                        return new HtmlString(Blade::render('@livewire(\'hr-admin.official-time-change-request.evaluation\',["type" => "individual", "data" => ["hris_number" => ' . $record->hris_number . ']])'));
                     })
                     ->hidden(fn ($record) => $record->status !== 'pending')
+                    ->modalSubmitAction(false)
             ])
             ->defaultSort('created_at', 'desc');
     }
