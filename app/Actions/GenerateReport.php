@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ScheduleType;
 use App\Models\Report;
 use App\Models\Employee;
 use Carbon\CarbonPeriod;
@@ -14,7 +15,18 @@ class GenerateReport
 {
     public function handle($employee, $date_from, $date_to): Collection
     {
-        $official_time = ($employee->official_time) ? $employee->official_time->time_in->format('H:i:s') : '08:00:00';
+        $schedule_type = ScheduleType::FULLFLEXI->value;
+        $official_time = null;
+
+        if ($employee->official_time) {
+            $schedule_type = $employee->official_time->type->value;
+        }
+
+        if ($schedule_type == ScheduleType::FIXED->value) {
+            $official_time = $employee->official_time->time_in->format('H:i:s');
+        }
+
+        // $official_time = ($schedule_type == ) ? $employee->official_time->time_in->format('H:i:s') : '08:00:00';
         $period = CarbonPeriod::create($date_from, $date_to)->toArray();
         $dates = [];
         array_pop($period);
@@ -61,6 +73,7 @@ class GenerateReport
                             'hris_number' => $employee->hris_number,
                             'time_start' => $time_start,
                             'time_end' => $time_end,
+                            'schedule_type' => $schedule_type,
                             'official_time' => $official_time,
                             'office' => $employee->department->description,
                             'appointment_status' => $employee->appointment_status,

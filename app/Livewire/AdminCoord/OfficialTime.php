@@ -5,6 +5,8 @@ namespace App\Livewire\AdminCoord;
 use Carbon\Carbon;
 use App\Enums\Role;
 use App\Actions\Azure;
+use App\Enums\ScheduleType;
+use Filament\Forms\Get;
 use Livewire\Component;
 use App\Models\Employee;
 use App\Models\Department;
@@ -32,17 +34,17 @@ class OfficialTime extends Component implements HasForms, HasTable
     public function table(Table $table): Table
     {
         $time = [
-            '05:00:00' => '5:00 AM',
-            '05:30:00' => '5:30 AM',
-            '06:00:00' => '6:00 AM',
-            '06:30:00' => '6:30 AM',
-            '07:00:00' => '7:00 AM',
-            '07:30:00' => '7:30 AM',
-            '08:00:00' => '8:00 AM',
-            '08:30:00' => '8:30 AM',
-            '09:00:00' => '9:00 AM',
-            '09:30:00' => '9:30 AM',
-            '10:00:00' => '10:00 AM',
+            // '05:00:00' => '5:00 AM',
+            // '05:30:00' => '5:30 AM',
+            // '06:00:00' => '6:00 AM',
+            // '06:30:00' => '6:30 AM',
+            '07:00:00' => '7:00 AM to 4:00 PM',
+            '07:30:00' => '7:30 AM to 4:30 PM',
+            '08:00:00' => '8:00 AM to 5:00 PM',
+            '08:30:00' => '8:30 AM to 5:30 PM',
+            '09:00:00' => '9:00 AM to 6:00 PM',
+            '09:30:00' => '9:30 AM to 6:30 PM',
+            // '10:00:00' => '10:00 AM',
         ];
 
         if (auth()->user()->role == Role::CENTERADMINCOORD) {
@@ -71,6 +73,11 @@ class OfficialTime extends Component implements HasForms, HasTable
                     ->label('Appointment Status')
                     ->badge()
                     ->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('official_time.type')
+                    ->label('Schedule Type')
+                    ->badge()
+                    ->placeholder('Not set')
+                    ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('official_time.time_in')
                     ->label('Official Time')
                     ->formatStateUsing(function ($state) {
@@ -83,10 +90,10 @@ class OfficialTime extends Component implements HasForms, HasTable
                 \Filament\Tables\Actions\Action::make('view-request')
                     ->button()
                     ->modal()
-                    ->modalWidth('lg')
+                    ->modalWidth('xl')
                     ->modalHeading(function ($record) {
                         $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
-                        return 'Current status of ' . str($name)->headline() . " change request of Official Time";
+                        return 'Status of ' . str($name)->headline() . " change request of Official Time";
                     })
                     ->hidden(function ($record) {
                         if ($record->latest_official_time) {
@@ -101,12 +108,16 @@ class OfficialTime extends Component implements HasForms, HasTable
                             ->label('HRIS Number'),
                         \Filament\Infolists\Components\TextEntry::make('full_name')
                             ->label('Full Name'),
+                        \Filament\Infolists\Components\TextEntry::make('latest_official_time.type')
+                            ->badge()
+                            ->label('Requested Schedule Type'),
                         \Filament\Infolists\Components\TextEntry::make('latest_official_time.time_in')
                             ->label('Requested Official Time')
                             ->formatStateUsing(function ($state) {
                                 $parsed = Carbon::parse($state);
                                 return $parsed->format('g:i A') . ' - ' . $parsed->copy()->addHours(9)->format('g:i A');
-                            }),
+                            })
+                            ->hidden(fn ($record) => $record->latest_official_time->type == ScheduleType::FULLFLEXI),
                         \Filament\Infolists\Components\TextEntry::make('latest_official_time.status')
                             ->label('Status')
                             ->formatStateUsing(function ($state) {
@@ -134,60 +145,77 @@ class OfficialTime extends Component implements HasForms, HasTable
                         return false;
                     })
                     ->form([
+                        \Filament\Forms\Components\Select::make('schedule_type')
+                            ->label('Schedule Type')
+                            ->options(ScheduleType::class)
+                            ->native(false)
+                            ->reactive()
+                            ->required(),
                         \Filament\Forms\Components\Select::make('official_time')
                             ->label('Official Time')
                             ->options($time)
                             ->native(false)
-                            ->required(),
+                            ->required()
+                            ->hidden(fn (Get $get) => $get('schedule_type') != ScheduleType::FIXED->value),
                         \Filament\Forms\Components\FileUpload::make('attachment')
                             ->acceptedFileTypes(['application/pdf', 'application/msword'])
                             ->required()
                             ->directory('officialtime-movs')
                             ->visibility('private')
-                            ->hidden(fn ($record) => !$record->official_time)
+                        // ->hidden(fn ($record) => !$record->official_time)
                     ])
                     ->action(function ($record, $data, Azure $azure) {
-                        if ($record->official_time) {
-                            $file = Storage::disk('public')->get($data['attachment']);
-                            $file_explode = explode('/', $data['attachment']);
-                            $filename = $file_explode[1];
-                            // $azure->put("movs", $file, $filename);
-                            Storage::disk('public')->delete($data['attachment']);
+                        $file = Storage::disk('public')->get($data['attachment']);
+                        $file_explode = explode('/', $data['attachment']);
+                        $filename = $file_explode[1];
+                        // $azure->put("movs", $file, $filename);
+                        Storage::disk('public')->delete($data['attachment']);
 
+                        if ($data['schedule_type'] == ScheduleType::FULLFLEXI->value) {
+                            $official_time = $record->official_time()->create([
+                                'hris_number' => $record->hris_number,
+                                'type' => $data['schedule_type'],
+                                'created_by' => auth()->user()->hris_number,
+                            ]);
+                        } else if ($data['schedule_type'] == ScheduleType::FIXED->value) {
                             $official_time = $record->official_time()->create([
                                 'hris_number' => $record->hris_number,
                                 'time_in' => $data['official_time'],
+                                'type' => $data['schedule_type'],
                                 'created_by' => auth()->user()->hris_number,
                             ]);
-
-                            $official_time->movs()->create(['filename' => 'movs/' . $filename]);
-
-
-                            $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
-
-                            Notification::make()
-                                ->title("Saved Successfully!")
-                                ->body($name . " official time change request has been submitted. Please wait for the HR to evaluate!")
-                                ->success()
-                                ->color('success')
-                                ->send();
-                        } else {
-                            $record->official_time()->create([
-                                'hris_number' => $record->hris_number,
-                                'time_in' => $data['official_time'],
-                                'status' => 'approved',
-                                'created_by' => auth()->user()->hris_number,
-                            ]);
-
-                            $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
-
-                            Notification::make()
-                                ->title("Saved Successfully!")
-                                ->body($name . " official time has been saved!")
-                                ->success()
-                                ->color('success')
-                                ->send();
                         }
+
+                        $official_time->movs()->create(['filename' => 'movs/' . $filename]);
+
+
+                        $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
+
+                        Notification::make()
+                            ->title("Saved Successfully!")
+                            ->body($name . " official time change request has been submitted. Please wait for the HR to evaluate!")
+                            ->success()
+                            ->color('success')
+                            ->send();
+                        // if ($record->official_time) {
+                        // }
+                        // else {
+                        //     $record->official_time()->create([
+                        //         'hris_number' => $record->hris_number,
+                        //         'time_in' => $data['official_time'],
+                        //         'status' => 'approved',
+                        //         'created_by' => auth()->user()->hris_number,
+                        //     ]);
+
+                        //     $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
+
+                        //     Notification::make()
+                        //         ->title("Saved Successfully!")
+                        //         ->body($name . " official time has been saved!")
+                        //         ->success()
+                        //         ->color('success')
+                        //         ->send();
+                        // }
                     })
             ])
             ->defaultSort('last_name', 'desc');

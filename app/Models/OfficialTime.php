@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\TimeCast;
+use App\Enums\ScheduleType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,12 +22,14 @@ class OfficialTime extends Model
     protected $fillable = [
         'hris_number',
         'time_in',
+        'type',
         'status',
         'created_by',
     ];
 
     protected $casts = [
         'time_in' => 'datetime',
+        'type' => ScheduleType::class,
     ];
 
     public function employee(): BelongsTo

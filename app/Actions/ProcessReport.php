@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Enums\Events;
 use App\Models\Event;
 use Carbon\CarbonPeriod;
+use App\Enums\ScheduleType;
 use Illuminate\Database\Eloquent\Collection;
 
 class ProcessReport
@@ -53,73 +54,95 @@ class ProcessReport
             if ($time->isNotEmpty()) {
                 $time_in = $time->first()->time_start;
                 $time_end = $time->first()->time_end;
-                $official_start_time = '08:30:00';
-                $grace_period = 15;
 
-                if ($flag->isNotEmpty()) {
-                    if (date('H:i:s', strtotime('08:30')) > date('H:i:s', strtotime($time->first()->official_time))) {
+                if ($time->first()->schedule_type == ScheduleType::FIXED->value) {
+                    $official_start_time = '08:30:00';
+                    $grace_period = 15;
+
+                    if ($flag->isNotEmpty()) {
+                        if (date('H:i:s', strtotime('08:30')) > date('H:i:s', strtotime($time->first()->official_time))) {
+                            $official_start_time = $time->first()->official_time;
+                        }
+                    } else if ($time->first()->time_start->dayOfWeek == Carbon::MONDAY) {
+                        if (date('H:i:s', strtotime($time->first()->official_time)) < date('H:i:s', strtotime('08:30'))) {
+                            $official_start_time = $time->first()->official_time;
+                        }
+                    } else if ($time->first()->official_time) {
                         $official_start_time = $time->first()->official_time;
                     }
-                } else if ($time->first()->time_start->dayOfWeek == Carbon::MONDAY) {
-                    if (date('H:i:s', strtotime($time->first()->official_time)) < date('H:i:s', strtotime('08:30'))) {
-                        $official_start_time = $time->first()->official_time;
-                    }
-                } else if ($time->first()->official_time) {
-                    $official_start_time = $time->first()->official_time;
-                }
 
-                if ($suspended->isNotEmpty()) {
-                    if ($suspended->first()->start == $suspended->first()->end) {
-                        $official_end_time  = $suspended->first()->end->format('H:i:s');
+                    if ($suspended->isNotEmpty()) {
+                        if ($suspended->first()->start == $suspended->first()->end) {
+                            $official_end_time  = $suspended->first()->end->format('H:i:s');
+                        } else {
+                            $official_end_time  = '17:00:00';
+                        }
                     } else {
-                        $official_end_time  = '17:00:00';
-                    }
-                } else {
-                    $official_end_time = Carbon::parse($official_start_time)->addHours(9)->format('H:i:s');
-                }
-
-                if ($holiday->isEmpty()) {
-                    $official_start = Carbon::parse($date->format('Y-m-d') . ' ' . $official_start_time)->seconds(0);
-                    $official_end = Carbon::parse($date->format('Y-m-d') . ' ' . $official_end_time)->seconds(0);
-
-                    if ($time_in->format('H:i:s') > $official_start->format('H:i:s')) {
-                        $official_start_diff = $official_start->diffInMinutes($time_in);
-                    } else {
-                        $official_start_diff = 10;
+                        $official_end_time = Carbon::parse($official_start_time)->addHours(9)->format('H:i:s');
                     }
 
-                    // START TARDY CALCULATION
-                    if ($official_start->format('H:i') < $time_in->format('H:i')) {
-                        if ($flag->isNotEmpty()) {
-                            $tardy = intdiv($official_start_diff, 60) . ':' . ($official_start_diff % 60);
-                            $tardies[$date->format('Y-m-d')] = [$official_start_diff, $official_start_time, $time_in, true];
-                        } else if ($date->dayOfWeek == Carbon::MONDAY) {
-                            if (date('H:i', strtotime($time->first()->official_time)) < date('H:i', strtotime('08:30'))) {
+                    if ($holiday->isEmpty()) {
+                        $official_start = Carbon::parse($date->format('Y-m-d') . ' ' . $official_start_time)->seconds(0);
+                        $official_end = Carbon::parse($date->format('Y-m-d') . ' ' . $official_end_time)->seconds(0);
+
+                        if ($time_in->format('H:i:s') > $official_start->format('H:i:s')) {
+                            $official_start_diff = $official_start->diffInMinutes($time_in);
+                        } else {
+                            $official_start_diff = 10;
+                        }
+
+                        // START TARDY CALCULATION
+                        if ($official_start->format('H:i') < $time_in->format('H:i')) {
+                            if ($flag->isNotEmpty()) {
+                                $tardy = intdiv($official_start_diff, 60) . ':' . ($official_start_diff % 60);
+                                $tardies[$date->format('Y-m-d')] = [$official_start_diff, $official_start_time, $time_in, true];
+                            } else if ($date->dayOfWeek == Carbon::MONDAY) {
+                                if (date('H:i', strtotime($time->first()->official_time)) < date('H:i', strtotime('08:30'))) {
+                                    $tardy = intdiv($official_start_diff, 60) . ':' . ($official_start_diff % 60);
+                                    $tardies[$date->format('Y-m-d')] = [$official_start_diff, $official_start_time, $time_in, false];
+                                }
+                            } else if ($official_start_diff > $grace_period) {
                                 $tardy = intdiv($official_start_diff, 60) . ':' . ($official_start_diff % 60);
                                 $tardies[$date->format('Y-m-d')] = [$official_start_diff, $official_start_time, $time_in, false];
+                            } else if ($official_start_diff < $grace_period) {
+                                $graced = true;
                             }
-                        } else if ($official_start_diff > $grace_period) {
-                            $tardy = intdiv($official_start_diff, 60) . ':' . ($official_start_diff % 60);
-                            $tardies[$date->format('Y-m-d')] = [$official_start_diff, $official_start_time, $time_in, false];
-                        } else if ($official_start_diff < $grace_period) {
-                            $graced = true;
+                        }
+                        // END OF TARDY CALCULATIONS
+
+                        $time_in_converted = Carbon::createFromFormat('H:i', $time_in->format('H:i'))->seconds(0);
+                        $time_out_converted = Carbon::createFromFormat('H:i', $time_end->format('H:i'))->seconds(0);
+                        $total_rendered = $time_in_converted->diffInMinutes($time_out_converted);
+                        if (($total_rendered - 60) < 480) {
+                            $not_completed_hrs[] = $date->format('Y-m-d');
+                        }
+
+                        if ($official_end->format('H:i:s') > $time_end->format('H:i:s')) {
+                            $official_end_converted = Carbon::createFromFormat('H:i', $official_end->format('H:i'))->seconds(0);
+                            $undertime_mins = $time_out_converted->diffInMinutes($official_end_converted);
+                            $undertime = intdiv($undertime_mins, 60) . ':' . ($undertime_mins % 60);
+                            $undertimes[] = $undertime_mins;
                         }
                     }
-                    // END OF TARDY CALCULATIONS
-
-                    $time_in_converted = Carbon::createFromFormat('H:i', $time_in->format('H:i'))->seconds(0);
-                    $time_out_converted = Carbon::createFromFormat('H:i', $time_end->format('H:i'))->seconds(0);
-                    $total_rendered = $time_in_converted->diffInMinutes($time_out_converted);
-                    if (($total_rendered - 60) < 480) {
-                        $not_completed_hrs[] = $date->format('Y-m-d');
+                } else if ($time->first()->schedule_type == ScheduleType::FULLFLEXI->value) {
+                    $official_start_time = null;
+                    $official_end_time = null;
+                    if ($flag->isNotEmpty() || $time->first()->time_start->dayOfWeek == Carbon::MONDAY) {
+                        $official_start_time = '08:30:00';
                     }
 
-                    if ($official_end->format('H:i:s') > $time_end->format('H:i:s')) {
-                        $official_end_converted = Carbon::createFromFormat('H:i', $official_end->format('H:i'))->seconds(0);
-                        $undertime_mins = $time_out_converted->diffInMinutes($official_end_converted);
-                        $undertime = intdiv($undertime_mins, 60) . ':' . ($undertime_mins % 60);
-                        $undertimes[] = $undertime_mins;
+                    if ($suspended->isNotEmpty()) {
+                        if ($suspended->first()->start == $suspended->first()->end) {
+                            $official_end_time  = $suspended->first()->end->format('H:i:s');
+                        } else {
+                            $official_end_time  = '17:00:00';
+                        }
+                    } else {
+                        $official_end_time = Carbon::parse($official_start_time)->addHours(9)->format('H:i:s');
                     }
+
+                    // if ()
+
                 }
             }
 
