@@ -24,7 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('reports', function (Blueprint $table) {
-            //
+            $table->dropColumn('break_start');
+            $table->dropColumn('break_end');
+            $table->dropColumn('schedule_type');
         });
     }
 };

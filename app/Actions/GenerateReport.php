@@ -16,18 +16,6 @@ class GenerateReport
 {
     public function handle($employee, $date_from, $date_to): Collection
     {
-        $schedule_type = ScheduleType::FULLFLEXI;
-        $official_time = null;
-        $schedule_type_effect_date = null;
-
-        if ($employee->official_time) {
-            $schedule_type = $employee->official_time->type;
-            $schedule_type_effect_date = $employee->official_time->effectivity_date;
-        }
-
-        if ($schedule_type == ScheduleType::FIXED) {
-            $official_time = $employee->official_time->time_in->format('H:i:s');
-        }
 
         // $official_time = ($schedule_type == ) ? $employee->official_time->time_in->format('H:i:s') : '08:00:00';
         $period = CarbonPeriod::create($date_from, $date_to)->toArray();
@@ -67,28 +55,38 @@ class GenerateReport
                         $break_start = null;
                         $break_end = null;
 
+
                         $schedule_type = ScheduleType::FULLFLEXI;
                         $official_time = null;
                         $schedule_type_effect_date = null;
 
-                        if ($day_entry->first()->schedule_type != $schedule_type) {
-                            if ($schedule_type_effect_date <= $date->format('Y-m-d')) {
-                                $schedule_type = $day_entry->first()->schedule_type;
+                        if ($employee->official_time) {
+                            $schedule_type_effect_date = $employee->official_time->effectivity_date;
 
-                                if ($schedule_type == ScheduleType::FIXED) {
-                                    $official_time = $day_entry->first()->official_time->time_in->format('H:i:s');
-                                } else {
-                                    $official_time = null;
+                            if ($day_entry->first()->schedule_type != $schedule_type) {
+
+                                if ($schedule_type_effect_date <= $date->format('Y-m-d')) {
+                                    $schedule_type = $employee->official_time->schedule_type;
+
+                                    if ($schedule_type == ScheduleType::FIXED) {
+                                        $official_time = $employee->official_time->time_in->format('H:i:s');
+                                    } else {
+                                        $official_time = null;
+                                    }
                                 }
                             }
                         }
 
 
+
                         if ($day_entry->count() == 1) {
-                            $time_start = $day_entry->first()->time_start;
-                            $time_end = $day_entry->first()->time_end;
-                            $break_start = $time_start->copy()->addHours(4);
-                            $break_end = $break_start->copy()->addHour();
+                            $time_start = $day_entry->first()->time_start?->startOfMinute();
+                            $time_end = $day_entry->first()->time_end?->startOfMinute();
+
+                            if ($time_end) {
+                                $break_start = $time_start->copy()->addHours(4);
+                                $break_end = $break_start->copy()->addHour();
+                            }
                         } else if ($day_entry->count() > 1) {
                             foreach ($day_entry as $entry) {
                                 $offi_break_start = Carbon::parse($entry->time_start->format('Y-m-d') . ' 11:00:00');
@@ -106,6 +104,11 @@ class GenerateReport
 
                             $time_start = $day_entry->first()->time_start;
                             $time_end = ($day_entry->last()->time_end) ? $day_entry->last()->time_end : $day_entry->last()->time_start;
+
+                            if ($break_start == null && $break_end == null) {
+                                $break_start = $time_start->copy()->addHours(4);
+                                $break_end = $break_start->copy()->addHour();
+                            }
                         }
 
                         Report::create([

@@ -55,7 +55,7 @@ class Evaluation extends Component implements HasForms, HasTable, HasInfolists
                             ->label('Full Name')
                             ->description('Full Name', position: 'above')
                             ->sortable(),
-                        \Filament\Tables\Columns\TextColumn::make('type')
+                        \Filament\Tables\Columns\TextColumn::make('schedule_type')
                             ->label('Schedule Type')
                             ->description('Schedule Type', position: 'above')
                             ->badge(),
@@ -174,7 +174,7 @@ class Evaluation extends Component implements HasForms, HasTable, HasInfolists
                 ->query(OfficialTime::where('hris_number', $this->hris_number))
                 ->columns([
                     \Filament\Tables\Columns\Layout\Split::make([
-                        \Filament\Tables\Columns\TextColumn::make('type')
+                        \Filament\Tables\Columns\TextColumn::make('schedule_type')
                             ->label('Schedule Type')
                             ->description('Schedule Type', position: 'above')
                             ->badge()

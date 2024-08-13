@@ -22,14 +22,14 @@ class OfficialTime extends Model
     protected $fillable = [
         'hris_number',
         'time_in',
-        'type',
+        'schedule_type',
         'status',
         'created_by',
     ];
 
     protected $casts = [
         'time_in' => 'datetime',
-        'type' => ScheduleType::class,
+        'schedule_type' => ScheduleType::class,
     ];
 
     public function employee(): BelongsTo

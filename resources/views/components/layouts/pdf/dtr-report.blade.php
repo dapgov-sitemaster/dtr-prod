@@ -91,15 +91,17 @@
                     <td><span class="font-semibold">Employee Name</span>: {{ strtoupper($employee->full_name) }}</td>
                     <td>
                         <span class="font-semibold">Official Time</span>:
-                        {{
-                            ($employee->official_time) ? $employee->official_time->time_in->format('g:i A'). ' - ' .$employee->official_time->time_in->copy()->addHours(9)->format('g:i A') : date('g:i A', strtotime('08:00')). ' - '.date('g:i A', strtotime('17:00'))
-                        }}
+                        @if ($employee->official_time)
+                            {{ ($employee->official_time->schedule_type == \App\Enums\ScheduleType::FIXED) ? $employee->official_time->time_in->format('g:i A'). ' - ' .$employee->official_time->time_in->copy()->addHours(9)->format('g:i A') : strtoupper(\App\Enums\ScheduleType::FULLFLEXI->getLabel()) }}
+                        @else
+                            {{ strtoupper(\App\Enums\ScheduleType::FULLFLEXI->getLabel()) }}
+                        @endif
                         / <span class="font-semibold">Flag</span>: 8:30 AM - 5:30 PM
                     </td>
                 </tr>
                 <tr>
                     <td><span class="font-semibold">Group/Center/Office</span>: {{ $employee->department->description }}</td>
-                    <td><span>Note: <span style="color: red;">*</span> Covered by Grace Period</span></td>
+                    <td><span>Note: <span style="color: red;">*</span> Grace Period</span> | <span style="color:red">•</span> = Full Flexitime | <span style="color:blue">•</span> = Fixed Official Time</td>
                 </tr>
             </table>
 
@@ -120,7 +122,7 @@
                         <tr>
                             {{-- DATE --}}
                             <td class="border">
-                                {{ Carbon\Carbon::parse($date)->format('m-d-Y, D') }}
+                                {{ Carbon\Carbon::parse($date)->format('m-d-Y, D'). (($report['is_flag']) ? ', Flag' : '') }} <span style="color: {{ ($report['schedule_type'] == 'FFT') ? 'red' : 'blue'}};font-size: small;">•</span>
                             </td>
                             {{-- TIME IN AND OUT --}}
                             <td class="border text-center">

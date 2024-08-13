@@ -129,7 +129,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                             if ($data['schedule_type'] == ScheduleType::FULLFLEXI->value) {
                                 $official_time = $record->official_time()->create([
                                     'hris_number' => $record->hris_number,
-                                    'type' => $data['schedule_type'],
+                                    'schedule_type' => $data['schedule_type'],
                                     'effectivity_date' => $data['effectivity_date'],
                                     'created_by' => auth()->user()->hris_number,
                                 ]);
@@ -137,7 +137,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                                 $official_time = $record->official_time()->create([
                                     'hris_number' => $record->hris_number,
                                     'time_in' => $data['official_time'],
-                                    'type' => $data['schedule_type'],
+                                    'schedule_type' => $data['schedule_type'],
                                     'effectivity_date' => $data['effectivity_date'],
                                     'created_by' => auth()->user()->hris_number,
                                 ]);
@@ -185,7 +185,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                                 $parsed = Carbon::parse($state);
                                 return $parsed->format('g:i A') . ' - ' . $parsed->copy()->addHours(9)->format('g:i A');
                             })
-                            ->hidden(fn ($record) => $record->latest_official_time->type == ScheduleType::FULLFLEXI),
+                            ->hidden(fn ($record) => $record->latest_official_time->schedule_type == ScheduleType::FULLFLEXI),
                         \Filament\Infolists\Components\TextEntry::make('latest_official_time.status')
                             ->label('Status')
                             ->formatStateUsing(function ($state) {
@@ -249,7 +249,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                         if ($data['schedule_type'] == ScheduleType::FULLFLEXI->value) {
                             $official_time = $record->official_time()->create([
                                 'hris_number' => $record->hris_number,
-                                'type' => $data['schedule_type'],
+                                'schedule_type' => $data['schedule_type'],
                                 'effectivity_date' => $data['effectivity_date'],
                                 'created_by' => auth()->user()->hris_number,
                             ]);
@@ -257,7 +257,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                             $official_time = $record->official_time()->create([
                                 'hris_number' => $record->hris_number,
                                 'time_in' => $data['official_time'],
-                                'type' => $data['schedule_type'],
+                                'schedule_type' => $data['schedule_type'],
                                 'effectivity_date' => $data['effectivity_date'],
                                 'created_by' => auth()->user()->hris_number,
                             ]);
