@@ -12,6 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('reports', function (Blueprint $table) {
+            $table->datetime('break_start')->nullable()->after('time_start');
+            $table->datetime('break_end')->nullable()->after('break_start');
             $table->enum('schedule_type', ['full_flexitime', 'fixed_officialtime'])->nullable()->after('time_end');
         });
     }

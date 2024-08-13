@@ -125,13 +125,35 @@
                             {{-- TIME IN AND OUT --}}
                             <td class="border text-center">
                                 @if($report['time_in'])
-                                    {{ (date('H:i:s', strtotime($report['time_in'])) < date('H:i:s', strtotime('12:00:00'))) ? date('g:i A', strtotime($report['time_in'])) : '' }}
+                                    {{ (date('H:i:s', strtotime($report['time_in'])) < date('H:i:s', strtotime('12:00:00'))) ? $report['time_in'] : '' }}
                                 @endif
                                 @if($report['graced'])
                                     <span style="color: red;">*</span>
                                 @endif
                             </td>
                             <td class="border text-center">
+                                @if($report['time_end'])
+                                    @if(date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00')))
+                                        @if (date('H:i:s', strtotime($report['time_in'])) < date('H:i:s', strtotime('12:00:00')))
+                                            {{ $report['break_start'] }}
+                                        @endif
+                                    @else
+                                        {{ $report['time_end'] }}
+                                    @endif
+                                @endif
+                            </td>
+                            <td class="border text-center">
+                                @if($report['time_end'])
+                                    @if (date('H:i:s', strtotime($report['time_in'])) > date('H:i:s', strtotime('12:00:00')))
+                                        {{ $report['time_in'] }}
+                                    @else
+                                        @if (date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('13:00:00')))
+                                            {{ $report['break_end'] }}
+                                        @endif
+                                    @endif
+                                @endif
+                            </td>
+                            {{-- <td class="border text-center">
                                 @if($report['time_end'])
                                     @if(date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00')))
                                         @if (date('H:i:s', strtotime($report['time_in'])) < date('H:i:s', strtotime('12:00:00')))
@@ -152,7 +174,7 @@
                                         @endif
                                     @endif
                                 @endif
-                            </td>
+                            </td> --}}
                             <td class="border text-center">
                                 {{ (date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00'))) ? date('g:i A', strtotime($report['time_end'])) : '' }}
                             </td>

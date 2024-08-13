@@ -25,4 +25,12 @@ enum ScheduleType: string implements HasLabel, HasColor
             self::FIXED => 'info',
         };
     }
+
+    public function getAbbr(): string
+    {
+        return match ($this) {
+            self::FULLFLEXI => 'fft',
+            self::FIXED => 'fot',
+        };
+    }
 }

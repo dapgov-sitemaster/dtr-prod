@@ -47,15 +47,21 @@ class ProcessReport
             $tardy = null;
             $undertime = null;
             $time_in = null;
+            $break_start = null;
+            $break_end = null;
             $time_end = null;
             $no_out = null;
             $graced = false;
+            $schedule_type = null;
 
             if ($time->isNotEmpty()) {
                 $time_in = $time->first()->time_start;
                 $time_end = $time->first()->time_end;
+                $schedule_type = $time->first()->schedule_type;
 
-                if ($time->first()->schedule_type == ScheduleType::FIXED->value) {
+                if ($schedule_type == ScheduleType::FIXED) {
+                    $break_start = $time->first()->break_start;
+                    $break_end = $time->first()->break_end;
                     $official_start_time = '08:30:00';
                     $grace_period = 15;
 
@@ -95,15 +101,15 @@ class ProcessReport
                         if ($official_start->format('H:i') < $time_in->format('H:i')) {
                             if ($flag->isNotEmpty()) {
                                 $tardy = intdiv($official_start_diff, 60) . ':' . ($official_start_diff % 60);
-                                $tardies[$date->format('Y-m-d')] = [$official_start_diff, $official_start_time, $time_in, true];
+                                $tardies[$date->format('Y-m-d')] = [$official_start_diff, [ScheduleType::FIXED->value, $official_start], $time_in, true];
                             } else if ($date->dayOfWeek == Carbon::MONDAY) {
                                 if (date('H:i', strtotime($time->first()->official_time)) < date('H:i', strtotime('08:30'))) {
                                     $tardy = intdiv($official_start_diff, 60) . ':' . ($official_start_diff % 60);
-                                    $tardies[$date->format('Y-m-d')] = [$official_start_diff, $official_start_time, $time_in, false];
+                                    $tardies[$date->format('Y-m-d')] = [$official_start_diff, [ScheduleType::FIXED->value, $official_start], $time_in, false];
                                 }
                             } else if ($official_start_diff > $grace_period) {
                                 $tardy = intdiv($official_start_diff, 60) . ':' . ($official_start_diff % 60);
-                                $tardies[$date->format('Y-m-d')] = [$official_start_diff, $official_start_time, $time_in, false];
+                                $tardies[$date->format('Y-m-d')] = [$official_start_diff, [ScheduleType::FIXED->value, $official_start], $time_in, false];
                             } else if ($official_start_diff < $grace_period) {
                                 $graced = true;
                             }
@@ -124,32 +130,80 @@ class ProcessReport
                             $undertimes[] = $undertime_mins;
                         }
                     }
-                } else if ($time->first()->schedule_type == ScheduleType::FULLFLEXI->value) {
+                } else if ($schedule_type == ScheduleType::FULLFLEXI) {
+                    $break_start = $time->first()->break_start;
+                    $break_end = $time->first()->break_end;
                     $official_start_time = null;
                     $official_end_time = null;
+
                     if ($flag->isNotEmpty() || $time->first()->time_start->dayOfWeek == Carbon::MONDAY) {
-                        $official_start_time = '08:30:00';
+                        $official_start_time = '08:30';
+                        $official_end_time = '17:30';
                     }
 
                     if ($suspended->isNotEmpty()) {
                         if ($suspended->first()->start == $suspended->first()->end) {
-                            $official_end_time  = $suspended->first()->end->format('H:i:s');
+                            $official_end_time  = $suspended->first()->end->format('H:i');
                         } else {
-                            $official_end_time  = '17:00:00';
+                            $official_end_time  = '17:00';
                         }
-                    } else {
-                        $official_end_time = Carbon::parse($official_start_time)->addHours(9)->format('H:i:s');
                     }
 
-                    // if ()
+                    if ($official_start_time) {
+                        $start = Carbon::parse($date->format('Y-m-d') . ' ' . $official_start_time);
+                        if ($time_in->format('Y-m-d H:i') > $start->format('Y-m-d H:i')) {
+                            $start_minsdiff = $start->diffInMinutes($time_in);
+                            $tardy = intdiv($start_minsdiff, 60) . ':' . ($start_minsdiff % 60);
+                            $tardies[$date->format('Y-m-d')] = [$start_minsdiff, [ScheduleType::FULLFLEXI->value, $official_start_time], $time_in, true];
 
+                            $end = Carbon::parse($date->format('Y-m-d') . ' ' . $official_end_time);
+                            if ($time_end->format('Y-m-d H:i') < $end->format('Y-m-d H:i')) {
+                                $end_minsdiff = $time_end->diffInMinutes($end);
+                                $undertime = intdiv($end_minsdiff, 60) . ':' . ($end_minsdiff % 60);
+                                $undertimes[] = $end_minsdiff;
+                            }
+                        }
+                    } else if ($official_end_time) {
+                        $end = Carbon::parse($date->format('Y-m-d') . ' ' . $official_end_time);
+                        if ($time_end->format('Y-m-d H:i') < $end->format('Y-m-d H:i')) {
+                            $end_minsdiff = $time_end->diffInMinutes($end);
+                            $undertime = intdiv($end_minsdiff, 60) . ':' . ($end_minsdiff % 60);
+                            $undertimes[] = $end_minsdiff;
+                        }
+                    } else {
+                        $start = Carbon::parse($date->format('Y-m-d') . ' 09:30:00');
+                        if ($time_in->format('Y-m-d H:i') > $start->format('Y-m-d H:i')) {
+                            $start_minsdiff = $start->diffInMinutes($time_in);
+                            $tardy = intdiv($start_minsdiff, 60) . ':' . ($start_minsdiff % 60);
+                            $tardies[$date->format('Y-m-d')] = [$start_minsdiff, [ScheduleType::FULLFLEXI->value, $official_start_time], $time_in, true];
+
+                            $end = Carbon::parse($date->format('Y-m-d') . ' 18:30:00');
+                            if ($time_end->format('Y-m-d H:i') < $end->format('Y-m-d H:i')) {
+                                $end_minsdiff = $time_end->diffInMinutes($end);
+                                $undertime = intdiv($end_minsdiff, 60) . ':' . ($end_minsdiff % 60);
+                                $undertimes[] = $end_minsdiff;
+                            }
+                        } else {
+                            $end = $time_in->addHours(9)->format('Y-m-d H:i');
+                            // temporary minus 60 for lunch break, will update once HR update me in lunch break time range available
+                            $minute_diff = $time_in->diffInMinutes($time_end) - 60;
+                            if ($minute_diff <= 480) {
+                                $end_minsdiff = $time_end->diffInMinutes($end);
+                                $undertime = intdiv($end_minsdiff, 60) . ':' . ($end_minsdiff % 60);
+                                $undertimes[] = $end_minsdiff;
+                            }
+                        }
+                    }
                 }
             }
 
             $dtr_report[$date->format('Y-m-d')] = [
                 'hris_number' => $employee->hris_number,
                 'time_in' => $time_in?->format('g:i A'),
+                'break_start' => $break_start?->format('g:i A'),
+                'break_end' => $break_end?->format('g:i A'),
                 'time_end' => $time_end?->format('g:i A'),
+                'schedule_type' => $schedule_type?->getAbbr(),
                 'tardy' => $tardy,
                 'undertime' => $undertime,
                 'graced' => $graced,
@@ -165,18 +219,21 @@ class ProcessReport
         foreach ($tardies as $key => $value) {
             $total_tardies += $value[0];
 
-            if ($flexied <= 3) {
-                if (!in_array($key, $not_completed_hrs)) {
-                    $date = Carbon::parse($key);
-                    if ($date->dayOfWeek != Carbon::MONDAY && !$value[3]) {
-                        $official_time_in = Carbon::createFromFormat('Y-m-d H:i:s', $key . ' ' . $value[1])->seconds(0);
+            if ($value[1][0] == ScheduleType::FIXED->value) {
+                if ($flexied <= 3) {
+                    if (!in_array($key, $not_completed_hrs)) {
+                        $date = Carbon::parse($key);
+                        if ($date->dayOfWeek != Carbon::MONDAY && !$value[3]) {
+                            $official_time_in = Carbon::createFromFormat('Y-m-d H:i:s', $key . ' ' . $value[1][1])->seconds(0);
 
-                        $time_in = $value[2];
-                        if ($time_in->between($official_time_in, $official_time_in->copy()->addHour(), true)) {
-                            $dtr_report[$key]['flexied'] = true;
-                            $dtr_report[$key]['tardy'] = null;
-                            $total_tardies -= $value[0];
-                            $flexied++;
+
+                            $time_in = $value[2];
+                            if ($time_in->between($official_time_in, $official_time_in->copy()->addHour(), true)) {
+                                $dtr_report[$key]['flexied'] = true;
+                                $dtr_report[$key]['tardy'] = null;
+                                $total_tardies -= $value[0];
+                                $flexied++;
+                            }
                         }
                     }
                 }

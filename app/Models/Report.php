@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Enums\ScheduleType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Report extends Model
 {
@@ -17,7 +18,10 @@ class Report extends Model
     protected $fillable = [
         'hris_number',
         'time_start',
+        'break_start',
+        'break_end',
         'time_end',
+        'schedule_type',
         'official_time',
         'office',
         'appointment_status',
@@ -26,7 +30,10 @@ class Report extends Model
 
     protected $casts = [
         'time_start' => 'datetime',
+        'break_start' => 'datetime',
+        'break_end' => 'datetime',
         'time_end' => 'datetime',
+        'schedule_type' => ScheduleType::class,
     ];
 
     public function employee()

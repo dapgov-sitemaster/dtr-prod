@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Enums\ScheduleType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class TimeEntry extends Model
 {
@@ -19,6 +20,7 @@ class TimeEntry extends Model
         'time_start',
         'time_end',
         'department_id',
+        'schedule_type',
         'official_time',
         'timekeeper_id',
         'tag',
@@ -27,6 +29,7 @@ class TimeEntry extends Model
     protected $casts = [
         'time_start' => 'datetime',
         'time_end' => 'datetime',
+        'schedule_type' => ScheduleType::class,
     ];
 
     public function employee()

@@ -106,6 +106,11 @@ class OfficialTime extends Component implements HasForms, HasTable
                             ->native(false)
                             ->required()
                             ->hidden(fn (Get $get) => $get('schedule_type') != ScheduleType::FIXED->value),
+                        \Filament\Forms\Components\DatePicker::make('effectivity_date')
+                            ->label('Effectivity Date')
+                            ->native(false)
+                            ->displayFormat('d F Y')
+                            ->required(),
                         \Filament\Forms\Components\FileUpload::make('attachment')
                             ->acceptedFileTypes(['application/pdf', 'application/msword'])
                             ->required()
@@ -125,6 +130,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                                 $official_time = $record->official_time()->create([
                                     'hris_number' => $record->hris_number,
                                     'type' => $data['schedule_type'],
+                                    'effectivity_date' => $data['effectivity_date'],
                                     'created_by' => auth()->user()->hris_number,
                                 ]);
                             } else if ($data['schedule_type'] == ScheduleType::FIXED->value) {
@@ -132,6 +138,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                                     'hris_number' => $record->hris_number,
                                     'time_in' => $data['official_time'],
                                     'type' => $data['schedule_type'],
+                                    'effectivity_date' => $data['effectivity_date'],
                                     'created_by' => auth()->user()->hris_number,
                                 ]);
                             }
@@ -218,6 +225,13 @@ class OfficialTime extends Component implements HasForms, HasTable
                             ->native(false)
                             ->required()
                             ->hidden(fn (Get $get) => $get('schedule_type') != ScheduleType::FIXED->value),
+                        \Filament\Forms\Components\DatePicker::make('effectivity_date')
+                            ->label('Effectivity Date')
+                            ->native(false)
+                            ->displayFormat('F d, Y')
+                            ->weekStartsOnSunday()
+                            ->closeOnDateSelection()
+                            ->required(),
                         \Filament\Forms\Components\FileUpload::make('attachment')
                             ->acceptedFileTypes(['application/pdf', 'application/msword'])
                             ->required()
@@ -236,6 +250,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                             $official_time = $record->official_time()->create([
                                 'hris_number' => $record->hris_number,
                                 'type' => $data['schedule_type'],
+                                'effectivity_date' => $data['effectivity_date'],
                                 'created_by' => auth()->user()->hris_number,
                             ]);
                         } else if ($data['schedule_type'] == ScheduleType::FIXED->value) {
@@ -243,6 +258,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                                 'hris_number' => $record->hris_number,
                                 'time_in' => $data['official_time'],
                                 'type' => $data['schedule_type'],
+                                'effectivity_date' => $data['effectivity_date'],
                                 'created_by' => auth()->user()->hris_number,
                             ]);
                         }

@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('official_times', function (Blueprint $table) {
-            $table->enum('type', ['full_flexitime', 'fixed_officialtime'])->nullable()->after('time_in');
-            $table->date('effectivity_date')->nullable()->after('type');
+        Schema::table('time_entries', function (Blueprint $table) {
+            $table->enum('schedule_type', ['full_flexitime', 'fixed_officialtime'])->nullable()->after('department_id');
         });
     }
 
@@ -22,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('official_times', function (Blueprint $table) {
+        Schema::table('time_entries', function (Blueprint $table) {
             //
         });
     }
