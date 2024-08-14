@@ -58,7 +58,7 @@ class SuperadminPanelProvider extends PanelProvider
             ->plugin(
                 FilamentFullCalendarPlugin::make()
                     ->selectable()
-                    ->editable()
+                // ->editable()
             );
     }
 }

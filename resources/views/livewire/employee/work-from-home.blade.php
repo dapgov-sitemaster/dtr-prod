@@ -1,5 +1,5 @@
 <div>
-    <div class="w-full bg-white p-8 rounded-xl">
+    <div class="w-full bg-white p-8 rounded-xl mb-10">
         <div class="block lg:flex lg:justify-between">
             <div class="text-3xl font-bold text-dap-primary underline decoration-dap-secondary/50">
                 Work from Home

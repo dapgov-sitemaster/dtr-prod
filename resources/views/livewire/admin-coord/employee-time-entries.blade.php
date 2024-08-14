@@ -1,5 +1,5 @@
 <div>
-    <div class="w-full bg-white p-8 rounded-xl">
+    <div class="w-full bg-white mb-10 p-8 rounded-xl">
         <div class="text-3xl font-bold text-dap-primary underline decoration-dap-secondary/50">
             {{ $employee->first_name }} | Time Entries
         </div>

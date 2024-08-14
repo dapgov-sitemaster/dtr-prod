@@ -24,6 +24,21 @@ class CalendarWidget extends FullCalendarWidget
     public Model | string | null $model = Event::class;
     public $departments;
 
+    public function config(): array
+    {
+        return [
+            'schedulerLicenseKey' => 'GPL-My-Project-Is-Open-Source',
+            'firstDay' => 0,
+            'headerToolbar' => [
+                'left' => 'dayGridWeek,dayGridDay',
+                'center' => 'title',
+                'right' => 'prev,next today',
+            ],
+            'selectable' => true,
+            'editable' => true,
+        ];
+    }
+
     /**
      * FullCalendar will call this function whenever it needs new event data.
      * This is triggered when the user clicks prev/next or switches views on the calendar.
@@ -88,6 +103,7 @@ class CalendarWidget extends FullCalendarWidget
                     }
                 )
                 ->mutateFormDataUsing(function (array $data, $record): array {
+                    // you are here!!!
                     $official_time = $record->official_time;
                     $time_start = ($official_time) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
                     $time_end = ($official_time) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
@@ -96,9 +112,36 @@ class CalendarWidget extends FullCalendarWidget
                     $data['description'] = $data['tag']->getLabel();
 
                     return $data;
+                })
+                ->visible(function ($record) {
+                    $this->dispatch('filament-fullcalendar--refresh');
+                    if ($record->start->format('Y-m-d') < now()->format('Y-m-d')) {
+                        Notification::make()
+                            ->title("Unable to move event!")
+                            ->body("Event can't be moved! Event's date already passed.")
+                            ->warning()
+                            ->color('warning')
+                            ->send();
+                        return false;
+                    }
+                    return true;
                 }),
             Actions\DeleteAction::make()
-                ->modalHeading('Delete Event'),
+                ->requiresConfirmation()
+                ->modalHeading('Delete Event')
+                ->visible(function ($record) {
+                    $this->dispatch('filament-fullcalendar--refresh');
+                    if ($record->start->format('Y-m-d') < now()->format('Y-m-d')) {
+                        Notification::make()
+                            ->title("Unable to move event!")
+                            ->body("Event can't be moved! Event's date already passed.")
+                            ->warning()
+                            ->color('warning')
+                            ->send();
+                        return false;
+                    }
+                    return true;
+                }),
         ];
     }
 
@@ -260,7 +303,32 @@ class CalendarWidget extends FullCalendarWidget
                                 ->send();
                         })
                         ->hidden(fn ($record): bool => $record->tag->value === 'wfh' || $record->tag->value === 'hwfh'),
-                    ...$livewire->getCachedModalActions(),
+                    // ...$livewire->getCachedModalActions(),
+                    Actions\EditAction::make()
+                        ->mountUsing(
+                            function (Event $record, Forms\Form $form, array $arguments) {
+                                $form->fill([
+                                    'hris_number' => $record->hris_number,
+                                    'tag' => $record->tag,
+                                    'starts_at' => $arguments['event']['start'] ?? $record->start->format('Y-m-d'),
+                                    'ends_at' => $arguments['event']['end'] ?? $record->end->format('Y-m-d')
+                                ]);
+                            }
+                        )
+                        ->visible(function ($record) {
+                            if ($record->start->format('Y-m-d') >= now()->format('Y-m-d')) {
+                                return true;
+                            }
+                            return false;
+                        }),
+                    Actions\DeleteAction::make()
+                        ->requiresConfirmation()
+                        ->visible(function ($record) {
+                            if ($record->start->format('Y-m-d') >= now()->format('Y-m-d')) {
+                                return true;
+                            }
+                            return false;
+                        }),
                     $action->getModalCancelAction(),
                 ]
             );
