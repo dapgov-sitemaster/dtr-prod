@@ -93,7 +93,7 @@ class Employee extends Model
 
     public function official_time(): HasOne
     {
-        return $this->hasOne(OfficialTime::class, 'hris_number', 'hris_number')->where('status', 'approved')->latest();
+        return $this->hasOne(OfficialTime::class, 'hris_number', 'hris_number')->where('status', 'approved')->orderBy('created_at', 'DESC');
     }
 
     public function latest_official_time(): HasOne

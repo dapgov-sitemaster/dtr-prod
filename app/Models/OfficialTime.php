@@ -23,6 +23,7 @@ class OfficialTime extends Model
         'hris_number',
         'time_in',
         'schedule_type',
+        'effectivity_date',
         'status',
         'created_by',
     ];

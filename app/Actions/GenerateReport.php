@@ -66,13 +66,17 @@ class GenerateReport
                             if ($day_entry->first()->schedule_type != $schedule_type) {
 
                                 if ($schedule_type_effect_date <= $date->format('Y-m-d')) {
+                                    info($schedule_type_effect_date . ' | ' . $schedule_type->value);
                                     $schedule_type = $employee->official_time->schedule_type;
-
                                     if ($schedule_type == ScheduleType::FIXED) {
                                         $official_time = $employee->official_time->time_in->format('H:i:s');
                                     } else {
+                                        $schedule_type = ScheduleType::FULLFLEXI;
                                         $official_time = null;
                                     }
+                                } else {
+                                    $schedule_type = ScheduleType::FULLFLEXI;
+                                    $official_time = null;
                                 }
                             }
                         }

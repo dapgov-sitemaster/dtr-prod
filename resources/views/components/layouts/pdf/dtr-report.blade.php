@@ -122,7 +122,10 @@
                         <tr>
                             {{-- DATE --}}
                             <td class="border">
-                                {{ Carbon\Carbon::parse($date)->format('m-d-Y, D'). (($report['is_flag']) ? ', Flag' : '') }} <span style="color: {{ ($report['schedule_type'] == 'FFT') ? 'red' : 'blue'}};font-size: small;">•</span>
+                                {{ Carbon\Carbon::parse($date)->format('m-d-Y, D'). (($report['is_flag']) ? ', Flag' : '') }}
+                                @if($report['schedule_type'] != null)
+                                    <span style="color: {{ ($report['schedule_type'] == 'FFT') ? 'red' : 'blue'}};font-size: small;">•</span>
+                                @endif
                             </td>
                             {{-- TIME IN AND OUT --}}
                             <td class="border text-center">

@@ -202,7 +202,9 @@ class ProcessReport
                     } else {
                         $start = Carbon::parse($date->format('Y-m-d') . ' 09:30:00')->seconds(0);
                         if ($time_end == null) {
+                            $tardy = intdiv(480, 60) . ':' . (480 % 60);
                             $tardies[$date->format('Y-m-d')] = [480, [ScheduleType::FULLFLEXI->value, $official_start_time], $time_in, true];
+                            $not_completed_hrs[] = $date->format('Y-m-d');
                         } else if ($time_in->format('Y-m-d H:i') > $start->format('Y-m-d H:i')) {
                             $start_minsdiff = $start->diffInMinutes($time_in);
                             $tardy = intdiv($start_minsdiff, 60) . ':' . ($start_minsdiff % 60);
@@ -278,7 +280,6 @@ class ProcessReport
         $undertime_freq = count($undertimes);
         $total_undertimes = array_sum($undertimes);
         $undertime_total = intdiv($total_undertimes, 60) . ':' . ($total_undertimes % 60);
-
         return [
             'reports' => $dtr_report,
             'total' => [
