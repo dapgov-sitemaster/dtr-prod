@@ -25,6 +25,9 @@
                     </div> --}}
                 </div>
             </div>
+            <div class="mb-4">
+                @livewire('employee.mov-upload')
+            </div>
             @can('isAdminCoordinator')
                 <div class="mb-4">
                     @livewire('admin-coord.daily-time-report')

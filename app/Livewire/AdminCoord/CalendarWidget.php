@@ -12,6 +12,7 @@ use App\Models\Department;
 use App\Enums\ScheduleType;
 use Illuminate\Support\Str;
 use Filament\Widgets\Widget;
+use App\Enums\OfficialLeaves;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -122,9 +123,16 @@ class CalendarWidget extends FullCalendarWidget
                         $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
                         $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
                     }
+
+                    if (Events::parse($data['tag']) == Events::ALA) {
+                        $description = $data['description_leave'];
+                    } else {
+                        $description = Events::tryFrom($data['tag'])->getLabel();
+                    }
+
                     $data['start'] = $time_start->format('Y-m-d H:i:s');
                     $data['end'] = $time_end->format('Y-m-d H:i:s');
-                    $data['description'] = Events::parse($data['tag'])->getLabel();
+                    $data['description'] = $description;
 
                     return $data;
                 }),
@@ -170,7 +178,13 @@ class CalendarWidget extends FullCalendarWidget
                             $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
                             $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
                         }
-                        $description = Events::tryFrom($data['tag'])->getLabel();
+
+                        if (Events::parse($data['tag']) == Events::ALA) {
+                            $description = $data['description_leave'];
+                        } else {
+                            $description = Events::tryFrom($data['tag'])->getLabel();
+                        }
+
                         $data['start'] = $time_start->format('Y-m-d H:i:s');
                         $data['end'] = $time_end->format('Y-m-d H:i:s');
                         $data['description'] = $description;
@@ -242,17 +256,26 @@ class CalendarWidget extends FullCalendarWidget
                     })
                     ->schema([
                         \Filament\Infolists\Components\TextEntry::make('employee.full_name')
+                            ->columnSpanFull()
                             ->label('Employee Name'),
+                        \Filament\Infolists\Components\TextEntry::make('official_time.schedule_type')
+                            ->label('Schedule Type')
+                            ->badge()
+                            ->placeholder('Not set'),
                         \Filament\Infolists\Components\TextEntry::make('official_time.time_in')
                             ->formatStateUsing(function ($state) {
                                 return $state->format('g:i A') . ' - ' . $state->copy()->addHours(9)->format('g:i A');
                             })
-                            ->placeholder('Not set'),
+                            ->placeholder('Not available'),
                         \Filament\Infolists\Components\TextEntry::make('tag')
                             ->label('Type of Event')
                             ->badge(),
                         \Filament\Infolists\Components\TextEntry::make('description')
-                            ->label('Event Description'),
+                            ->label('Event Description')
+                            ->formatStateUsing(function ($state) {
+                                $leave_type = OfficialLeaves::tryFrom($state);
+                                return ($leave_type) ? $leave_type->getLabel() : $state;
+                            }),
                         \Filament\Infolists\Components\IconEntry::make('mov')
                             ->label('Uploaded MOV')
                             ->icon('heroicon-o-document-check')
@@ -345,6 +368,27 @@ class CalendarWidget extends FullCalendarWidget
                                 ]);
                             }
                         )
+                        ->mutateFormDataUsing(function (array $data, $record): array {
+                            $official_time = $record->official_time;
+                            $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
+                            $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                            if ($record->official_time) {
+                                $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
+                                $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                            }
+
+                            if (Events::parse($data['tag']) == Events::ALA) {
+                                $description = $data['description_leave'];
+                            } else {
+                                $description = Events::tryFrom($data['tag'])->getLabel();
+                            }
+
+                            $data['start'] = $time_start->format('Y-m-d H:i:s');
+                            $data['end'] = $time_end->format('Y-m-d H:i:s');
+                            $data['description'] = $description;
+
+                            return $data;
+                        })
                         ->visible(function ($record) {
                             if ($record->start->format('Y-m-d') >= now()->format('Y-m-d')) {
                                 return true;
@@ -406,8 +450,18 @@ class CalendarWidget extends FullCalendarWidget
                         })
                         ->native(false)
                         ->required()
-                        ->columnSpanFull()
                         ->live(),
+                    \Filament\Forms\Components\Select::make('description_leave')
+                        ->label('Type of Official Leave')
+                        ->options(OfficialLeaves::class)
+                        ->native(false)
+                        ->visible(function (Get $get) {
+                            return match (Events::parse($get('tag'))) {
+                                Events::ALA => true,
+                                default => false,
+                            };
+                        })
+                        ->required(),
                     \Filament\Forms\Components\TextInput::make('description')
                         ->required()
                         ->visible(fn (Get $get) => match (Events::parse($get('tag'))) {
