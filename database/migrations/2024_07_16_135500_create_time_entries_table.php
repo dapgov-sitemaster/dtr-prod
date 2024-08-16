@@ -18,8 +18,8 @@ return new class extends Migration
             $table->datetime('time_start');
             $table->datetime('time_end')->nullable();
             $table->foreignId('department_id')->constrained('departments');
-            $table->time('official_time');
-            $table->foreignId('timekeeper_id')->constrained('users');
+            $table->time('official_time')->nullable();
+            $table->foreignId('timekeeper_id')->constrained('users')->nullable();
             $table->enum('tag', ['ros', 'wfh', 'mvpool']);
             $table->timestamps();
         });
