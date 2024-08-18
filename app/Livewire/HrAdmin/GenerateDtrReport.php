@@ -4,11 +4,13 @@ namespace App\Livewire\HrAdmin;
 
 use Filament\Forms\Set;
 use Livewire\Component;
+use App\Models\Employee;
 use Filament\Forms\Form;
 use Livewire\Attributes\Js;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use App\Enums\AppointmentStatus;
+use Illuminate\Support\Facades\Gate;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Concerns\InteractsWithForms;
 
@@ -59,7 +61,9 @@ class GenerateDtrReport extends Component implements HasForms
                             ->afterStateUpdated(function (HasForms $livewire, \Filament\Forms\Components\Select $component) {
                                 $livewire->validateOnly($component->getStatePath());
                             })
-                            ->options(\App\Models\Employee::all()->pluck('full_name', 'hris_number'))
+                            // ->options(\App\Models\Employee::isDapcc()->get()->pluck('full_name', 'hris_number'))
+                            ->getSearchResultsUsing(fn (string $search): array => Employee::searchEmployee($search)->limit(50)->get()->pluck('full_name', 'hris_number')->toArray())
+                            ->getOptionLabelUsing(fn ($value): ?string => Employee::find($value)?->full_name)
                             ->searchable()
                             ->required()
                             ->suffixAction(
@@ -105,7 +109,7 @@ class GenerateDtrReport extends Component implements HasForms
                             ->validationAttribute('Office/Division')
                             ->native(false)
                             ->live()
-                            ->options(\App\Models\Department::all()->pluck('description', 'id'))
+                            ->options(\App\Models\Department::isDapcc()->get()->pluck('description', 'id'))
                             ->searchable()
                             ->afterStateUpdated(function (HasForms $livewire, \Filament\Forms\Components\Select $component) {
                                 $livewire->validateOnly($component->getStatePath());
@@ -126,13 +130,17 @@ class GenerateDtrReport extends Component implements HasForms
 
     public function generate($type)
     {
-        if ($type == 'individual') {
-            $data = $this->individualForm->getState();
-            $this->dispatch('redirectToDtrReport', dtrtype: 'employee', hris_number: $data['hris_number'], yearmonth: $data['yearmonth'], cutoff: $data['cutoff']);
-        } else if ($type == 'office') {
-            $data = $this->bulkForm->getState();
-            $this->dispatch('redirectToDtrReport', dtrtype: 'bulk', office_id: $data['office_id'], yearmonth: $data['yearmonth'], cutoff: $data['cutoff'], appointment_status: $data['appointment_status']);
-            // return redirect()->route('admin.dtr.bulk-dtr-report', ['department' => $data['office_id'], 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff'], 'appointment_status' => $data['appointment_status']]);
+        if (Gate::allows('view-dapcc')) {
+            dd('this is for dapcc dtr report/ to be development mamaya :))');
+        } else {
+            if ($type == 'individual') {
+                $data = $this->individualForm->getState();
+                $this->dispatch('redirectToDtrReport', dtrtype: 'employee', hris_number: $data['hris_number'], yearmonth: $data['yearmonth'], cutoff: $data['cutoff']);
+            } else if ($type == 'office') {
+                $data = $this->bulkForm->getState();
+                $this->dispatch('redirectToDtrReport', dtrtype: 'bulk', office_id: $data['office_id'], yearmonth: $data['yearmonth'], cutoff: $data['cutoff'], appointment_status: $data['appointment_status']);
+                // return redirect()->route('admin.dtr.bulk-dtr-report', ['department' => $data['office_id'], 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff'], 'appointment_status' => $data['appointment_status']]);
+            }
         }
     }
 

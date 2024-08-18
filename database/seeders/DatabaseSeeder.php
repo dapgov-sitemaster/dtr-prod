@@ -15,15 +15,24 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        $user = User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // $user = User::factory()->create([
+        //     'hris_number' => '000000',
+        //     'role' => 'superadmin',
+        //     'email' => 'superadmin@dap.edu.ph',
+        // ]);
+
+        User::find(1)->first()->employee()->create([
+            'hris_number' => '000000',
+            'last_name' => 'Test',
+            'first_name' => 'Super Admin',
+            'department_id' => 61,
+            'appointment_status' => 'pbp',
         ]);
 
-        $user->employee->create([
-            '' => fake()->lastName('male'),
-            '' => fake()->lastName('male'),
-            '' => fake()->lastName('male'),
-        ]);
+        // $user->employee->create([
+        //     '' => fake()->lastName('male'),
+        //     '' => fake()->lastName('male'),
+        //     '' => fake()->lastName('male'),
+        // ]);
     }
 }

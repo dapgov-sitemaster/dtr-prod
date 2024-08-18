@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Livewire\AdminCoord;
+namespace App\Livewire\Dapcc\AdminCoord\Events;
 
 use App\Enums\Role;
 use Livewire\Component;
 use App\Models\Department;
 use Livewire\Attributes\Title;
 
-class EventCalendar extends Component
+class Index extends Component
 {
     public $departments;
     #[Title('| Event Calendar')]
@@ -22,6 +22,6 @@ class EventCalendar extends Component
 
     public function render()
     {
-        return view('livewire.admin-coord.event-calendar');
+        return view('livewire.dapcc.admin-coord.events.index');
     }
 }

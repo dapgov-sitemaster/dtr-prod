@@ -60,13 +60,12 @@ class User extends Authenticatable
             ->useLogName('user')
             ->setDescriptionForEvent(function (string $eventName) {
                 return match ($eventName) {
-                    'created' => auth()->user()->employee->full_name . " has created a new employee: " . $this->employee->full_name,
-                    'updated' => auth()->user()->employee->full_name . " has updated info of " . $this->employee->full_name,
+                    'created' => auth()->user()->employee->full_name . " has created a new employee",
+                    'updated' => auth()->user()->employee->full_name . " has updated info of",
                     default => auth()->user()->employee->full_name . " has {$eventName} a employee"
                 };
             })
             ->dontSubmitEmptyLogs();
-        // Chain fluent methods for configuration options
     }
 
     public function employee()

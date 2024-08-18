@@ -7,6 +7,7 @@ use App\Models\TimeEntry;
 use Filament\Tables\Table;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Computed;
+use Illuminate\Support\Facades\Gate;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Resources\Components\Tab;
 use Filament\Tables\Contracts\HasTable;
@@ -26,7 +27,11 @@ class TimeEntries extends Component implements HasForms, HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(TimeEntry::latest())
+            ->query(
+                TimeEntry::query()
+                    ->isDapcc()
+                    ->with('employee')
+            )
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('hris_number')
                     ->label('HRIS Number')
@@ -39,6 +44,10 @@ class TimeEntries extends Component implements HasForms, HasTable
                     ->label('Name')
                     ->searchable(['first_name', 'last_name'])
                     ->sortable(['first_name', 'last_name']),
+                \Filament\Tables\Columns\TextColumn::make('department.description')
+                    ->label('Department')
+                    ->searchable(['department.group', 'department.center', 'department.office'])
+                    ->sortable(['department.group', 'department.center', 'department.office']),
                 \Filament\Tables\Columns\TextColumn::make('date')
                     ->label('Date')
                     ->getStateUsing(fn ($record) => $record->time_start->format('M d, Y'))

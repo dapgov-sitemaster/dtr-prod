@@ -2,16 +2,17 @@
 
 namespace App\Models;
 
-use App\Enums\AppointmentStatus;
 use Illuminate\Support\Str;
+use App\Enums\AppointmentStatus;
+use Spatie\Activitylog\LogOptions;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
 class Employee extends Model
 {
@@ -46,8 +47,8 @@ class Employee extends Model
             ->useLogName('employee')
             ->setDescriptionForEvent(function (string $eventName) {
                 return match ($eventName) {
-                    'created' => auth()->user()->employee->full_name . " has created a new employee: " . $this->full_name,
-                    'updated' => auth()->user()->employee->full_name . " has updated info of " . $this->full_name,
+                    'created' => auth()->user()->employee->full_name . " has created a new employee: " . ucwords("{$this->last_name}, {$this->first_name} {$this->middle_initial}"),
+                    'updated' => auth()->user()->employee->full_name . " has updated info of " . ucwords("{$this->last_name}, {$this->first_name} {$this->middle_initial}"),
                     default => auth()->user()->employee->full_name . " has {$eventName} a employee"
                 };
             })
@@ -109,5 +110,15 @@ class Employee extends Model
     public function event(): HasOne
     {
         return $this->hasOne(Event::class, 'hris_number', 'hris_number')->latest();
+    }
+
+    public function scopeIsDapcc($query)
+    {
+        return $query->whereHas('department', fn ($query) => (Gate::allows('view-dapcc')) ? $query->where('center', 'TEST') : $query);
+    }
+
+    public function scopeSearchEmployee($query, $search)
+    {
+        return $query->where('last_name', 'like', "%{$search}%")->orWhere('first_name', 'like', "%{$search}%")->orWhere('hris_number', 'like', "%{$search}%");
     }
 }

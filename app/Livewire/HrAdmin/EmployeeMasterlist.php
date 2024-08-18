@@ -4,6 +4,7 @@ namespace App\Livewire\HrAdmin;
 
 use App\Enums\Role;
 use App\Models\User;
+use Filament\Forms\Get;
 use Livewire\Component;
 use App\Models\Employee;
 use Filament\Forms\Form;
@@ -12,6 +13,7 @@ use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Title;
 use App\Enums\AppointmentStatus;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Contracts\HasTable;
@@ -34,7 +36,12 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(Employee::latest())
+            ->query(
+                Employee::query()
+                    ->isDapcc()
+                    ->with('department', 'official_time', 'user')
+                    ->latest()
+            )
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('hris_number')
                     ->label('HRIS Number')
@@ -72,69 +79,7 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                     ->createAnother(false)
                     ->slideOver()
                     // ->model(Post::class)
-                    ->form([
-                        \Filament\Forms\Components\Section::make()
-                            ->columns([
-                                'sm' => 1,
-                                'xl' => 2,
-                            ])
-                            ->schema([
-                                \Filament\Forms\Components\TextInput::make('hris_number')
-                                    ->label('HRIS Number')
-                                    ->mask('999999')
-                                    ->placeholder('Enter 6 digit HRIS number')
-                                    ->autocomplete(false)
-                                    ->length(6)
-                                    ->required(),
-                                \Filament\Forms\Components\TextInput::make('email')
-                                    ->placeholder('Enter DAP Email Address')
-                                    ->email()
-                                    ->autocomplete(false)
-                                    ->required(),
-                                \Filament\Forms\Components\Select::make('department_id')
-                                    ->label('Department')
-                                    ->options(Department::all()->pluck('description', 'id'))
-                                    ->native(false)
-                                    ->searchable()
-                                    ->required()
-                                    ->columnSpanFull(),
-
-                                \Filament\Forms\Components\Grid::make([
-                                    'default' => 1,
-                                    'xl'    => 3,
-                                ])
-                                    ->schema([
-                                        \Filament\Forms\Components\TextInput::make('last_name')
-                                            ->label('Last Name')
-                                            ->placeholder('Enter Last Name')
-                                            ->autocomplete(false)
-                                            ->required(),
-                                        \Filament\Forms\Components\TextInput::make('first_name')
-                                            ->label('First Name')
-                                            ->placeholder('Enter First Name')
-                                            ->autocomplete(false)
-                                            ->required(),
-                                        \Filament\Forms\Components\TextInput::make('middle_name')
-                                            ->label('Middle Name')
-                                            ->placeholder('Enter Middle Name')
-                                            ->autocomplete(false),
-                                    ]),
-                                \Filament\Forms\Components\Select::make('appointment_status')
-                                    ->options(AppointmentStatus::class)
-                                    ->native(false)
-                                    ->required(),
-                                \Filament\Forms\Components\Select::make('role')
-                                    ->options(function () {
-                                        return collect(Role::cases())
-                                            ->filter(fn ($case) => $case !== Role::SUPERADMIN)
-                                            ->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])
-                                            ->toArray();
-                                    })
-                                    ->native(false)
-                                    ->required(),
-                            ]),
-                        // ...
-                    ])
+                    ->form($this->employeeSchema()['create'])
                     ->action(function (array $data): Model {
                         $user = User::create([
                             'hris_number' => $data['hris_number'],
@@ -190,61 +135,7 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                             'role' => $employee->user->role,
                         ];
                     })
-                    ->form([
-                        \Filament\Forms\Components\Section::make()
-                            ->columns([
-                                'sm' => 1,
-                                'xl' => 2,
-                            ])
-                            ->schema([
-                                \Filament\Forms\Components\TextInput::make('email')
-                                    ->placeholder('Enter DAP Email Address')
-                                    ->email()
-                                    ->autocomplete(false)
-                                    ->required(),
-                                \Filament\Forms\Components\Select::make('department_id')
-                                    ->label('Department')
-                                    ->options(Department::all()->pluck('description', 'id'))
-                                    ->native(false)
-                                    ->searchable()
-                                    ->required(),
-
-                                \Filament\Forms\Components\Grid::make([
-                                    'default' => 1,
-                                    'xl'    => 3,
-                                ])
-                                    ->schema([
-                                        \Filament\Forms\Components\TextInput::make('last_name')
-                                            ->label('Last Name')
-                                            ->placeholder('Enter Last Name')
-                                            ->autocomplete(false)
-                                            ->required(),
-                                        \Filament\Forms\Components\TextInput::make('first_name')
-                                            ->label('First Name')
-                                            ->placeholder('Enter First Name')
-                                            ->autocomplete(false)
-                                            ->required(),
-                                        \Filament\Forms\Components\TextInput::make('middle_name')
-                                            ->label('Middle Name')
-                                            ->placeholder('Enter Middle Name')
-                                            ->autocomplete(false),
-                                    ]),
-                                \Filament\Forms\Components\Select::make('appointment_status')
-                                    ->options(AppointmentStatus::class)
-                                    ->native(false)
-                                    ->required(),
-                                \Filament\Forms\Components\Select::make('role')
-                                    ->options(function () {
-                                        return collect(Role::cases())
-                                            ->filter(fn ($case) => $case !== Role::SUPERADMIN)
-                                            ->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])
-                                            ->toArray();
-                                    })
-                                    ->native(false)
-                                    ->hidden(fn ($record) => ($record->user->role->value === 'superadmin'))
-                                    ->required(),
-                            ]),
-                    ])
+                    ->form($this->employeeSchema()['edit'])
                     ->action(function ($data, Employee $employee) {
 
                         $employee->department_id = $data['department_id'];
@@ -279,4 +170,264 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                     ->native(false),
             ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent);
     }
+
+    public function employeeSchema()
+    {
+        if (Gate::allows('view-dapcc')) {
+            return [
+                'create' => [
+                    \Filament\Forms\Components\Section::make()
+                        ->columns([
+                            'sm' => 1,
+                            'xl' => 2,
+                        ])
+                        ->schema([
+                            \Filament\Forms\Components\TextInput::make('hris_number')
+                                ->label('HRIS Number')
+                                ->mask('999999')
+                                ->placeholder('Enter 6 digit HRIS number')
+                                ->autocomplete(false)
+                                ->length(6)
+                                ->required(),
+                            \Filament\Forms\Components\TextInput::make('email')
+                                ->placeholder('Enter DAP Email Address')
+                                ->email()
+                                ->autocomplete(false)
+                                ->required(fn (Get $get): bool => $get('role') != Role::JOBBER->value),
+                            \Filament\Forms\Components\Select::make('department_id')
+                                ->label('Department')
+                                ->options(Department::isDapcc()->get()->pluck('description', 'id'))
+                                ->native(false)
+                                ->searchable()
+                                ->required()
+                                ->columnSpanFull(),
+
+                            \Filament\Forms\Components\Grid::make([
+                                'default' => 1,
+                                'xl'    => 3,
+                            ])
+                                ->schema([
+                                    \Filament\Forms\Components\TextInput::make('last_name')
+                                        ->label('Last Name')
+                                        ->placeholder('Enter Last Name')
+                                        ->autocomplete(false)
+                                        ->required(),
+                                    \Filament\Forms\Components\TextInput::make('first_name')
+                                        ->label('First Name')
+                                        ->placeholder('Enter First Name')
+                                        ->autocomplete(false)
+                                        ->required(),
+                                    \Filament\Forms\Components\TextInput::make('middle_name')
+                                        ->label('Middle Name')
+                                        ->placeholder('Enter Middle Name')
+                                        ->autocomplete(false),
+                                ]),
+                            \Filament\Forms\Components\Select::make('appointment_status')
+                                ->options(AppointmentStatus::class)
+                                ->native(false)
+                                ->required(),
+                            \Filament\Forms\Components\Select::make('role')
+                                ->live()
+                                ->options(function () {
+                                    return collect(Role::cases())
+                                        ->filter(fn ($case) => $case !== Role::SUPERADMIN)
+                                        ->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])
+                                        ->toArray();
+                                })
+                                ->native(false)
+                                ->required(),
+                        ]),
+                ],
+                'edit' => [
+                    \Filament\Forms\Components\Section::make()
+                        ->columns([
+                            'sm' => 1,
+                            'xl' => 2,
+                        ])
+                        ->schema([
+                            \Filament\Forms\Components\TextInput::make('email')
+                                ->placeholder('Enter DAP Email Address')
+                                ->email()
+                                ->autocomplete(false)
+                                ->required(fn (Get $get, $record): bool => $get('role') != Role::JOBBER->value && $record->user->role != Role::JOBBER),
+                            \Filament\Forms\Components\Select::make('department_id')
+                                ->label('Department')
+                                ->options(Department::isDapcc()->get()->pluck('description', 'id'))
+                                ->native(false)
+                                ->searchable()
+                                ->required(),
+
+                            \Filament\Forms\Components\Grid::make([
+                                'default' => 1,
+                                'xl'    => 3,
+                            ])
+                                ->schema([
+                                    \Filament\Forms\Components\TextInput::make('last_name')
+                                        ->label('Last Name')
+                                        ->placeholder('Enter Last Name')
+                                        ->autocomplete(false)
+                                        ->required(),
+                                    \Filament\Forms\Components\TextInput::make('first_name')
+                                        ->label('First Name')
+                                        ->placeholder('Enter First Name')
+                                        ->autocomplete(false)
+                                        ->required(),
+                                    \Filament\Forms\Components\TextInput::make('middle_name')
+                                        ->label('Middle Name')
+                                        ->placeholder('Enter Middle Name')
+                                        ->autocomplete(false),
+                                ]),
+                            \Filament\Forms\Components\Select::make('appointment_status')
+                                ->options(AppointmentStatus::class)
+                                ->native(false)
+                                ->required(),
+                            \Filament\Forms\Components\Select::make('role')
+                                ->options(function () {
+                                    return collect(Role::cases())
+                                        ->filter(fn ($case) => $case !== Role::SUPERADMIN)
+                                        ->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])
+                                        ->toArray();
+                                })
+                                ->native(false)
+                                ->hidden(fn ($record) => ($record->user->role->value === 'superadmin'))
+                                ->required(),
+                        ]),
+                ]
+            ];
+        } else {
+            return [
+                'create' => [
+                    \Filament\Forms\Components\Section::make()
+                        ->columns([
+                            'sm' => 1,
+                            'xl' => 2,
+                        ])
+                        ->schema([
+                            \Filament\Forms\Components\TextInput::make('hris_number')
+                                ->label('HRIS Number')
+                                ->mask('999999')
+                                ->placeholder('Enter 6 digit HRIS number')
+                                ->autocomplete(false)
+                                ->length(6)
+                                ->required(),
+                            \Filament\Forms\Components\TextInput::make('email')
+                                ->placeholder('Enter DAP Email Address')
+                                ->email()
+                                ->autocomplete(false)
+                                ->required(),
+                            \Filament\Forms\Components\Select::make('department_id')
+                                ->label('Department')
+                                ->options(Department::all()->pluck('description', 'id'))
+                                ->native(false)
+                                ->searchable()
+                                ->required()
+                                ->columnSpanFull(),
+
+                            \Filament\Forms\Components\Grid::make([
+                                'default' => 1,
+                                'xl'    => 3,
+                            ])
+                                ->schema([
+                                    \Filament\Forms\Components\TextInput::make('last_name')
+                                        ->label('Last Name')
+                                        ->placeholder('Enter Last Name')
+                                        ->autocomplete(false)
+                                        ->required(),
+                                    \Filament\Forms\Components\TextInput::make('first_name')
+                                        ->label('First Name')
+                                        ->placeholder('Enter First Name')
+                                        ->autocomplete(false)
+                                        ->required(),
+                                    \Filament\Forms\Components\TextInput::make('middle_name')
+                                        ->label('Middle Name')
+                                        ->placeholder('Enter Middle Name')
+                                        ->autocomplete(false),
+                                ]),
+                            \Filament\Forms\Components\Select::make('appointment_status')
+                                ->options(AppointmentStatus::class)
+                                ->native(false)
+                                ->required(),
+                            \Filament\Forms\Components\Select::make('role')
+                                ->options(function () {
+                                    return collect(Role::cases())
+                                        ->filter(fn ($case) => $case !== Role::SUPERADMIN)
+                                        ->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])
+                                        ->toArray();
+                                })
+                                ->native(false)
+                                ->required(),
+                        ]),
+                ],
+                'edit' => [
+                    \Filament\Forms\Components\Section::make()
+                        ->columns([
+                            'sm' => 1,
+                            'xl' => 2,
+                        ])
+                        ->schema([
+                            \Filament\Forms\Components\TextInput::make('email')
+                                ->placeholder('Enter DAP Email Address')
+                                ->email()
+                                ->autocomplete(false)
+                                ->required(),
+                            \Filament\Forms\Components\Select::make('department_id')
+                                ->label('Department')
+                                ->options(Department::all()->pluck('description', 'id'))
+                                ->native(false)
+                                ->searchable()
+                                ->required(),
+
+                            \Filament\Forms\Components\Grid::make([
+                                'default' => 1,
+                                'xl'    => 3,
+                            ])
+                                ->schema([
+                                    \Filament\Forms\Components\TextInput::make('last_name')
+                                        ->label('Last Name')
+                                        ->placeholder('Enter Last Name')
+                                        ->autocomplete(false)
+                                        ->required(),
+                                    \Filament\Forms\Components\TextInput::make('first_name')
+                                        ->label('First Name')
+                                        ->placeholder('Enter First Name')
+                                        ->autocomplete(false)
+                                        ->required(),
+                                    \Filament\Forms\Components\TextInput::make('middle_name')
+                                        ->label('Middle Name')
+                                        ->placeholder('Enter Middle Name')
+                                        ->autocomplete(false),
+                                ]),
+                            \Filament\Forms\Components\Select::make('appointment_status')
+                                ->options(AppointmentStatus::class)
+                                ->native(false)
+                                ->required(),
+                            \Filament\Forms\Components\Select::make('role')
+                                ->options(function () {
+                                    return collect(Role::cases())
+                                        ->filter(fn ($case) => $case !== Role::SUPERADMIN)
+                                        ->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])
+                                        ->toArray();
+                                })
+                                ->native(false)
+                                ->hidden(fn ($record) => ($record->user->role->value === 'superadmin'))
+                                ->required(),
+                        ]),
+                ]
+            ];
+        }
+    }
+
+    // public function employeeAction()
+    // {
+    //     if() {
+
+    //     }
+    //     else {
+    //         return [
+    //             'create' => [
+
+    //             ]
+    //         ];
+    //     }
+    // }
 }

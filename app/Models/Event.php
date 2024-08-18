@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
-use App\Enums\Events;
+use Spatie\Activitylog\LogOptions;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Event extends Model
 {
@@ -31,11 +31,14 @@ class Event extends Model
         'created_by',
     ];
 
-    protected $casts = [
-        'tag' => Events::class,
-        'start' => 'datetime',
-        'end' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'tag' => Gate::allows('view-dapcc') ? \App\Enums\Dapcc\Events::class : \App\Enums\Events::class,
+            'start' => 'datetime',
+            'end' => 'datetime',
+        ];
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

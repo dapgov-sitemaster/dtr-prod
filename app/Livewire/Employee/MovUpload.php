@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Employee;
 
-use App\Enums\Events;
 use App\Models\Event;
 use Livewire\Component;
 use Filament\Tables\Table;
@@ -26,8 +25,9 @@ class MovUpload extends Component implements HasForms, HasTable
 
     public function table(Table $table): Table
     {
+        $tags = (auth()->user()->employee->department->center == 'TEST') ? [\App\Enums\Dapcc\Events::SHIFT, \App\Enums\Dapcc\Events::DAYOFF] : [\App\Enums\Events::WFH, \App\Enums\Events::HWFH];
         return $table
-            ->query(Event::with('mov')->where('hris_number', auth()->user()->hris_number)->whereNotIn('tag', [Events::WFH, Events::HWFH]))
+            ->query(Event::with('mov')->where('hris_number', auth()->user()->hris_number)->whereNotIn('tag', $tags))
             ->columns([
                 // \Filament\Tables\Columns\TextColumn::make('date')
                 //     ->label('Date')
