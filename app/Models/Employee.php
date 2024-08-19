@@ -7,13 +7,16 @@ use App\Enums\AppointmentStatus;
 use Spatie\Activitylog\LogOptions;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Scopes\ActiveEmployeeScope;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+#[ScopedBy([ActiveEmployeeScope::class])]
 class Employee extends Model
 {
     use HasFactory, LogsActivity;
@@ -47,8 +50,8 @@ class Employee extends Model
             ->useLogName('employee')
             ->setDescriptionForEvent(function (string $eventName) {
                 return match ($eventName) {
-                    'created' => auth()->user()->employee->full_name . " has created a new employee: " . ucwords("{$this->last_name}, {$this->first_name} {$this->middle_initial}"),
-                    'updated' => auth()->user()->employee->full_name . " has updated info of " . ucwords("{$this->last_name}, {$this->first_name} {$this->middle_initial}"),
+                    'created' => auth()->user()->employee->full_name . " has created a new employee",
+                    'updated' => auth()->user()->employee->full_name . " has updated info",
                     default => auth()->user()->employee->full_name . " has {$eventName} a employee"
                 };
             })

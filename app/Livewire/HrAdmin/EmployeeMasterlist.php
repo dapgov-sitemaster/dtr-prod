@@ -38,7 +38,8 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
         return $table
             ->query(
                 Employee::query()
-                    ->isDapcc()
+                    // ->isDapcc()
+                    ->withoutGlobalScopes()
                     ->with('department', 'official_time', 'user')
                     ->latest()
             )
@@ -57,15 +58,14 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                     ->sortable(['first_name', 'last_name']),
                 \Filament\Tables\Columns\TextColumn::make('department.description')
                     ->label('Department')
-                    // ->formatStateUsing(fn ($record) => $record->department->description)
                     ->searchable(['group', 'center', 'office'])
                     ->sortable(['group', 'center', 'office']),
-                \Filament\Tables\Columns\TextColumn::make('official_time.time_in')
-                    ->label('Official Time')
-                    ->dateTime('g:i A'),
                 \Filament\Tables\Columns\TextColumn::make('appointment_status')
                     ->label('Appointment Status')
                     ->badge(),
+                \Filament\Tables\Columns\IconColumn::make('employment_status')
+                    ->label('Employment Status')
+                    ->boolean(),
                 \Filament\Tables\Columns\TextColumn::make('user.role')
                     ->label('Role')
                     ->badge(),
@@ -187,16 +187,20 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                                 ->mask('999999')
                                 ->placeholder('Enter 6 digit HRIS number')
                                 ->autocomplete(false)
+                                ->validationAttribute('HRIS Number')
+                                ->unique(table: User::class)
                                 ->length(6)
                                 ->required(),
                             \Filament\Forms\Components\TextInput::make('email')
                                 ->placeholder('Enter DAP Email Address')
                                 ->email()
+                                ->validationAttribute('DAP Email Address')
+                                ->unique(table: User::class)
                                 ->autocomplete(false)
                                 ->required(fn (Get $get): bool => $get('role') != Role::JOBBER->value),
                             \Filament\Forms\Components\Select::make('department_id')
                                 ->label('Department')
-                                ->options(Department::isDapcc()->get()->pluck('description', 'id'))
+                                ->options(Department::all()->pluck('description', 'id'))
                                 ->native(false)
                                 ->searchable()
                                 ->required()

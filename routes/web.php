@@ -54,7 +54,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // for DAPCC
-    Route::prefix('dapcc')->middleware('checkcenter:TEST')->group(function () {
+    Route::prefix('dapcc')->middleware('checkcenter:DAPCC')->group(function () {
         // DAPCC HR Admin modules
         Route::get('/hr-admin/events', App\Livewire\Dapcc\HrAdmin\Events\Index::class)->middleware('checkrole:hradmin')->name('dapcc.hr-admin.events');
 

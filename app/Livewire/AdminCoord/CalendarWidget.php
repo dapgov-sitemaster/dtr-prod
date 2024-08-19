@@ -492,7 +492,7 @@ class CalendarWidget extends FullCalendarWidget
                         ->label('Employee Name')
                         ->multiple()
                         // ->options(\App\Models\Employee::whereIn('department_id', $this->departments)->where('employment_status', true)->get()->pluck('full_name', 'hris_number'))
-                        ->getSearchResultsUsing(fn (string $search): array => Employee::searchEmployee($search)->limit(50)->get()->pluck('full_name', 'hris_number')->toArray())
+                        ->getSearchResultsUsing(fn (string $search): array => Employee::searchEmployee($search)->whereIn('department_id', $this->departments)->limit(10)->get()->pluck('full_name', 'hris_number')->toArray())
                         ->getOptionLabelUsing(fn ($value): ?string => Employee::find($value)?->full_name)
                         ->native(false)
                         ->searchable(['first_name', 'last_name'])
