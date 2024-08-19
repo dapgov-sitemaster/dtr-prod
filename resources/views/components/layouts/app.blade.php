@@ -124,7 +124,7 @@
                         </header>
                         <div class="flex-1 w-full px-4 mx-auto md:px-14 lg:px-24">
 
-                            {{-- <x-filament::modal slide-over id="generate-qr" icon-color="info" width="xl">
+                            <x-filament::modal slide-over id="generate-qr" icon-color="info" width="xl">
                                 <x-slot name="heading">
                                     <span class="text-xl text-dap-primary font-semibold underline decoration-dap-secondary">QR Code</span>
                                 </x-slot>
@@ -153,7 +153,7 @@
                                     <span class="text-xl text-dap-primary font-semibold underline decoration-dap-secondary">E-Signature</span>
                                 </x-slot>
                                 @livewire('profile.electronic-signature')
-                            </x-filament::modal> --}}
+                            </x-filament::modal>
                             {{ $slot }}
                         </div>
                     </div>
