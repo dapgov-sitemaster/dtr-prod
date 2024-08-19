@@ -29,7 +29,6 @@ class TimeEntries extends Component implements HasForms, HasTable
         return $table
             ->query(
                 TimeEntry::query()
-                    ->isDapcc()
                     ->with('employee')
             )
             ->columns([

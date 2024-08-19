@@ -14,7 +14,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'checkrole' => \App\Http\Middleware\CheckRole::class,
-            'checkcenter' => \App\Http\Middleware\CheckCenter::class,
             'haswfhsched' => \App\Http\Middleware\HasWfhSchedule::class,
         ]);
     })

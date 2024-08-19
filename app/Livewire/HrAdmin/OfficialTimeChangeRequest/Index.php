@@ -41,7 +41,7 @@ class Index extends Component implements HasForms, HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(OfficialTime::whereHas('employee', fn ($query) => $query->isDapcc()->whereIn('department_id', $this->departments))->latest())
+            ->query(OfficialTime::whereHas('employee', fn ($query) => $query->whereIn('department_id', $this->departments))->latest())
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('employee.hris_number')
                     ->label('HRIS Number')
