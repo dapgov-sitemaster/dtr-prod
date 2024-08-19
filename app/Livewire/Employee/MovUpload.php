@@ -25,9 +25,8 @@ class MovUpload extends Component implements HasForms, HasTable
 
     public function table(Table $table): Table
     {
-        $tags = (auth()->user()->employee->department->center == 'TEST') ? [\App\Enums\Dapcc\Events::SHIFT, \App\Enums\Dapcc\Events::DAYOFF] : [\App\Enums\Events::WFH, \App\Enums\Events::HWFH];
         return $table
-            ->query(Event::with('mov')->where('hris_number', auth()->user()->hris_number)->whereNotIn('tag', $tags))
+            ->query(Event::with('mov')->where('hris_number', auth()->user()->hris_number)->whereNotIn('tag', [\App\Enums\Events::WFH, \App\Enums\Events::HWFH]))
             ->columns([
                 // \Filament\Tables\Columns\TextColumn::make('date')
                 //     ->label('Date')
@@ -36,12 +35,12 @@ class MovUpload extends Component implements HasForms, HasTable
                 //     ->sortable(['start']),
                 \Filament\Tables\Columns\TextColumn::make('start')
                     ->label('Date Start')
-                    ->formatStateUsing(fn ($state) => $state->format('Y-m-d g:i A'))
+                    ->formatStateUsing(fn($state) => $state->format('Y-m-d g:i A'))
                     ->searchable()
                     ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('end')
                     ->label('Date End')
-                    ->formatStateUsing(fn ($state) => $state->format('Y-m-d g:i A'))
+                    ->formatStateUsing(fn($state) => $state->format('Y-m-d g:i A'))
                     ->searchable()
                     ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('tag')
@@ -57,7 +56,7 @@ class MovUpload extends Component implements HasForms, HasTable
                 \Filament\Tables\Columns\TextColumn::make('mov.filename')
                     ->label('MOV')
                     ->badge()
-                    ->formatStateUsing(fn ($state) => ($state) ? 'Uploaded Already' : '')
+                    ->formatStateUsing(fn($state) => ($state) ? 'Uploaded Already' : '')
                     ->placeholder('Not yet uploaded')
                     ->sortable(),
             ])
@@ -98,7 +97,7 @@ class MovUpload extends Component implements HasForms, HasTable
                             ->color('success')
                             ->send();
                     })
-                    ->hidden(fn ($record): bool => ($record->mov) ? true : false),
+                    ->hidden(fn($record): bool => ($record->mov) ? true : false),
             ])
             ->defaultSort('start', 'desc')
             ->emptyStateHeading('No MOV Pending this week');

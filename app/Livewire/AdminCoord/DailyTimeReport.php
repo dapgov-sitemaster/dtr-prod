@@ -36,9 +36,7 @@ class DailyTimeReport extends Component implements HasForms, HasTable
         return $table
             ->query(
                 Employee::query()
-                    ->with(['time_entries' => fn ($query) => $query->whereDate('time_start', now()->format('Y-m-d'))])
-                    ->with(['event' => fn ($query) => $query->whereDate('start', now()->format('Y-m-d'))])
-                    ->where('employment_status', true)
+                    ->with(['time_entries' => fn($query) => $query->whereDate('time_start', now()->format('Y-m-d'))], ['event' => fn($query) => $query->whereDate('start', now()->format('Y-m-d'))])
                     ->whereIn('department_id', $departments)
             )
             // ->heading('Division/Office Daily Time Report ' . now()->format('F d, Y (D)'))
