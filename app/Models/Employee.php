@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Role;
 use Illuminate\Support\Str;
 use App\Enums\AppointmentStatus;
 use Spatie\Activitylog\LogOptions;
@@ -65,6 +66,13 @@ class Employee extends Model
         );
     }
 
+    protected function apostFirstName(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => (str($this->first_name)->endsWith('s')) ? $this->first_name . "'" : $this->first_name . "'s",
+        );
+    }
+
     protected function lastName(): Attribute
     {
         return Attribute::make(
@@ -113,6 +121,18 @@ class Employee extends Model
     public function event(): HasOne
     {
         return $this->hasOne(Event::class, 'hris_number', 'hris_number')->latest();
+    }
+
+    public function scopeDepartmentCovered($query)
+    {
+        $user_dept = auth()->user()->employee->department;
+        $departments = match (auth()->user()->role) {
+            Role::ADMINCOORD => [$user_dept->center],
+            Role::CENTERADMINCOORD => Department::select('id')->where('center', $user_dept->center)->get()->pluck('id')->toArray(),
+            Role::GROUPADMINCOORD => Department::select('id')->where('group', $user_dept->group)->get()->pluck('id')->toArray(),
+            default => [],
+        };
+        return (empty($departments)) ? $query : $query->whereIn('department_id', $departments);
     }
 
     public function scopeIsDapcc($query)

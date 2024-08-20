@@ -171,12 +171,42 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
             ])
             ->actions([
                 // \Filament\Tables\Actions\ActionGroup::make([
+                \Filament\Tables\Actions\Action::make('edit-emp-status')
+                    ->button()
+                    ->modalWidth('lg')
+                    ->label('Update Status')
+                    ->modalHeading(fn ($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
+                    ->requiresConfirmation()
+                    ->form([
+                        \Filament\Forms\Components\ToggleButtons::make('role')
+                            ->inline()
+                            ->default(fn ($record) => $record->employment_status)
+                            ->options([1 => 'Active', 0 => 'Inactive'])
+                            ->colors([0 => 'danger', 1 => 'success'])
+                            ->icons([1 => 'heroicon-o-check-circle', 0 => 'heroicon-o-x-circle'])
+                            ->required(),
+                    ])
+                    ->action(function ($record, $data) {
+                        if ($record->employment_status == $data['role']) {
+                            Notification::make()
+                                ->title("No changes has made!")
+                                ->warning()
+                                ->color('warning')
+                                ->send();
+                        } else {
+                            $record->employment_status = $data['role'];
+                            $record->save();
+                            $stats = [1 => 'Active', 0 => 'Inactive'];
+                            Notification::make()
+                                ->title($record->full_name . " has been set as " . $stats[$data['role']] . "!")
+                                ->success()
+                                ->color('success')
+                                ->send();
+                        }
+                    }),
                 \Filament\Tables\Actions\EditAction::make('edit-employee')
                     ->slideOver()
-                    ->modalHeading(function ($record) {
-                        $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
-                        return 'Edit ' . str($name)->headline() . " information";
-                    })
+                    ->modalHeading(fn ($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
                     ->modalIcon('heroicon-o-pencil-square')
                     // ->mutateFormDataUsing(function (array $data, $record): array {
                     //     dd($data);

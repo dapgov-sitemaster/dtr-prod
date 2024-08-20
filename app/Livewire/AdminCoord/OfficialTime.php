@@ -48,18 +48,12 @@ class OfficialTime extends Component implements HasForms, HasTable
             // '10:00:00' => '10:00 AM',
         ];
 
-        if (auth()->user()->role == Role::CENTERADMINCOORD) {
-            $departments = Department::where('center', auth()->user()->employee->department->center)->get()->pluck('id')->toArray();
-        } else {
-            $departments = [auth()->user()->employee->department_id];
-        }
-
         return $table
             ->query(
                 Employee::query()
                     ->with(['official_time' => fn ($query) => $query->where('status', 'approved')])
                     ->where('employment_status', true)
-                    ->whereIn('department_id', $departments)
+                    ->departmentCovered()
             )
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('hris_number')
@@ -159,10 +153,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                     ->button()
                     ->modal()
                     ->modalWidth('xl')
-                    ->modalHeading(function ($record) {
-                        $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
-                        return 'Status of ' . str($name)->headline() . " change request of Official Time";
-                    })
+                    ->modalHeading(fn ($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
                     ->hidden(function ($record) {
                         if ($record->latest_official_time) {
                             if ($record->latest_official_time->status == 'pending') {
@@ -200,10 +191,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                 \Filament\Tables\Actions\Action::make('set-time')
                     ->button()
                     ->modalWidth('sm')
-                    ->modalHeading(function ($record) {
-                        $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
-                        return 'Set ' . str($name)->headline() . " official time";
-                    })
+                    ->modalHeading(fn ($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
                     ->hidden(function ($record): bool {
                         if ($record->latest_official_time) {
                             if ($record->latest_official_time->status === 'pending') {
@@ -265,34 +253,12 @@ class OfficialTime extends Component implements HasForms, HasTable
 
                         $official_time->movs()->create(['filename' => 'movs/' . $filename]);
 
-
-                        $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
-
                         Notification::make()
                             ->title("Saved Successfully!")
-                            ->body($name . " official time change request has been submitted. Please wait for the HR to evaluate!")
+                            ->body($record->apost_first_name . " official time change request has been submitted. Please wait for the HR to evaluate!")
                             ->success()
                             ->color('success')
                             ->send();
-                        // if ($record->official_time) {
-                        // }
-                        // else {
-                        //     $record->official_time()->create([
-                        //         'hris_number' => $record->hris_number,
-                        //         'time_in' => $data['official_time'],
-                        //         'status' => 'approved',
-                        //         'created_by' => auth()->user()->hris_number,
-                        //     ]);
-
-                        //     $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
-
-                        //     Notification::make()
-                        //         ->title("Saved Successfully!")
-                        //         ->body($name . " official time has been saved!")
-                        //         ->success()
-                        //         ->color('success')
-                        //         ->send();
-                        // }
                     })
             ])
             ->defaultSort('last_name', 'desc');

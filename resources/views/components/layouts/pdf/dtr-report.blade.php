@@ -123,8 +123,10 @@
                             {{-- DATE --}}
                             <td class="border">
                                 {{ Carbon\Carbon::parse($date)->format('m-d-Y, D'). (($report['is_flag']) ? ', Flag' : '') }}
-                                @if($report['schedule_type'] != null)
-                                    <span style="color: {{ ($report['schedule_type'] == 'FFT') ? 'red' : 'blue'}};font-size: small;">•</span>
+                                @if(Carbon\Carbon::parse($date)->dayOfWeek != Carbon\Carbon::MONDAY)
+                                    @if($report['schedule_type'] != null )
+                                        <span style="color: {{ ($report['schedule_type'] == 'FFT') ? 'red' : 'blue'}};font-size: small;">•</span>
+                                    @endif
                                 @endif
                             </td>
                             {{-- TIME IN AND OUT --}}
@@ -245,7 +247,7 @@
                     <td class="text-center w-full">
                         @if($employee['signature_blob'])
                             <div class="w-96 border-b-2 h-5 mx-auto" style="border-bottom: 1px solid;">
-                                <img src="data:image/png;base64, {{ base64_encode($employee['signature_blob']) }}" height="40px" alt="" draggable="false">
+                                {{-- <img src="data:image/png;base64, {{ base64_encode($employee['signature_blob']) }}" height="40px" alt="" draggable="false"> --}}
                             </div>
                         @else
                             <div class="w-96 border-b-2 mx-auto" style="border-bottom: 1px solid;height:40px;"></div>

@@ -20,18 +20,7 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
 {
     use InteractsWithTable, InteractsWithForms;
 
-    public $departments;
-
     #[Title('| Daily Time Records')]
-    public function mount()
-    {
-        if (auth()->user()->role == Role::CENTERADMINCOORD) {
-            $this->departments = Department::where('center', auth()->user()->employee->department->center)->get()->pluck('id')->toArray();
-        } else {
-            $this->departments = [auth()->user()->employee->department_id];
-        }
-    }
-
     public function render()
     {
         return view('livewire.admin-coord.daily-time-records');
@@ -44,7 +33,7 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                 Employee::query()
                     ->with(['official_time' => fn ($query) => $query->where('status', 'approved')])
                     ->where('employment_status', true)
-                    ->whereIn('department_id', $this->departments)
+                    ->departmentCovered()
             )
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('hris_number')
@@ -82,10 +71,7 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                         ->labeledFrom('md')
                         ->url(fn ($record) => route('admin.dtr.emp-time-entries', ['hris_number' => $record->hris_number])),
                     \Filament\Tables\Actions\Action::make('generate-report')
-                        ->modalHeading(function ($record) {
-                            $name = (str($record->first_name)->endsWith('s')) ? $record->first_name . "'" : $record->first_name . "'s";
-                            return 'Generate DTR Report of ' . str($name)->headline();
-                        })
+                        ->modalHeading(fn ($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
                         ->color('secondary')
                         ->icon('heroicon-m-document-arrow-down')
                         ->labeledFrom('md')

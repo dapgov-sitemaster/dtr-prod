@@ -3,14 +3,16 @@
 namespace App\Models;
 
 use App\Enums\ScheduleType;
+use Spatie\Activitylog\LogOptions;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class TimeEntry extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -33,6 +35,22 @@ class TimeEntry extends Model
         'time_end' => 'datetime',
         'schedule_type' => ScheduleType::class,
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->useLogName('time_entries')
+            ->setDescriptionForEvent(function (string $eventName) {
+                return match ($eventName) {
+                    'created' => auth()->user()->employee->full_name . " has created a new employee",
+                    'updated' => auth()->user()->employee->full_name . " has updated info",
+                    default => auth()->user()->employee->full_name . " has {$eventName} a employee"
+                };
+            })
+            ->dontSubmitEmptyLogs();
+    }
 
     public function employee()
     {

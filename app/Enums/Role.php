@@ -10,6 +10,7 @@ enum Role: string implements HasLabel, HasColor
     case EMPLOYEE = 'employee';
     case ADMINCOORD = 'admincoord';
     case CENTERADMINCOORD = 'centeradmincoord';
+    case GROUPADMINCOORD = 'groupadmincoord';
     case HRADMIN = 'hradmin';
     case TIMEKEEPER = 'timekeeper';
     case JOBBER = 'jobber';
@@ -21,6 +22,7 @@ enum Role: string implements HasLabel, HasColor
             self::EMPLOYEE => 'Employee',
             self::ADMINCOORD => 'Admin Coordinator',
             self::CENTERADMINCOORD => 'Center Admin Coordinator',
+            self::GROUPADMINCOORD => 'Group Admin Coordinator',
             self::HRADMIN => 'HR Administrator',
             self::TIMEKEEPER => 'Timekeeper',
             self::JOBBER => 'Jobber',
@@ -34,6 +36,7 @@ enum Role: string implements HasLabel, HasColor
             self::EMPLOYEE => 'gray',
             self::ADMINCOORD => 'success',
             self::CENTERADMINCOORD => 'success',
+            self::GROUPADMINCOORD => 'success',
             self::HRADMIN => 'primary',
             self::TIMEKEEPER => 'warning',
             self::JOBBER => 'gray',

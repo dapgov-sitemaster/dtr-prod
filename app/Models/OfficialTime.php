@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Casts\TimeCast;
 use App\Enums\ScheduleType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;

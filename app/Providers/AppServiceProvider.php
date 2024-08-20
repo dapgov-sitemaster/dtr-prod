@@ -38,7 +38,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('isAdminCoordinator', function (\App\Models\User $user) {
-            return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::ADMINCOORD || $user->role == \App\Enums\Role::CENTERADMINCOORD;
+            return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::ADMINCOORD || $user->role == \App\Enums\Role::CENTERADMINCOORD || $user->role == \App\Enums\Role::GROUPADMINCOORD;
         });
 
         Gate::define('isHrAdmin', function (\App\Models\User $user) {

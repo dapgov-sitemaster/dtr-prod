@@ -86,20 +86,19 @@ class DtrReportController extends Controller
     public function bulk(Department $department, Request $request, GenerateReport $generate, ProcessReport $process)
     {
         $title = null;
-        $department_query = null;
         $appointment_status = $request->get('appointment_status');
 
         if (auth()->user()->role == Role::ADMINCOORD || auth()->user()->role == Role::SUPERADMIN) {
             $title = $department->description;
-            $department_query = [$department->id];
         } else if (auth()->user()->role == Role::CENTERADMINCOORD) {
             $title = $department->group . '/' . $department->center;
-            $department_query = Department::select('id')->where('center', $department->center)->get()->pluck('id')->toArray();
+        } else if (auth()->user()->role == Role::GROUPADMINCOORD) {
+            $title = $department->group;
         }
 
         $employees = Employee::query()
             ->with(['official_time', 'department'])
-            ->whereIn('department_id', $department_query)
+            ->departmentCovered()
             ->where('appointment_status', AppointmentStatus::tryFrom($appointment_status))
             ->get();
 

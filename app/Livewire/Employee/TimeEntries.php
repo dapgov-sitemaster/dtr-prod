@@ -40,25 +40,19 @@ class TimeEntries extends Component implements HasForms, HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(
-                TimeEntry::where('hris_number', auth()->user()->hris_number)->latest()
-            )
+            ->query(TimeEntry::where('hris_number', auth()->user()->hris_number))
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('date')
                     ->label('Date')
-                    ->getStateUsing(fn ($record) => $record->time_start->format('Y-m-d'))
+                    ->getStateUsing(fn ($record) => $record->time_start->format('F d, Y'))
                     ->searchable(['time_start'])
                     ->sortable(['time_start']),
                 \Filament\Tables\Columns\TextColumn::make('time_start')
                     ->label('Time In')
-                    ->formatStateUsing(fn ($state) => $state->format('g:i A'))
-                    ->searchable()
-                    ->sortable(),
+                    ->formatStateUsing(fn ($state) => $state->format('g:i A')),
                 \Filament\Tables\Columns\TextColumn::make('time_end')
                     ->label('Time Out')
-                    ->formatStateUsing(fn ($state) => $state->format('g:i A'))
-                    ->searchable()
-                    ->sortable(),
+                    ->formatStateUsing(fn ($state) => $state->format('g:i A')),
                 \Filament\Tables\Columns\TextColumn::make('tag')
                     ->label('Type of Time Entry')
                     ->formatStateUsing(fn ($state) => ($state === 'ros') ? 'Report On-site' : 'Work from Home')
@@ -102,6 +96,7 @@ class TimeEntries extends Component implements HasForms, HasTable
                             );
                     })
             ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
-            ->emptyStateHeading('No Time Entries yet');
+            ->emptyStateHeading('No Time Entries yet')
+            ->defaultSort('time_start');
     }
 }

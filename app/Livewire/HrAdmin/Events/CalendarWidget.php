@@ -25,7 +25,6 @@ class CalendarWidget extends FullCalendarWidget
 {
     // protected static string $view = 'livewire.calendar-widget';
     public Model | string | null $model = Event::class;
-    public $departments;
 
     public function config(): array
     {
@@ -48,14 +47,6 @@ class CalendarWidget extends FullCalendarWidget
      */
     public function fetchEvents(array $fetchInfo): array
     {
-        if (auth()->user()->role == Role::CENTERADMINCOORD) {
-            $this->departments = Department::where('center', auth()->user()->employee->department->center)->get()->pluck('id')->toArray();
-        } else {
-            $this->departments = [auth()->user()->employee->department_id];
-        }
-
-        $departments = $this->departments;
-
         return $this->model::query()
             ->whereDate('start', '>=', $fetchInfo['start'])
             ->whereDate('end', '<=', $fetchInfo['end'])

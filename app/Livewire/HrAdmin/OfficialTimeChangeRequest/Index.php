@@ -21,17 +21,7 @@ class Index extends Component implements HasForms, HasTable
 {
     use InteractsWithTable, InteractsWithForms;
 
-    public $departments;
-
     #[Title('| Official Time Change Requests')]
-    public function mount()
-    {
-        if (auth()->user()->role == Role::CENTERADMINCOORD) {
-            $this->departments = Department::where('center', auth()->user()->employee->department->center)->get()->pluck('id')->toArray();
-        } else {
-            $this->departments = [auth()->user()->employee->department_id];
-        }
-    }
 
     public function render()
     {
@@ -41,7 +31,7 @@ class Index extends Component implements HasForms, HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(OfficialTime::whereHas('employee', fn ($query) => $query->whereIn('department_id', $this->departments))->latest())
+            ->query(OfficialTime::with('employee')->latest())
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('employee.hris_number')
                     ->label('HRIS Number')

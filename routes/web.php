@@ -22,6 +22,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/time-entries', App\Livewire\Employee\TimeEntries::class)->name('employee.time-entries');
         Route::get('/dtr-report', App\Livewire\Employee\DtrReport::class)->name('employee.dtr-report');
         Route::get('/work-from-home', App\Livewire\Employee\WorkFromHome::class)->middleware('haswfhsched')->name('employee.work-from-home');
+        Route::get('/profile/identity-photo', App\Livewire\Profile\IdentityPhoto::class)->name('employee.identity-photo');
+        Route::get('/profile/electronic-signature', App\Livewire\Profile\ElectronicSignature::class)->name('employee.electronic-signature');
+        Route::get('/profile/qr-code', App\Livewire\Profile\QrCode::class)->name('employee.qr-code');
     });
 
     // Admin Coord modules

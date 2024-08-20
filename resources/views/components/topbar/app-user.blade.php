@@ -22,22 +22,16 @@
                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
 
                 <!-- Authentication -->
-
-                {{-- <x-dropdown-link href="{{ route('user.profile') }}">
-                    {{ __('Profile') }}
-                </x-dropdown-link> --}}
-                <button @click="$dispatch('open-modal', { id: 'generate-qr' })" class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
+                <x-dropdown-link href="{{ route('employee.qr-code') }}">
                     {{ __('Generate QR Code') }}
-                </button>
-                <button @click="$dispatch('open-modal', { id: 'identity-photo' })" class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
+                </x-dropdown-link>
+                <x-dropdown-link href="{{ route('employee.identity-photo') }}">
                     {{ __('Identity Photo') }}
-                </button>
-                <button @click="$dispatch('open-modal', { id: 'e-signature' })" class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out">
+                </x-dropdown-link>
+                <x-dropdown-link href="{{ route('employee.electronic-signature') }}">
                     {{ __('E-Signature') }}
-                </button>
-                {{-- <x-dropdown-link href="{{ route('user.photo') }}">
-                    {{ __('Identity Photo') }}
-                </x-dropdown-link> --}}
+                </x-dropdown-link>
+                <div class="border-t border-gray-200 dark:border-gray-600"></div>
                 <x-dropdown-link href="{{ route('logout') }}">
                     {{ __('Log Out') }}
                 </x-dropdown-link>

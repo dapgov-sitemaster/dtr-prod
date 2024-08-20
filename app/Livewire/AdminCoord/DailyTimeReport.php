@@ -25,19 +25,11 @@ class DailyTimeReport extends Component implements HasForms, HasTable
 
     public function table(Table $table): Table
     {
-        $departments = null;
-
-        if (auth()->user()->role == Role::CENTERADMINCOORD) {
-            $departments = Department::where('center', auth()->user()->employee->department->center)->get()->pluck('id')->toArray();
-        } else {
-            $departments = [auth()->user()->employee->department_id];
-        }
-
         return $table
             ->query(
                 Employee::query()
-                    ->with(['time_entries' => fn($query) => $query->whereDate('time_start', now()->format('Y-m-d'))], ['event' => fn($query) => $query->whereDate('start', now()->format('Y-m-d'))])
-                    ->whereIn('department_id', $departments)
+                    ->with(['time_entries' => fn ($query) => $query->whereDate('time_start', now()->format('Y-m-d'))], ['event' => fn ($query) => $query->whereDate('start', now()->format('Y-m-d'))])
+                    ->departmentCovered()
             )
             // ->heading('Division/Office Daily Time Report ' . now()->format('F d, Y (D)'))
             // ->heading(function () {
