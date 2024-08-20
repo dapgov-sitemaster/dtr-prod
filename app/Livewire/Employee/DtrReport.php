@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\Event;
 use App\Models\Report;
 use Livewire\Component;
+use App\Models\Employee;
 use App\Actions\ProcessReport;
 use Livewire\Attributes\Title;
 use App\Actions\GenerateReport;
@@ -24,7 +25,7 @@ class DtrReport extends Component
     {
         $this->yearmonth = now()->format('Y-m');
         $this->cutoff = 1;
-        $this->employee = auth()->user()->employee;
+        $this->employee = Employee::with('official_time')->where('hris_number', auth()->user()->hris_number)->first();
     }
 
     public function render()
@@ -54,17 +55,19 @@ class DtrReport extends Component
             ->whereBetween('start', [$date_from, $date_to])
             ->get();
 
-        $dtr_report = Report::query()
-            ->where('hris_number', $this->employee->hris_number)
-            ->whereBetween('time_start', [$date_from, $date_to])
-            ->get();
+        // $dtr_report = Report::query()
+        //     ->where('hris_number', $this->employee->hris_number)
+        //     ->whereBetween('time_start', [$date_from, $date_to])
+        //     ->get();
+        $generate = new GenerateReport;
+        $dtr_report = $generate->handle($this->employee, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'));
 
         if ($dtr_report->isNotEmpty()) {
             $this->showDtr = true;
             $process = new ProcessReport;
             $processed = $process->handle($this->employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->format('Y-m-d'), $events);
             // dd($processed);
-            info($this->showDtr);
+            // info($this->showDtr);
             return $processed;
         }
 

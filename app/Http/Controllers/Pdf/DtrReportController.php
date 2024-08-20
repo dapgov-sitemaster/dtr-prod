@@ -63,6 +63,7 @@ class DtrReportController extends Controller
                 ->get();
 
             $dtr_report = $generate->handle($employee, $date_from->format('Y-m-d'), $date_to->copy()->addDay()->format('Y-m-d'));
+            // dd($dtr_report);
             $processed = $process->handle($employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->copy()->addDay()->format('Y-m-d'), $events);
 
 

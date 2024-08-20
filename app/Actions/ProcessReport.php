@@ -7,7 +7,8 @@ use App\Enums\Events;
 use App\Models\Event;
 use Carbon\CarbonPeriod;
 use App\Enums\ScheduleType;
-use Illuminate\Database\Eloquent\Collection;
+// use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 
 class ProcessReport
 {
@@ -31,7 +32,6 @@ class ProcessReport
 
         foreach ($dates as $date) {
             $time = clone $dtr->whereBetween('time_start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
-
             $flag = clone $events->where('tag', Events::FLAG)->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
             $holiday = clone $events->where('tag', Events::HOL)->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
             $suspended = clone $events->where('tag', Events::SUS)->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
@@ -42,7 +42,6 @@ class ProcessReport
             $suspended_remarks = $suspended->map(fn ($item) => ['value' => strtoupper($item->tag->value)])->toArray();
             $holiday_remarks = $holiday->map(fn ($item) => ['value' => strtoupper($item->tag->value)])->toArray();
             $remarks = collect()->merge($schedule_remarks)->merge($flag_remarks)->merge($suspended_remarks)->merge($holiday_remarks);
-            // $remarks = collect($schedule_remarks);
 
             $isflag = false;
             $tardy = null;
