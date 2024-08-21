@@ -29,7 +29,7 @@ Route::middleware('auth')->group(function () {
 
     // Admin Coord modules
 
-    Route::prefix('admin')->middleware('checkrole:admincoord,centeradmincoord')->group(function () {
+    Route::prefix('admin')->middleware(['checkrole:admincoord,centeradmincoord', 'checkcenter:PASIG'])->group(function () {
         Route::get('/official-time', App\Livewire\AdminCoord\OfficialTime::class)->name('admin.official-time');
 
         Route::get('/event-calendar', App\Livewire\AdminCoord\EventCalendar::class)->name('admin.event-calendar');
@@ -45,7 +45,7 @@ Route::middleware('auth')->group(function () {
 
     // HR Admin modules
 
-    Route::prefix('hr-admin')->middleware('checkrole:hradmin')->group(function () {
+    Route::prefix('hr-admin')->middleware(['checkrole:hradmin', 'checkcenter:PASIG'])->group(function () {
         Route::get('/master-list', App\Livewire\HrAdmin\EmployeeMasterlist::class)->name('hr-admin.master-list');
         Route::get('/dtr-report', App\Livewire\HrAdmin\GenerateDtrReport::class)->name('hr-admin.generate-dtr-report.index');
         Route::get('/dtr-report/employee/{hris_number}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'individual'])->name('hradmin.dtr.emp-dtr-report');
@@ -54,6 +54,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/events', App\Livewire\HrAdmin\Events\Index::class)->name('hr-admin.events.index');
         Route::get('/time-entries', App\Livewire\HrAdmin\TimeEntries::class)->name('hr-admin.time-entries.index');
         // Route::get('/dtr-report', App\Livewire\Employee\DtrReport::class)->name('employee.dtr-report');
+    });
+
+    Route::prefix('dapcc')->middleware('checkcenter:DAPCC')->group(function () {
+        // DAPCC HR Admin modules
+        Route::get('/hr-admin/events', App\Livewire\Dapcc\HrAdmin\Events\Index::class)->middleware('checkrole:hradmin')->name('dapcc.hr-admin.events');
+
+        // DAPCC Admin Coordinator
+        Route::get('/admin/event-calendar', App\Livewire\Dapcc\AdminCoord\Events\Index::class)->middleware('checkrole:admincoord,centeradmincoord')->name('dapcc.admin.event-calendar');
     });
 
     // Route::get('/user/identity-photo', App\Livewire\Profile\IdentityPhoto::class)->name('user.photo');
