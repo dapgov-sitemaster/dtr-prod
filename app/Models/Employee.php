@@ -141,7 +141,10 @@ class Employee extends Model
 
     public function scopeIsDapcc($query)
     {
-        return $query->whereHas('department', fn ($query) => (Gate::allows('view-dapcc')) ? $query->where('center', 'TEST') : $query);
+        if (auth()->user()->role && !Gate::allows('view-dapcc')) {
+            return $query;
+        }
+        return $query->whereHas('department', fn ($query) => $query->where('center', 'DAPCC'));
     }
 
     public function scopeSearchEmployee($query, $search)

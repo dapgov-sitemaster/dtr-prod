@@ -34,7 +34,7 @@ class Event extends Model
     protected function casts(): array
     {
         return [
-            'tag' => \App\Enums\Events::class,
+            'tag' => Gate::allows('view-dapcc') ? \App\Enums\Dapcc\Events::class : \App\Enums\Events::class,
             'start' => 'datetime',
             'end' => 'datetime',
         ];
