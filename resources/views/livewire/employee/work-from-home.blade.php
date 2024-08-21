@@ -79,7 +79,6 @@
                                             setInterval(() => {
                                                 const now = new Date().getTime();
                                                 const remainingTime = now - endDate;
-                                                console.log(remainingTime);
                                                 $data.remainingTime = remainingTime > 0 ? remainingTime : 0;
                                             }, 1000);
                                         }"
@@ -154,10 +153,10 @@
 
 
                 <div class="my-4">
-                    <x-button wire:click="time_capture" disabled="{{ ($entries->first()->time_end == null) ? 'true' : 'false' }}" color="primary" class="py-1 px-5 mx-1">
+                    <x-button x-on:click="$wire.$refresh()" wire:click="time_capture" disabled="{{ ($entries->first()->time_end == null) ? 'true' : 'false' }}" color="primary" class="py-1 px-5 mx-1">
                         Start
                     </x-button>
-                    <x-button wire:click="time_capture" disabled="{{ ($entries->first()->time_end != null) ? 'true' : 'false' }}" color="primary" class="py-1 px-5 mx-1">
+                    <x-button x-on:click="$wire.$refresh()" wire:click="time_capture" disabled="{{ ($entries->first()->time_end != null) ? 'true' : 'false' }}" color="primary" class="py-1 px-5 mx-1">
                         Stop
                     </x-button>
                 </div>
@@ -208,3 +207,11 @@
         </div> --}}
     </div>
 </div>
+@script
+    <script>
+        document.addEventListener('refresh-page', event => {
+           window.location.reload(false);
+        })
+      </script>
+
+@endscript

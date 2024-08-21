@@ -101,6 +101,7 @@ class CalendarWidget extends FullCalendarWidget
                         $form->fill([
                             'hris_number' => $record->hris_number,
                             'tag' => $tag,
+                            'description_leave' => OfficialLeaves::parse($record->description) ?? $record->description,
                             'starts_at' => $arguments['event']['start'] ?? $record->start->format('Y-m-d'),
                             'ends_at' => $arguments['event']['end'] ?? $record->end->format('Y-m-d')
                         ]);

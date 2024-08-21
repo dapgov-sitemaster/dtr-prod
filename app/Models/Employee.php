@@ -43,6 +43,10 @@ class Employee extends Model
         'appointment_status' => AppointmentStatus::class,
     ];
 
+    protected $appends = [
+        'full_name'
+    ];
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -51,9 +55,9 @@ class Employee extends Model
             ->useLogName('employee')
             ->setDescriptionForEvent(function (string $eventName) {
                 return match ($eventName) {
-                    'created' => auth()->user()->employee->full_name . " has created a new employee",
-                    'updated' => auth()->user()->employee->full_name . " has updated info",
-                    default => auth()->user()->employee->full_name . " has {$eventName} a employee"
+                    'created' => $this->full_name . " has created a new employee",
+                    'updated' => $this->full_name . " has updated info",
+                    default => $this->full_name . " has {$eventName} a employee"
                 };
             })
             ->dontSubmitEmptyLogs();

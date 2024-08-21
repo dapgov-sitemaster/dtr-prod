@@ -48,28 +48,31 @@ class DtrReport extends Component
         $date_from = Carbon::parse($range['date_from']);
         $date_to = Carbon::parse($range['date_to'])->addDay();
 
-        $events = Event::query()
-            ->select('id', 'tag', 'start', 'hris_number')
-            ->where('hris_number', $this->employee->hris_number)
-            ->orWhere('hris_number', NULL)
-            ->whereBetween('start', [$date_from, $date_to])
-            ->get();
+        if ($date_to < now()) {
+            $events = Event::query()
+                ->select('id', 'tag', 'start', 'hris_number')
+                ->where('hris_number', $this->employee->hris_number)
+                ->orWhere('hris_number', NULL)
+                ->whereBetween('start', [$date_from, $date_to])
+                ->get();
 
-        // $dtr_report = Report::query()
-        //     ->where('hris_number', $this->employee->hris_number)
-        //     ->whereBetween('time_start', [$date_from, $date_to])
-        //     ->get();
-        $generate = new GenerateReport;
-        $dtr_report = $generate->handle($this->employee, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'));
+            // $dtr_report = Report::query()
+            //     ->where('hris_number', $this->employee->hris_number)
+            //     ->whereBetween('time_start', [$date_from, $date_to])
+            //     ->get();
+            $generate = new GenerateReport;
+            $dtr_report = $generate->handle($this->employee, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'));
 
-        if ($dtr_report->isNotEmpty()) {
-            $this->showDtr = true;
-            $process = new ProcessReport;
-            $processed = $process->handle($this->employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->format('Y-m-d'), $events);
-            // dd($processed);
-            // info($this->showDtr);
-            return $processed;
+            if ($dtr_report->isNotEmpty()) {
+                $this->showDtr = true;
+                $process = new ProcessReport;
+                $processed = $process->handle($this->employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->format('Y-m-d'), $events);
+                // dd($processed);
+                // info($this->showDtr);
+                return $processed;
+            }
         }
+
 
         $this->showDtr = false;
         return ["message" => "DTR Report for " . Carbon::parse($yearmonth)->format('F Y') . " " . (($cutoff == 1) ? 'First Cut-off' : 'Second Cut-off') . " are not yet Generated. Please wait for the Admin Coordinator to generate the DTR Report."];
