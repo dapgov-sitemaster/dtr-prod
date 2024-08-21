@@ -13,6 +13,7 @@ use App\Models\Department;
 use App\Enums\ScheduleType;
 use Illuminate\Support\Str;
 use Filament\Widgets\Widget;
+use App\Enums\OfficialLeaves;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -56,7 +57,7 @@ class CalendarWidget extends FullCalendarWidget
                     ->id($event->id)
                     ->title(
                         ($event->tag == Events::HOL || $event->tag == Events::SUS || $event->tag == Events::FLAG) ?
-                            $event->tag->getLabel() :
+                            $event->description :
                             $event->employee->last_name . ', ' . Str::initials($event->employee->first_name)
                     )
                     ->extraProperties([
@@ -88,6 +89,7 @@ class CalendarWidget extends FullCalendarWidget
                 ->modalHeading('Edit Event')
                 ->mountUsing(
                     function (Event $record, Forms\Form $form, array $arguments) {
+
                         $tag = $record->tag;
                         if ($record->tag == Events::WFH || $record->tag == Events::HWFH) {
                             if (Carbon::parse($arguments['event']['start'])->dayOfWeek != Carbon::FRIDAY) {
@@ -98,11 +100,14 @@ class CalendarWidget extends FullCalendarWidget
                         $form->fill([
                             'hris_number' => $record->hris_number,
                             'tag' => $tag,
+                            'description_leave' => OfficialLeaves::parse($record->description) ?? $record->description,
+                            'description' => $record->description,
                             'starts_at' => $arguments['event']['start'] ?? $record->start->format('Y-m-d'),
                             'ends_at' => $arguments['event']['end'] ?? $record->end->format('Y-m-d')
                         ]);
                     }
                 )
+                ->form($this->editActionFormSchema())
                 ->mutateFormDataUsing(function (array $data, $record): array {
                     $official_time = $record->official_time;
                     $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
@@ -111,9 +116,16 @@ class CalendarWidget extends FullCalendarWidget
                         $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
                         $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
                     }
+                    if ($data['tag'] == Events::ALA) {
+                        $description = $data['description_leave'];
+                    } else if ($record->tag == Events::HOL || $record->tag == Events::SUS) {
+                        $description = $data['description'];
+                    } else {
+                        $description = $data['tag']->getLabel();
+                    }
                     $data['start'] = $time_start->format('Y-m-d H:i:s');
                     $data['end'] = $time_end->format('Y-m-d H:i:s');
-                    $data['description'] = Events::parse($data['tag'])->getLabel();
+                    $data['description'] = $description;
 
                     return $data;
                 }),
@@ -147,7 +159,7 @@ class CalendarWidget extends FullCalendarWidget
                                 $data['end'] = $data['ends_at'] . ' ' . $data['time'] . ':00';
                             }
                         } else if (Events::parse($data['tag']) == Events::HOL || Events::parse($data['tag']) == Events::FLAG) {
-                            $data['description'] = Events::parse($data['tag'])->getLabel();
+                            $data['description'] = (Events::parse($data['tag']) == Events::HOL) ? $data['description'] : Events::parse($data['tag'])->getLabel();
                             $data['start'] = $data['starts_at'] . ' 08:00:00';
                             $data['end'] = $data['ends_at'] . ' 17:00:00';
                         }
@@ -159,7 +171,15 @@ class CalendarWidget extends FullCalendarWidget
                             $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
                             $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
                         }
-                        $description = Events::tryFrom($data['tag'])->getLabel();
+
+                        if (Events::parse($data['tag']) == Events::ALA) {
+                            $description = $data['description_leave'];
+                        } else if (Events::parse($data['tag']) == Events::HOL || Events::parse($data['tag']) == Events::SUS) {
+                            $description = $data['description'];
+                        } else {
+                            $description = $data['tag']->getLabel();
+                        }
+
                         $data['start'] = $time_start->format('Y-m-d H:i:s');
                         $data['end'] = $time_end->format('Y-m-d H:i:s');
                         $data['description'] = $description;
@@ -169,6 +189,30 @@ class CalendarWidget extends FullCalendarWidget
                     $data['created_by'] = auth()->user()->hris_number;
 
                     return $data;
+                })
+                ->using(function (array $data, string $model) {
+                    if (array_key_exists('hris_number', $data)) {
+                        foreach ($data['hris_number'] as $hris_number) {
+                            $model::create([
+                                'hris_number' => $hris_number,
+                                'start' => $data['start'],
+                                'end' => $data['end'],
+                                'tag' => $data['tag'],
+                                'description' => $data['description'],
+                                'status' => $data['status'],
+                                'created_by' => $data['created_by'],
+                            ]);
+                        }
+                    } else {
+                        $model::create([
+                            'start' => $data['start'],
+                            'end' => $data['end'],
+                            'tag' => $data['tag'],
+                            'description' => $data['description'],
+                            'status' => $data['status'],
+                            'created_by' => $data['created_by'],
+                        ]);
+                    }
                 }),
         ];
     }
@@ -179,7 +223,17 @@ class CalendarWidget extends FullCalendarWidget
             $this->record = $this->resolveRecord($event['id']);
         }
 
-        if (Carbon::parse($event['start'])->format('Y-m-d') < $this->record->start->format('Y-m-d')) {
+        if ($this->record->tag == Events::HOL || $this->record->tag == Events::SUS || $this->record->tag == Events::FLAG) {
+            $this->mountAction('edit', [
+                'type' => 'drop',
+                'event' => $event,
+                'oldEvent' => $oldEvent,
+                'relatedEvents' => $relatedEvents,
+                'delta' => $delta,
+                'oldResource' => $oldResource,
+                'newResource' => $newResource,
+            ]);
+        } else if (Carbon::parse($event['start'])->format('Y-m-d') < $this->record->start->format('Y-m-d')) {
             Notification::make()
                 ->title("Unable to move event!")
                 ->body("Event can't be move backwards from the current Date.")
@@ -321,7 +375,7 @@ class CalendarWidget extends FullCalendarWidget
                                 ->color('success')
                                 ->send();
                         })
-                        ->hidden(fn ($record): bool => $record->tag->value === 'wfh' || $record->tag->value === 'hwfh'),
+                        ->hidden(fn ($record): bool => $record->tag === Events::WFH || $record->tag->value === Events::HWFH || $record->tag == Events::HOL || $record->tag == Events::SUS || $record->tag == Events::FLAG),
                     // ...$livewire->getCachedModalActions(),
                     Actions\EditAction::make()
                         ->mountUsing(
@@ -329,11 +383,37 @@ class CalendarWidget extends FullCalendarWidget
                                 $form->fill([
                                     'hris_number' => $record->hris_number,
                                     'tag' => $record->tag,
+                                    'description_leave' => OfficialLeaves::parse($record->description) ?? $record->description,
+                                    'description' => $record->description,
                                     'starts_at' => $arguments['event']['start'] ?? $record->start->format('Y-m-d'),
                                     'ends_at' => $arguments['event']['end'] ?? $record->end->format('Y-m-d')
                                 ]);
                             }
                         )
+                        ->form($this->editActionFormSchema())
+                        ->mutateFormDataUsing(function (array $data, $record): array {
+                            $official_time = $record->official_time;
+                            $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
+                            $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                            if ($record->official_time) {
+                                $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
+                                $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                            }
+
+                            if ($data['tag'] == Events::ALA) {
+                                $description = $data['description_leave'];
+                            } else if ($record->tag == Events::HOL || $record->tag == Events::SUS) {
+                                $description = $data['description'];
+                            } else {
+                                $description = $data['tag']->getLabel();
+                            }
+
+                            $data['start'] = $time_start->format('Y-m-d H:i:s');
+                            $data['end'] = $time_end->format('Y-m-d H:i:s');
+                            $data['description'] = $description;
+
+                            return $data;
+                        })
                         ->visible(function ($record) {
                             if ($record->start->format('Y-m-d') >= now()->format('Y-m-d')) {
                                 return true;
@@ -395,8 +475,18 @@ class CalendarWidget extends FullCalendarWidget
                         })
                         ->native(false)
                         ->required()
-                        ->columnSpanFull()
                         ->live(),
+                    \Filament\Forms\Components\Select::make('description_leave')
+                        ->label('Type of Official Leave')
+                        ->options(OfficialLeaves::class)
+                        ->native(false)
+                        ->visible(function (Get $get) {
+                            return match (Events::parse($get('tag'))) {
+                                Events::ALA => true,
+                                default => false,
+                            };
+                        })
+                        ->required(),
                     \Filament\Forms\Components\TextInput::make('description')
                         ->required()
                         ->visible(fn (Get $get) => match (Events::parse($get('tag'))) {
@@ -405,8 +495,98 @@ class CalendarWidget extends FullCalendarWidget
                         }),
                     \Filament\Forms\Components\Select::make('hris_number')
                         ->label('Employee Name')
+                        ->multiple()
                         // ->options(\App\Models\Employee::where('employment_status', true)->get()->pluck('full_name', 'hris_number'))
                         ->getSearchResultsUsing(fn (string $search): array => Employee::searchEmployee($search)->limit(50)->get()->pluck('full_name', 'hris_number')->toArray())
+                        ->getOptionLabelUsing(fn ($value): ?string => Employee::find($value)?->full_name)
+                        ->native(false)
+                        ->searchable(['first_name', 'last_name', 'hris_number'])
+                        ->required()
+                        ->columnSpanFull()
+                        ->hidden(fn (Get $get) => match (Events::parse($get('tag'))) {
+                            Events::HOL, Events::SUS, Events::FLAG => true,
+                            default => false,
+                        }),
+                    Forms\Components\Grid::make()
+                        ->visible(fn (Get $get) => Gate::allows('special-events') && Events::parse($get('tag')) == Events::SUS)
+                        ->schema([
+                            Forms\Components\Checkbox::make('whole_day')
+                                ->label('is Whole Day')
+                                ->live(),
+                            Forms\Components\TimePicker::make('time')
+                                ->visible(fn (Get $get) => !$get('whole_day'))
+                                ->label('Suspension Time')
+                                ->required()
+                                ->seconds(false),
+                        ]),
+                ])
+        ];
+    }
+
+    public function editActionFormSchema(): array
+    {
+        return [
+            Forms\Components\Grid::make()
+                ->schema([
+                    Forms\Components\DatePicker::make('starts_at')
+                        ->weekStartsOnSunday()
+                        ->native(false)
+                        ->closeOnDateSelection()
+                        ->minDate(now()->format('Y-m-d'))
+                        ->live()
+                        ->required(),
+                    Forms\Components\DatePicker::make('ends_at')
+                        ->weekStartsOnSunday()
+                        ->native(false)
+                        ->closeOnDateSelection()
+                        ->minDate(now()->format('Y-m-d'))
+                        ->live()
+                        ->required(),
+                ]),
+            Forms\Components\Grid::make()
+                ->visible(fn (Get $get) => $get('starts_at') != '' && $get('ends_at') != '')
+                ->schema([
+                    \Filament\Forms\Components\Select::make('tag')
+                        ->label('Type of Event')
+                        ->options(function (Get $get) {
+                            $options = [];
+                            foreach (Events::cases() as $case) {
+                                if ($case == Events::WFH || $case == Events::HWFH) {
+                                    if (Carbon::parse($get('starts_at'))->dayOfWeek == Carbon::FRIDAY) {
+                                        if (Carbon::parse($get('starts_at'))->format('Y-m-d') == Carbon::parse($get('ends_at'))->format('Y-m-d')) {
+                                            $options[$case->value] = $case->getLabel();
+                                        }
+                                    }
+                                } else {
+                                    $options[$case->value] = $case->getLabel();
+                                }
+                            }
+                            return $options;
+                        })
+                        ->native(false)
+                        ->required()
+                        ->live(),
+                    \Filament\Forms\Components\Select::make('description_leave')
+                        ->label('Type of Official Leave')
+                        ->options(OfficialLeaves::class)
+                        ->native(false)
+                        ->visible(function (Get $get) {
+                            return match (Events::parse($get('tag'))) {
+                                Events::ALA => true,
+                                default => false,
+                            };
+                        })
+                        ->required(),
+                    \Filament\Forms\Components\TextInput::make('description')
+                        ->required()
+                        ->visible(fn (Get $get) => match (Events::parse($get('tag'))) {
+                            Events::HOL, Events::SUS => true,
+                            default => false,
+                        }),
+                    \Filament\Forms\Components\Select::make('hris_number')
+                        ->label('Employee Name')
+                        // ->options(\App\Models\Employee::whereIn('department_id', $this->departments)->where('employment_status', true)->get()->pluck('full_name', 'hris_number'))
+                        ->getSearchResultsUsing(fn (string $search): array => Employee::searchEmployee($search)->departmentCovered()->limit(50)->get()->pluck('full_name', 'hris_number')->toArray())
                         ->getOptionLabelUsing(fn ($value): ?string => Employee::find($value)?->full_name)
                         ->native(false)
                         ->searchable(['first_name', 'last_name'])

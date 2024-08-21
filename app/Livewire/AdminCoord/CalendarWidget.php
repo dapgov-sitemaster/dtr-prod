@@ -59,7 +59,7 @@ class CalendarWidget extends FullCalendarWidget
                     ->id($event->id)
                     ->title(
                         ($event->tag == Events::HOL || $event->tag == Events::SUS || $event->tag == Events::FLAG) ?
-                            $event->tag->getLabel() :
+                            $event->description :
                             $event->employee->last_name . ', ' . Str::initials($event->employee->first_name)
                     )
                     ->extraProperties([
@@ -148,40 +148,23 @@ class CalendarWidget extends FullCalendarWidget
                     }
                 )
                 ->mutateFormDataUsing(function (array $data): array {
-                    if (Gate::allows('special-events') && (Events::parse($data['tag']) == Events::HOL || Events::parse($data['tag']) == Events::SUS || Events::parse($data['tag']) == Events::FLAG)) {
-                        if (Events::parse($data['tag']) == Events::SUS) {
-                            if ($data['whole_day']) {
-                                $data['start'] = $data['starts_at'] . ' 08:00:00';
-                                $data['end'] = $data['ends_at'] . ' 17:00:00';
-                            } else {
-                                $data['start'] = $data['starts_at'] . ' ' . $data['time'] . ':00';
-                                $data['end'] = $data['ends_at'] . ' ' . $data['time'] . ':00';
-                            }
-                        } else if (Events::parse($data['tag']) == Events::HOL || Events::parse($data['tag']) == Events::FLAG) {
-                            $data['description'] = Events::parse($data['tag'])->getLabel();
-                            $data['start'] = $data['starts_at'] . ' 08:00:00';
-                            $data['end'] = $data['ends_at'] . ' 17:00:00';
-                        }
-                    } else {
-                        $official_time = \App\Models\OfficialTime::where('hris_number', $data['hris_number'])->where('status', 'approved')->first();
-                        $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
-                        $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
-                        if ($official_time) {
-                            $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
-                            $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
-                        }
-
-                        if (Events::parse($data['tag']) == Events::ALA) {
-                            $description = $data['description_leave'];
-                        } else {
-                            $description = Events::tryFrom($data['tag'])->getLabel();
-                        }
-
-                        $data['start'] = $time_start->format('Y-m-d H:i:s');
-                        $data['end'] = $time_end->format('Y-m-d H:i:s');
-                        $data['description'] = $description;
+                    $official_time = \App\Models\OfficialTime::where('hris_number', $data['hris_number'])->where('status', 'approved')->first();
+                    $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
+                    $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                    if ($official_time) {
+                        $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
+                        $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
                     }
 
+                    if (Events::parse($data['tag']) == Events::ALA) {
+                        $description = $data['description_leave'];
+                    } else {
+                        $description = Events::tryFrom($data['tag'])->getLabel();
+                    }
+
+                    $data['start'] = $time_start->format('Y-m-d H:i:s');
+                    $data['end'] = $time_end->format('Y-m-d H:i:s');
+                    $data['description'] = $description;
                     $data['status'] = 'approved';
                     $data['created_by'] = auth()->user()->hris_number;
 
@@ -209,7 +192,14 @@ class CalendarWidget extends FullCalendarWidget
             $this->record = $this->resolveRecord($event['id']);
         }
 
-        if (Carbon::parse($event['start'])->format('Y-m-d') < $this->record->start->format('Y-m-d') && $this->record->start->format('Y-m-d') < now()->format('Y-m-d')) {
+        if ($this->record->tag == Events::HOL || $this->record->tag == Events::SUS || $this->record->tag == Events::FLAG) {
+            Notification::make()
+                ->title("Unable to move event!")
+                ->body("You do not have the permission to move this Event!.")
+                ->warning()
+                ->color('warning')
+                ->send();
+        } else if (Carbon::parse($event['start'])->format('Y-m-d') < $this->record->start->format('Y-m-d') && $this->record->start->format('Y-m-d') < now()->format('Y-m-d')) {
             Notification::make()
                 ->title("Unable to move event!")
                 ->body("Event can't be move backwards from the current Date.")
@@ -360,7 +350,15 @@ class CalendarWidget extends FullCalendarWidget
                                 ->color('success')
                                 ->send();
                         })
-                        ->hidden(fn ($record): bool => $record->tag->value === 'wfh' || $record->tag->value === 'hwfh'),
+                        ->hidden(function ($record): bool {
+                            if ($record->tag == Events::HOL || $record->tag == Events::SUS || $record->tag == Events::FLAG) {
+                                return true;
+                            }
+                            if ($record->tag === Events::WFH || $record->tag === Events::HWFH) {
+                                return true;
+                            }
+                            return false;
+                        }),
                     // ...$livewire->getCachedModalActions(),
                     Actions\EditAction::make()
                         ->mountUsing(
@@ -383,10 +381,10 @@ class CalendarWidget extends FullCalendarWidget
                                 $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
                             }
 
-                            if (Events::parse($data['tag']) == Events::ALA) {
+                            if ($data['tag'] == Events::ALA) {
                                 $description = $data['description_leave'];
                             } else {
-                                $description = Events::tryFrom($data['tag'])->getLabel();
+                                $description = $data['tag']->getLabel();
                             }
 
                             $data['start'] = $time_start->format('Y-m-d H:i:s');
@@ -396,6 +394,9 @@ class CalendarWidget extends FullCalendarWidget
                             return $data;
                         })
                         ->visible(function ($record) {
+                            if ($record->tag == Events::HOL || $record->tag == Events::SUS || $record->tag == Events::FLAG) {
+                                return false;
+                            }
                             if ($record->start->format('Y-m-d') >= now()->format('Y-m-d')) {
                                 return true;
                             }
@@ -404,6 +405,9 @@ class CalendarWidget extends FullCalendarWidget
                     Actions\DeleteAction::make()
                         ->requiresConfirmation()
                         ->visible(function ($record) {
+                            if ($record->tag == Events::HOL || $record->tag == Events::SUS || $record->tag == Events::FLAG) {
+                                return false;
+                            }
                             if ($record->start->format('Y-m-d') >= now()->format('Y-m-d')) {
                                 return true;
                             }
@@ -448,7 +452,7 @@ class CalendarWidget extends FullCalendarWidget
                                             $options[$case->value] = $case->getLabel();
                                         }
                                     }
-                                } else {
+                                } else if ($case != Events::HOL && $case != Events::FLAG && $case != Events::SUS) {
                                     $options[$case->value] = $case->getLabel();
                                 }
                             }
@@ -468,12 +472,6 @@ class CalendarWidget extends FullCalendarWidget
                             };
                         })
                         ->required(),
-                    \Filament\Forms\Components\TextInput::make('description')
-                        ->required()
-                        ->visible(fn (Get $get) => match (Events::parse($get('tag'))) {
-                            Events::HOL, Events::SUS => true,
-                            default => false,
-                        }),
                     \Filament\Forms\Components\Select::make('hris_number')
                         ->label('Employee Name')
                         ->multiple()
@@ -481,7 +479,7 @@ class CalendarWidget extends FullCalendarWidget
                         ->getSearchResultsUsing(fn (string $search): array => Employee::searchEmployee($search)->departmentCovered()->limit(10)->get()->pluck('full_name', 'hris_number')->toArray())
                         ->getOptionLabelUsing(fn ($value): ?string => Employee::find($value)?->full_name)
                         ->native(false)
-                        ->searchable(['first_name', 'last_name'])
+                        ->searchable(['first_name', 'last_name', 'hris_number'])
                         ->required()
                         ->columnSpanFull()
                         ->hidden(fn (Get $get) => match (Events::parse($get('tag'))) {
@@ -538,7 +536,7 @@ class CalendarWidget extends FullCalendarWidget
                                             $options[$case->value] = $case->getLabel();
                                         }
                                     }
-                                } else {
+                                } else if ($case != Events::HOL && $case != Events::FLAG && $case != Events::SUS) {
                                     $options[$case->value] = $case->getLabel();
                                 }
                             }
@@ -558,12 +556,6 @@ class CalendarWidget extends FullCalendarWidget
                             };
                         })
                         ->required(),
-                    \Filament\Forms\Components\TextInput::make('description')
-                        ->required()
-                        ->visible(fn (Get $get) => match (Events::parse($get('tag'))) {
-                            Events::HOL, Events::SUS => true,
-                            default => false,
-                        }),
                     \Filament\Forms\Components\Select::make('hris_number')
                         ->label('Employee Name')
                         // ->options(\App\Models\Employee::whereIn('department_id', $this->departments)->where('employment_status', true)->get()->pluck('full_name', 'hris_number'))

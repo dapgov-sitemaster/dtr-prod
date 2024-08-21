@@ -36,4 +36,13 @@ enum OfficialLeaves: string implements HasLabel
             self::AL => 'Adoption Leave',
         };
     }
+
+    public static function parse(Events | string | null $value): ?self
+    {
+        if ($value instanceof self) {
+            return $value;
+        }
+
+        return self::tryFrom($value);
+    }
 }

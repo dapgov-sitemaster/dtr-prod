@@ -5,7 +5,7 @@ use App\Livewire\Auth\Login;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/sign-in');
-Route::get('/sign-in', Login::class)->name('login');
+Route::get('/sign-in', Login::class)->middleware('guest')->name('login');
 
 Route::middleware('auth')->group(function () {
     Route::get('/home', App\Livewire\Home::class)->name('home');
