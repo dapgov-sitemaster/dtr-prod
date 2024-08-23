@@ -10,10 +10,24 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('/login', [AuthController::class, 'login']);
+// Route::post('/login', [AuthController::class, 'login'])->name('v1.login'); // this is for new qr scanner app, i guess....
+Route::prefix('v1')->post('/login/new', [AuthController::class, 'login'])->name('v1.login');
+Route::post('/mvpool/login', [AuthController::class, 'mvpool_login'])->name('mvpool.login');
 
-Route::middleware('auth:sanctum')->group(function() {
-    Route::post('/attendance/employee-info', [AttendanceController::class, 'info']);
+Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
+    Route::post('/time_entry/info/new', [AttendanceController::class, 'info'])->name('v1.time_entry.info');
+    // Route::post('/attendance/employee-info', [AttendanceController::class, 'info']); // this is for qr scanner app, i guess....
 
-    Route::post('/attendance/time-capture', [AttendanceController::class, 'time_capture']);
+    Route::post('/time_entry/capture', [AttendanceController::class, 'old_time_capture'])->name('v1.time_entry');
+
+    Route::post('/attendance/time-capture', [AttendanceController::class, 'time_capture'])->name('pasig.time_entry');
+    Route::post('/attendance/dapcc/time-capture', [AttendanceController::class, 'dapcc_time_entry'])->name('dapcc.time_entry');
+
+
+    Route::post('/mvpool/time_entry/new', [AttendanceController::class, 'mvpool_time_entry'])->name('mvpool.timeentry');
+    Route::post('/mvpool/location', [AttendanceController::class, 'location'])->middleware('auth:sanctum')->name('v1.location');
+    Route::get('/mvpool/time_entries', [AttendanceController::class, 'mvpool_time_entries'])->middleware('auth:sanctum')->name('v1.time_entries');
+    // Route::get('/mvpool/time_entries', [NewAuthController::class, 'time_entries'])->middleware('auth:sanctum')->name('v1.time_entries');
+    // Route::post('/mvpool/location', [NewTimeEntryController::class, 'location'])->middleware('auth:sanctum')->name('v1.location');
+    // Route::post('/mvpool/time_entry/new', [NewTimeEntryController::class, 'mvpool_time_entry'])->middleware('auth:sanctum')->name('v1.timeentry');
 });

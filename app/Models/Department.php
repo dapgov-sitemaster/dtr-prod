@@ -33,6 +33,6 @@ class Department extends Model
 
     public function scopeIsDapcc($query)
     {
-        return $query->when(Gate::allows('view-dapcc'), fn ($query) => $query->where('center', 'TEST'));
+        return $query->when(Gate::allows('view-dapcc'), fn($query) => $query->where('center', 'DAPCC'));
     }
 }

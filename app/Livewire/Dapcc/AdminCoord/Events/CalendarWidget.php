@@ -27,17 +27,6 @@ class CalendarWidget extends FullCalendarWidget
 {
     // protected static string $view = 'livewire.calendar-widget';
     public Model | string | null $model = Event::class;
-    public $departments;
-
-    public function mount($departments)
-    {
-        $this->departments = $departments;
-        // if (auth()->user()->role == Role::CENTERADMINCOORD) {
-        //     $this->departments = Department::where('center', auth()->user()->employee->department->center)->get()->pluck('id')->toArray();
-        // } else {
-        //     $this->departments = [auth()->user()->employee->department_id];
-        // }
-    }
 
     public function config(): array
     {
@@ -49,7 +38,7 @@ class CalendarWidget extends FullCalendarWidget
                 'center' => 'title',
                 'right' => 'prev,next today',
             ],
-            'selectable' => true,
+            // 'selectable' => true,
             'editable' => true,
         ];
     }
@@ -60,15 +49,13 @@ class CalendarWidget extends FullCalendarWidget
      */
     public function fetchEvents(array $fetchInfo): array
     {
-        $departments = $this->departments;
-
         return $this->model::query()
-            ->whereHas('employee', fn ($query) => $query->isDapcc()->whereIn('department_id', $departments))
+            ->whereHas('employee', fn($query) => $query->departmentCovered())
             ->whereDate('start', '>=', Carbon::parse($fetchInfo['start'])->subMonth()->format('Y-m-d'))
             ->whereDate('end', '<=', Carbon::parse($fetchInfo['end'])->addMonth()->format('Y-m-d'))
             ->get()
             ->map(
-                fn (Event $event) => EventData::make()
+                fn(Event $event) => EventData::make()
                     ->id($event->id)
                     ->title(
                         ($event->tag == Events::HOL || $event->tag == Events::SUS || $event->tag == Events::FLAG) ?
@@ -158,43 +145,29 @@ class CalendarWidget extends FullCalendarWidget
                     }
                 )
                 ->mutateFormDataUsing(function (array $data): array {
-                    if (Gate::allows('special-events') && (Events::parse($data['tag']) == Events::HOL || Events::parse($data['tag']) == Events::SUS || Events::parse($data['tag']) == Events::FLAG)) {
-                        if (Events::parse($data['tag']) == Events::SUS) {
-                            if ($data['whole_day']) {
-                                $data['start'] = $data['starts_at'] . ' 08:00:00';
-                                $data['end'] = $data['ends_at'] . ' 17:00:00';
-                            } else {
-                                $data['start'] = $data['starts_at'] . ' ' . $data['time'] . ':00';
-                                $data['end'] = $data['ends_at'] . ' ' . $data['time'] . ':00';
-                            }
-                        } else if (Events::parse($data['tag']) == Events::HOL || Events::parse($data['tag']) == Events::FLAG) {
-                            $data['description'] = Events::parse($data['tag'])->getLabel();
-                            $data['start'] = $data['starts_at'] . ' 08:00:00';
-                            $data['end'] = $data['ends_at'] . ' 17:00:00';
-                        }
-                    } else {
-                        $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
-                        $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
-                        $official_time = \App\Models\OfficialTime::where('hris_number', $data['hris_number'])->where('status', 'approved')->first();
+                    $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
+                    // $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                    $time_end = $time_start->copy()->addHours(9);
+                    $official_time = \App\Models\OfficialTime::where('hris_number', $data['hris_number'])->where('status', 'approved')->first();
 
-                        if ($official_time) {
-                            $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
-                            $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
-                        } else if (Events::parse($data['tag']) == Events::SHIFT || Events::parse($data['tag']) == Events::DAYOFF) {
-                            $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . $data['timestarts_at']);
-                            $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . $data['timeends_at']);
-                        }
-
-                        if (Events::parse($data['tag']) == Events::ALA) {
-                            $description = $data['description_leave'];
-                        } else {
-                            $description = Events::tryFrom($data['tag'])->getLabel();
-                        }
-
-                        $data['start'] = $time_start->format('Y-m-d H:i:s');
-                        $data['end'] = $time_end->format('Y-m-d H:i:s');
-                        $data['description'] = $description;
+                    if ($official_time) {
+                        $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
+                        $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '17:00:00');
+                    } else if (Events::parse($data['tag']) == Events::SHIFT || Events::parse($data['tag']) == Events::DAYOFF) {
+                        $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . $data['timestarts_at']);
+                        // $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . $data['timeends_at']);
+                        $time_end = $time_start->copy()->addHours(9);
                     }
+
+                    if (Events::parse($data['tag']) == Events::ALA) {
+                        $description = $data['description_leave'];
+                    } else {
+                        $description = Events::tryFrom($data['tag'])->getLabel();
+                    }
+
+                    $data['start'] = $time_start->format('Y-m-d H:i:s');
+                    $data['end'] = $time_end->format('Y-m-d H:i:s');
+                    $data['description'] = $description;
 
                     $data['status'] = 'approved';
                     $data['created_by'] = auth()->user()->hris_number;
@@ -269,7 +242,7 @@ class CalendarWidget extends FullCalendarWidget
                     'sm' => 1,
                     'xl' => 2,
                 ])
-                    ->hidden(fn ($record) => match (Events::parse($record->tag)) {
+                    ->hidden(fn($record) => match (Events::parse($record->tag)) {
                         Events::HOL, Events::SUS, Events::FLAG => true,
                         default => false,
                     })
@@ -293,7 +266,7 @@ class CalendarWidget extends FullCalendarWidget
                                     })
                                     ->placeholder('Not available'),
                             ])
-                            ->visible(fn ($record) => $record->employee->official_time && $record->tag == Events::SHIFT),
+                            ->visible(fn($record) => $record->employee->official_time && $record->tag == Events::SHIFT),
                         \Filament\Infolists\Components\Grid::make([
                             'sm' => 1,
                             'xl' => 2,
@@ -308,7 +281,7 @@ class CalendarWidget extends FullCalendarWidget
                                     ->label('Time End')
                                     ->placeholder('Not set'),
                             ])
-                            ->visible(fn ($record) => !$record->employee->official_time && $record->tag == Events::SHIFT),
+                            ->visible(fn($record) => !$record->employee->official_time && $record->tag == Events::SHIFT),
                         \Filament\Infolists\Components\TextEntry::make('tag')
                             ->label('Type of Event')
                             ->badge(),
@@ -329,7 +302,7 @@ class CalendarWidget extends FullCalendarWidget
                                 return route('admin.pdf.view-mov', ['mov' => $record->mov]);
                             }, shouldOpenInNewTab: true)
                             ->placeholder('No uploaded file')
-                            ->hidden(fn ($record): bool => $record->tag === Events::SHIFT || $record->tag == Events::DAYOFF),
+                            ->hidden(fn($record): bool => $record->tag === Events::SHIFT || $record->tag == Events::DAYOFF),
                         \Filament\Infolists\Components\TextEntry::make('created_by.first_name')
                             ->label('Created by'),
                     ]),
@@ -337,7 +310,7 @@ class CalendarWidget extends FullCalendarWidget
                     'sm' => 1,
                     'xl' => 2,
                 ])
-                    ->visible(fn ($record) => match (Events::parse($record->tag)) {
+                    ->visible(fn($record) => match (Events::parse($record->tag)) {
                         Events::HOL, Events::SUS, Events::FLAG => true,
                         default => false,
                     })
@@ -349,18 +322,18 @@ class CalendarWidget extends FullCalendarWidget
                             ->label('Event Description'),
                         \Filament\Infolists\Components\TextEntry::make('start')
                             ->dateTime('g:i A')
-                            ->visible(fn ($record) => Events::parse($record->tag) == Events::SUS && $record->start == $record->end)
+                            ->visible(fn($record) => Events::parse($record->tag) == Events::SUS && $record->start == $record->end)
                             ->label('Time Start'),
                         \Filament\Infolists\Components\TextEntry::make('created_by.first_name')
                             ->label('Created by'),
                     ]),
             ])
             ->modalFooterActions(
-                fn (\Filament\Actions\ViewAction $action, FullCalendarWidget $livewire) => [
+                fn(\Filament\Actions\ViewAction $action, FullCalendarWidget $livewire) => [
                     \Filament\Actions\Action::make('upload-mov')
                         ->label('Upload MOV')
                         ->color('success')
-                        ->hidden(fn ($record) => match (Events::parse($record->tag)) {
+                        ->hidden(fn($record) => match (Events::parse($record->tag)) {
                             Events::HOL, Events::SUS, Events::FLAG => true,
                             default => false,
                         })
@@ -397,7 +370,7 @@ class CalendarWidget extends FullCalendarWidget
                                 ->color('success')
                                 ->send();
                         })
-                        ->hidden(fn ($record): bool => $record->tag === Events::SHIFT || $record->tag == Events::DAYOFF),
+                        ->hidden(fn($record): bool => $record->tag === Events::SHIFT || $record->tag == Events::DAYOFF),
                     // ...$livewire->getCachedModalActions(),
                     Actions\EditAction::make()
                         ->mountUsing(
@@ -408,7 +381,7 @@ class CalendarWidget extends FullCalendarWidget
                                     'timestarts_at' => ($record->tag == Events::SHIFT || $record->tag == Events::DAYOFF) ? $record->start->format('H:i') : null,
                                     'timeends_at' => ($record->tag == Events::SHIFT || $record->tag == Events::DAYOFF) ? $record->end->format('H:i') : null,
                                     'starts_at' => $arguments['event']['start'] ?? $record->start->format('Y-m-d'),
-                                    'ends_at' => $arguments['event']['end'] ?? $record->end->format('Y-m-d')
+                                    // 'ends_at' => $arguments['event']['end'] ?? $record->end->format('Y-m-d')
                                 ]);
                             }
                         )
@@ -416,14 +389,16 @@ class CalendarWidget extends FullCalendarWidget
                         ->mutateFormDataUsing(function (array $data, $record): array {
                             $official_time = $record->official_time;
                             $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
-                            $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                            // $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                            $time_end = $time_start->copy()->addHours(9);
 
                             if ($official_time) {
                                 $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
-                                $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                                $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '17:00:00');
                             } else if (Events::parse($data['tag']) == Events::SHIFT || Events::parse($data['tag']) == Events::DAYOFF) {
                                 $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . $data['timestarts_at']);
-                                $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . $data['timeends_at']);
+                                // $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . $data['timeends_at']);
+                                $time_end = $time_start->copy()->addHours(9);
                             }
 
                             if (Events::parse($data['tag']) == Events::ALA) {
@@ -469,24 +444,24 @@ class CalendarWidget extends FullCalendarWidget
                         ->minDate(now()->format('Y-m-d'))
                         ->live()
                         ->required(),
-                    Forms\Components\DatePicker::make('ends_at')
-                        ->weekStartsOnSunday()
-                        ->native(false)
-                        ->closeOnDateSelection()
-                        ->minDate(now()->format('Y-m-d'))
-                        ->live()
-                        ->required(),
+                    // Forms\Components\DatePicker::make('ends_at')
+                    //     ->weekStartsOnSunday()
+                    //     ->native(false)
+                    //     ->closeOnDateSelection()
+                    //     ->minDate(now()->format('Y-m-d'))
+                    //     ->live()
+                    //     ->required(),
                 ]),
             Forms\Components\Grid::make()
-                ->visible(fn (Get $get) => $get('starts_at') != '' && $get('ends_at') != '')
+                ->visible(fn(Get $get) => $get('starts_at') != '')
                 ->schema([
                     \Filament\Forms\Components\Select::make('tag')
                         ->label('Type of Event')
                         ->options(function () {
                             if (!Gate::allows('special-events')) {
                                 return collect(Events::cases())
-                                    ->filter(fn ($case) => $case !== Events::SUS && $case !== Events::HOL && $case !== Events::FLAG)
-                                    ->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])
+                                    ->filter(fn($case) => $case !== Events::SUS && $case !== Events::HOL && $case !== Events::FLAG)
+                                    ->mapWithKeys(fn($case) => [$case->value => $case->getLabel()])
                                     ->toArray();
                             }
 
@@ -512,7 +487,7 @@ class CalendarWidget extends FullCalendarWidget
                                 ->seconds(false)
                                 ->required(),
                         ])
-                        ->visible(fn (Get $get) => Events::parse($get('tag')) == Events::SHIFT || Events::parse($get('tag')) == Events::DAYOFF),
+                        ->visible(fn(Get $get) => Events::parse($get('tag')) == Events::SHIFT || Events::parse($get('tag')) == Events::DAYOFF),
                     \Filament\Forms\Components\Select::make('description_leave')
                         ->label('Type of Official Leave')
                         ->options(OfficialLeaves::class)
@@ -526,19 +501,20 @@ class CalendarWidget extends FullCalendarWidget
                         ->required(),
                     \Filament\Forms\Components\TextInput::make('description')
                         ->required()
-                        ->visible(fn (Get $get) => match (Events::parse($get('tag'))) {
+                        ->visible(fn(Get $get) => match (Events::parse($get('tag'))) {
                             Events::HOL, Events::SUS => true,
                             default => false,
                         }),
                     \Filament\Forms\Components\Select::make('hris_number')
                         ->label('Employee Name')
                         ->multiple()
-                        ->getSearchResultsUsing(fn (string $search): array => Employee::isDapcc()->searchEmployee($search)->limit(50)->get()->pluck('full_name', 'hris_number')->toArray())
-                        ->getOptionLabelUsing(fn ($value): ?string => Employee::find($value)?->full_name)
+                        ->getSearchResultsUsing(fn(string $search): array => Employee::departmentCovered()->searchEmployee($search)->limit(50)->get()->pluck('full_name', 'hris_number')->toArray())
+                        ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->full_name)
                         ->native(false)
+                        ->searchable(['first_name', 'last_name', 'hris_number'])
                         ->required()
                         ->columnSpanFull()
-                        ->hidden(fn (Get $get) => match (Events::parse($get('tag'))) {
+                        ->hidden(fn(Get $get) => match (Events::parse($get('tag'))) {
                             Events::HOL, Events::SUS, Events::FLAG => true,
                             default => false,
                         }),
@@ -558,24 +534,24 @@ class CalendarWidget extends FullCalendarWidget
                         ->minDate(now()->format('Y-m-d'))
                         ->live()
                         ->required(),
-                    Forms\Components\DatePicker::make('ends_at')
-                        ->weekStartsOnSunday()
-                        ->native(false)
-                        ->closeOnDateSelection()
-                        ->minDate(now()->format('Y-m-d'))
-                        ->live()
-                        ->required(),
+                    // Forms\Components\DatePicker::make('ends_at')
+                    //     ->weekStartsOnSunday()
+                    //     ->native(false)
+                    //     ->closeOnDateSelection()
+                    //     ->minDate(now()->format('Y-m-d'))
+                    //     ->live()
+                    //     ->required(),
                 ]),
             Forms\Components\Grid::make()
-                ->visible(fn (Get $get) => $get('starts_at') != '' && $get('ends_at') != '')
+                ->visible(fn(Get $get) => $get('starts_at') != '')
                 ->schema([
                     \Filament\Forms\Components\Select::make('tag')
                         ->label('Type of Event')
                         ->options(function () {
                             if (!Gate::allows('special-events')) {
                                 return collect(Events::cases())
-                                    ->filter(fn ($case) => $case !== Events::SUS && $case !== Events::HOL && Events::FLAG)
-                                    ->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])
+                                    ->filter(fn($case) => $case !== Events::SUS && $case !== Events::HOL && Events::FLAG)
+                                    ->mapWithKeys(fn($case) => [$case->value => $case->getLabel()])
                                     ->toArray();
                             }
 
@@ -601,7 +577,7 @@ class CalendarWidget extends FullCalendarWidget
                                 ->seconds(false)
                                 ->required(),
                         ])
-                        ->visible(fn (Get $get) => Events::parse($get('tag')) == Events::SHIFT || Events::parse($get('tag')) == Events::DAYOFF),
+                        ->visible(fn(Get $get) => Events::parse($get('tag')) == Events::SHIFT || Events::parse($get('tag')) == Events::DAYOFF),
                     \Filament\Forms\Components\Select::make('description_leave')
                         ->label('Type of Official Leave')
                         ->options(OfficialLeaves::class)
@@ -613,37 +589,19 @@ class CalendarWidget extends FullCalendarWidget
                             };
                         })
                         ->required(),
-                    \Filament\Forms\Components\TextInput::make('description')
-                        ->required()
-                        ->visible(fn (Get $get) => match (Events::parse($get('tag'))) {
-                            Events::HOL, Events::SUS => true,
-                            default => false,
-                        }),
                     \Filament\Forms\Components\Select::make('hris_number')
                         ->label('Employee Name')
                         // ->options(\App\Models\Employee::isDapcc()->where('employment_status', true)->get()->pluck('full_name', 'hris_number'))
-                        ->getSearchResultsUsing(fn (string $search): array => Employee::isDapcc()->searchEmployee($search)->limit(50)->get()->pluck('full_name', 'hris_number')->toArray())
-                        ->getOptionLabelUsing(fn ($value): ?string => Employee::where('hris_number', $value)->first()?->full_name)
+                        ->getSearchResultsUsing(fn(string $search): array => Employee::isDapcc()->departmentCovered()->searchEmployee($search)->limit(50)->get()->pluck('full_name', 'hris_number')->toArray())
+                        ->getOptionLabelUsing(fn($value): ?string => Employee::where('hris_number', $value)->first()?->full_name)
                         ->native(false)
-                        ->searchable(['first_name', 'last_name'])
+                        ->searchable(['first_name', 'last_name', 'hris_number'])
                         ->required()
                         ->columnSpanFull()
-                        ->hidden(fn (Get $get) => match (Events::parse($get('tag'))) {
+                        ->hidden(fn(Get $get) => match (Events::parse($get('tag'))) {
                             Events::HOL, Events::SUS, Events::FLAG => true,
                             default => false,
                         }),
-                    Forms\Components\Grid::make()
-                        ->visible(fn (Get $get) => Gate::allows('special-events') && Events::parse($get('tag')) == Events::SUS)
-                        ->schema([
-                            Forms\Components\Checkbox::make('whole_day')
-                                ->label('is Whole Day')
-                                ->live(),
-                            Forms\Components\TimePicker::make('time')
-                                ->visible(fn (Get $get) => !$get('whole_day'))
-                                ->label('Suspension Time')
-                                ->required()
-                                ->seconds(false),
-                        ]),
                 ])
         ];
     }

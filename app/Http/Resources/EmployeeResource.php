@@ -21,6 +21,7 @@ class EmployeeResource extends JsonResource
             'department' => $this->department->description,
             'identity_photo_path' => $this->identity_photo_path,
             'time_entry' => now()->format('g:i A'),
+            'route' => ($this->department->center == 'DAPCC') ? route('dapcc.time_entry') : route('pasig.time_entry'),
         ];
     }
 }

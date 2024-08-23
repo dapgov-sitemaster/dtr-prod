@@ -58,10 +58,22 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('dapcc')->middleware('checkcenter:DAPCC')->group(function () {
         // DAPCC HR Admin modules
-        Route::get('/hr-admin/events', App\Livewire\Dapcc\HrAdmin\Events\Index::class)->middleware('checkrole:hradmin')->name('dapcc.hr-admin.events');
+        Route::prefix('hr-admin')->middleware('checkrole:hradmin')->group(function () {
+            Route::get('/events', App\Livewire\Dapcc\HrAdmin\Events\Index::class)->name('dapcc.hr-admin.events');
+            Route::get('/dtr-report', App\Livewire\Dapcc\HrAdmin\GenerateDtrReports::class)->name('dapcc.hr-admin.generate-dtr-report');
+            Route::get('/dtr-report/employee/{hris_number}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'dapcc_individual'])->name('dapcc.hradmin.dtr.emp-dtr-report');
+            Route::get('/dtr-report/bulk/{department}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'dapcc_bulk'])->name('dapcc.hradmin.dtr.bulk-dtr-report');
+            Route::get('/time-entries', App\Livewire\HrAdmin\TimeEntries::class)->name('dapcc.hr-admin.time-entries.index');
+        });
 
         // DAPCC Admin Coordinator
-        Route::get('/admin/event-calendar', App\Livewire\Dapcc\AdminCoord\Events\Index::class)->middleware('checkrole:admincoord,centeradmincoord')->name('dapcc.admin.event-calendar');
+        Route::prefix('admin')->middleware('checkrole:admincoord,centeradmincoord,groupadmincoord')->group(function () {
+            Route::get('/event-calendar', App\Livewire\Dapcc\AdminCoord\Events\Index::class)->name('dapcc.admin.event-calendar');
+            Route::get('/daily-time-records', App\Livewire\Dapcc\AdminCoord\DailyTimeRecords::class)->name('dapcc.admin.dtr.index');
+            // Route::get('/daily-time-records/{hris_number}/time-entries', App\Livewire\AdminCoord\EmployeeTimeEntries::class)->name('admin.dtr.emp-time-entries');
+            Route::get('/daily-time-records/employee/{hris_number}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'dapcc_individual'])->name('dapcc.admin.dtr.emp-dtr-report');
+            Route::get('/daily-time-records/bulk/{department}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'dapcc_bulk'])->name('dapcc.admin.dtr.bulk-dtr-report');
+        });
     });
 
     // Route::get('/user/identity-photo', App\Livewire\Profile\IdentityPhoto::class)->name('user.photo');

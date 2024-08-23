@@ -18,14 +18,61 @@ class AuthController extends Controller
 
         $attempt = Auth::guard('web')->attempt($validated);
 
-        if($attempt) {
+        if ($attempt) {
             $user = User::where('email', $request->email)->first();
             $token = $user->createToken($user->id)->plainTextToken;
 
-            return response()->json(['token' => $token], 200);
-        }
-        else {
+            $endpoint = env('AZURE_STORAGE_API_ENDPOINT');
+            $sas_token = env('AZURE_STORAGE_SAS_TOKEN');
+
+            return response()->json(['token' => $token, 'endpoint' => $endpoint, 'sas_token' => $sas_token], 200);
+        } else {
             return response()->json(['message' => 'User credentials are not correct.'], 422);
         }
     }
+
+    public function mvpool_login(Request $request)
+    {
+        $fields = $request->validate([
+            'email' => 'required',
+            'password' => 'required'
+        ]);
+
+        if (Auth::guard('web')->attempt($fields)) {
+            $user = User::where('email', $request->email)->first();
+
+            if (count($user->tokens->where('name', $user->hris_number . '-access')) > 0) {
+                $response = "token-existed";
+            } else {
+                $response = $user->createToken($user->hris_number . '-access')->plainTextToken;
+            }
+            // $token = $user->createToken($user->hris_number.'-access', ['mvpool:access'])->plainTextToken;
+
+            return response()->json(['status' => 'success', 'response' => $response]);
+        } else {
+            return response()->json(['status' => 'failed']);
+        }
+    }
+
+    // public function old_login(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'email' => 'required|email',
+    //         'password' => 'required',
+    //     ]);
+
+    //     $attempt = Auth::guard('web')->attempt($validated);
+
+    //     if ($attempt) {
+    //         $user = User::where('email', $request->email)->first();
+    //         $token = $user->createToken($user->id)->plainTextToken;
+
+    //         $endpoint = env('AZURE_STORAGE_API_ENDPOINT');
+    //         $sas_token = env('AZURE_STORAGE_SAS_TOKEN');
+
+    //         return response()->json(['token' => $token, 'endpoint' => $endpoint, 'sas_token' => $sas_token], 200);
+    //     } else {
+    //         return response()->json(['message' => 'User credentials are not correct.'], 422);
+    //     }
+    // }
 }

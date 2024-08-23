@@ -35,6 +35,7 @@ class TimeEntries extends Component implements HasForms, HasTable
             ->query(
                 TimeEntry::query()
                     ->with('employee')
+                    ->isDapcc()
             )
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('hris_number')
@@ -54,18 +55,18 @@ class TimeEntries extends Component implements HasForms, HasTable
                     ->sortable(['group', 'center', 'office']),
                 \Filament\Tables\Columns\TextColumn::make('date')
                     ->label('Date')
-                    ->getStateUsing(fn ($record) => $record->time_start->format('M d, Y'))
+                    ->getStateUsing(fn($record) => $record->time_start->format('M d, Y'))
                     ->searchable(['time_start'])
                     ->sortable(['time_start']),
                 \Filament\Tables\Columns\TextColumn::make('time_start')
                     ->label('Time In')
-                    ->formatStateUsing(fn ($state) => $state->format('g:i A')),
+                    ->formatStateUsing(fn($state) => $state->format('g:i A')),
                 \Filament\Tables\Columns\TextColumn::make('time_end')
                     ->label('Time Out')
-                    ->formatStateUsing(fn ($state) => $state->format('g:i A')),
+                    ->formatStateUsing(fn($state) => $state->format('g:i A')),
                 \Filament\Tables\Columns\TextColumn::make('tag')
                     ->label('Type of Time Entry')
-                    ->formatStateUsing(fn ($state) => ($state === 'ros') ? 'Report On-site' : 'Work from Home')
+                    ->formatStateUsing(fn($state) => ($state === 'ros') ? 'Report On-site' : 'Work from Home')
                     ->searchable()
                     ->sortable(),
             ])
@@ -82,8 +83,8 @@ class TimeEntries extends Component implements HasForms, HasTable
                             ->placeholder('Enter HRIS Number or Name')
                             ->validationAttribute('Employee')
                             ->native(false)
-                            ->getSearchResultsUsing(fn (string $search): array => Employee::searchEmployee($search)->limit(50)->get()->pluck('full_name', 'hris_number')->toArray())
-                            ->getOptionLabelUsing(fn ($value): ?string => Employee::find($value)?->full_name)
+                            ->getSearchResultsUsing(fn(string $search): array => Employee::searchEmployee($search)->limit(50)->get()->pluck('full_name', 'hris_number')->toArray())
+                            ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->full_name)
                             ->searchable(['first_name', 'last_name', 'hris_number'])
                             ->required()
                             ->columnSpanFull(),
@@ -262,7 +263,7 @@ class TimeEntries extends Component implements HasForms, HasTable
                         return $query
                             ->when(
                                 $data['tag'],
-                                fn (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder => $query->whereIn('tag', $data['tag']),
+                                fn(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder => $query->whereIn('tag', $data['tag']),
                             );
                     })
             ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)

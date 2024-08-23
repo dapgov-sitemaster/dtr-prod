@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Role;
 use App\Enums\ScheduleType;
 use Spatie\Activitylog\LogOptions;
 use Illuminate\Support\Facades\Gate;
@@ -69,6 +70,9 @@ class TimeEntry extends Model
 
     public function scopeIsDapcc($query)
     {
-        return $query->whereHas('department', fn ($query) => (Gate::allows('view-dapcc')) ? $query->where('center', 'TEST') : $query);
+        if (Gate::allows('view-pasig')) {
+            return $query;
+        }
+        return $query->whereHas('department', fn($query) => $query->where('center', 'DAPCC'));
     }
 }
