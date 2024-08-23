@@ -60,9 +60,9 @@ class User extends Authenticatable
             ->useLogName('user')
             ->setDescriptionForEvent(function (string $eventName) {
                 return match ($eventName) {
-                    'created' => $this->employee->full_name . " has created a new employee",
-                    'updated' => $this->employee->full_name . " has updated info of",
-                    default => $this->employee->full_name . " has {$eventName} a employee"
+                    'created' => auth()->user()->employee->full_name . " has created a new employee",
+                    'updated' => auth()->user()->employee->full_name . " has updated info of",
+                    default => auth()->user()->employee->full_name . " has {$eventName} a employee"
                 };
             })
             ->dontSubmitEmptyLogs();

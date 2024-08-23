@@ -34,6 +34,7 @@ class Event extends Model
     protected function casts(): array
     {
         return [
+            // 'tag' => Gate::allows('view-dapcc') ? \App\Enums\Dapcc\Events::class : \App\Enums\Events::class,
             'tag' => \App\Enums\Events::class,
             'start' => 'datetime',
             'end' => 'datetime',
@@ -46,7 +47,7 @@ class Event extends Model
             ->logFillable()
             ->logOnlyDirty()
             ->useLogName('event')
-            ->setDescriptionForEvent(fn (string $eventName) => $this->employee->full_name . " has {$eventName} an event")
+            ->setDescriptionForEvent(fn(string $eventName) => $this->employee->full_name . " has {$eventName} an event")
             ->dontSubmitEmptyLogs();
     }
 

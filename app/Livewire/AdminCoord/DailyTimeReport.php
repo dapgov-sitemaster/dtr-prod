@@ -28,7 +28,7 @@ class DailyTimeReport extends Component implements HasForms, HasTable
         return $table
             ->query(
                 Employee::query()
-                    ->with(['time_entries' => fn ($query) => $query->whereDate('time_start', now()->format('Y-m-d'))], ['event' => fn ($query) => $query->whereDate('start', now()->format('Y-m-d'))])
+                    ->with(['time_entries' => fn($query) => $query->whereDate('time_start', now()->format('Y-m-d'))], ['event' => fn($query) => $query->whereDate('start', now()->format('Y-m-d'))])
                     ->departmentCovered()
             )
             // ->heading('Division/Office Daily Time Report ' . now()->format('F d, Y (D)'))
@@ -62,7 +62,7 @@ class DailyTimeReport extends Component implements HasForms, HasTable
                             } else if ($record->time_entries->count() > 1) {
                                 return ($record->time_entries->first()->time_end) ? $record->time_entries->first()->time_end->format('g:i A') : $record->time_entries->first()->time_start->format('g:i A');
                             } else {
-                                return $record->time_entries->first()->time_end->format('g:i A');
+                                return $record->time_entries->first()->time_end?->format('g:i A');
                             }
                         }
                         return null;

@@ -39,8 +39,8 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
             ->query(
                 Employee::query()
                     ->withoutGlobalScopes()
+                    ->isDapcc()
                     ->with('department', 'official_time', 'user')
-                    ->latest()
             )
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('hris_number')
@@ -91,10 +91,14 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                                     ->placeholder('Enter 6 digit HRIS number')
                                     ->autocomplete(false)
                                     ->length(6)
+                                    ->validationAttribute('HRIS Number')
+                                    ->unique(table: User::class)
                                     ->required(),
                                 \Filament\Forms\Components\TextInput::make('email')
                                     ->placeholder('Enter DAP Email Address')
                                     ->email()
+                                    ->validationAttribute('DAP Email Address')
+                                    ->unique(table: User::class)
                                     ->autocomplete(false)
                                     ->required(),
                                 \Filament\Forms\Components\Select::make('department_id')
@@ -235,6 +239,8 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                                 \Filament\Forms\Components\TextInput::make('email')
                                     ->placeholder('Enter DAP Email Address')
                                     ->email()
+                                    ->validationAttribute('DAP Email Address')
+                                    ->unique(table: User::class)
                                     ->autocomplete(false)
                                     ->required(),
                                 \Filament\Forms\Components\Select::make('department_id')
@@ -312,7 +318,8 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                     ->options(Department::all()->pluck('description', 'id'))
                     ->searchable()
                     ->native(false),
-            ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent);
+            ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
+            ->defaultSort('created_at');
     }
 
     // public function employeeAction()

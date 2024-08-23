@@ -66,28 +66,28 @@ class Employee extends Model
     protected function firstName(): Attribute
     {
         return Attribute::make(
-            get: fn (string $value) => Str::title($value),
+            get: fn(string $value) => Str::title($value),
         );
     }
 
     protected function apostFirstName(): Attribute
     {
         return Attribute::make(
-            get: fn () => (str($this->first_name)->endsWith('s')) ? $this->first_name . "'" : $this->first_name . "'s",
+            get: fn() => (str($this->first_name)->endsWith('s')) ? $this->first_name . "'" : $this->first_name . "'s",
         );
     }
 
     protected function lastName(): Attribute
     {
         return Attribute::make(
-            get: fn (string $value) => Str::title($value),
+            get: fn(string $value) => Str::title($value),
         );
     }
 
     protected function middleName(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => ($value) ? Str::title($value) : null,
+            get: fn($value) => ($value) ? Str::title($value) : null,
         );
     }
 
@@ -131,7 +131,7 @@ class Employee extends Model
     {
         $user_dept = auth()->user()->employee->department;
         $departments = match (auth()->user()->role) {
-            Role::ADMINCOORD => [$user_dept->center],
+            Role::ADMINCOORD => [$user_dept->id],
             Role::CENTERADMINCOORD => Department::select('id')->where('center', $user_dept->center)->get()->pluck('id')->toArray(),
             Role::GROUPADMINCOORD => Department::select('id')->where('group', $user_dept->group)->get()->pluck('id')->toArray(),
             default => [],
@@ -141,7 +141,10 @@ class Employee extends Model
 
     public function scopeIsDapcc($query)
     {
-        return $query->whereHas('department', fn ($query) => (Gate::allows('view-dapcc')) ? $query->where('center', 'TEST') : $query);
+        if (auth()->user()->role == Role::SUPERADMIN && !Gate::allows('view-dapcc')) {
+            return $query;
+        }
+        return $query->whereHas('department', fn($query) => $query->where('center', 'DAPCC'));
     }
 
     public function scopeSearchEmployee($query, $search)

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Location;
 use App\Models\TimeEntry;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -49,6 +50,14 @@ class TimeEntryJob implements ShouldQueue
             $time_entry = $this->data['latest'];
             $time_entry->time_end = $this->data['time_end'];
             $time_entry->save();
+        }
+
+        if (array_key_exists('location', $this->data)) {
+            $new_loc = new Location();
+            $new_loc->time_entry_id = $time_entry->id;
+            $new_loc->location = $this->data['location']['address'];
+            $new_loc->coordinates = $this->data['location']['coordinates'];
+            $new_loc->save();
         }
     }
 }

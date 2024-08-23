@@ -28,6 +28,14 @@ class AppServiceProvider extends ServiceProvider
             return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::HRADMIN;
         });
 
+        Gate::define('view-dapcc', function (\App\Models\User $user) {
+            return $user->role == \App\Enums\Role::SUPERADMIN || $user->employee->department->center == 'DAPCC';
+        });
+
+        Gate::define('view-pasig', function (\App\Models\User $user) {
+            return $user->role == \App\Enums\Role::SUPERADMIN || $user->employee->department->center != 'DAPCC';
+        });
+
         Gate::define('has-wfh-schedule', function (\App\Models\User $user) {
             $event = $user->employee->event()->whereDate('start', now()->format('Y-m-d'))->first();
             if ($event?->tag == \App\Enums\Events::WFH) {
