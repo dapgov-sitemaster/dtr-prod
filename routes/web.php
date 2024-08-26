@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\Pdf\QrCodeController;
+use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\Login;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/sign-in');
 Route::get('/sign-in', Login::class)->middleware('guest')->name('login');
+Route::get('/forgot-password', ForgotPassword::class)->middleware('guest')->name('forgot-password');
 
 Route::middleware('auth')->group(function () {
     Route::get('/home', App\Livewire\Home::class)->name('home');

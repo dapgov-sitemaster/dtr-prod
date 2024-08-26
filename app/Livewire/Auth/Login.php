@@ -2,14 +2,16 @@
 
 namespace App\Livewire\Auth;
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Livewire\Attributes\Title;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
+use Illuminate\Support\Facades\Auth;
 
 #[Layout('components.layouts.guest')]
 class Login extends Component
 {
+    #[Title('| Login')]
     #[Validate('required')]
     public $email;
 
@@ -27,7 +29,7 @@ class Login extends Component
     {
         $validated = $this->validate();
 
-        if(!Auth::attempt($validated, $this->remember)) {
+        if (!Auth::attempt($validated, $this->remember)) {
             return $this->addError('credentials', 'Invalid email or password.');
         }
 

@@ -41,12 +41,12 @@
                                 {{ __('Log in') }}
                             </x-button>
                         </div>
-                        {{-- <div class="text-right">
+                        <div class="text-right">
                             <a class="hover:underline text-sm text-gray-700 font-semibold dark:text-gray-400 rounded-md focus:outline-none"
-                                href="{{ route('password.request') }}">
+                                href="{{ route('forgot-password') }}">
                                 {{ __('Forgot your password?') }}
                             </a>
-                        </div> --}}
+                        </div>
                     </div>
                 </div>
             </div>
