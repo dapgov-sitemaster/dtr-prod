@@ -81,6 +81,11 @@ class User extends Authenticatable implements FilamentUser, HasName
             ->dontSubmitEmptyLogs();
     }
 
+    public function hasRole($role)
+    {
+        return auth()->user()->role == $role;
+    }
+
     public function employee()
     {
         return $this->hasOne(Employee::class, 'hris_number', 'hris_number');

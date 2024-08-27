@@ -4,7 +4,7 @@
         <div class="text-3xl font-bold text-dap-primary underline decoration-dap-secondary/50">
             Generate DTR Report
         </div>
-        <div class="mt-6 px-32">
+        <div class="mt-6 lg:px-32 px-4">
             {{-- {{ $this->table }} --}}
             <div x-data="{ tab: 'employeeTab' }">
                 <div>

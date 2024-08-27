@@ -45,7 +45,7 @@ class GenerateReport
             ->where('hris_number', $employee->hris_number)
             ->whereBetween(DB::raw('DATE(time_start)'), [$period[0]->format('Y-m-d'), $period[count($period) - 1]->format('Y-m-d')])
             ->get();
-        // dd($employee);
+        // dd($time_entries);
 
         if ($time_entries) {
             foreach ($period as $date) {
@@ -102,8 +102,10 @@ class GenerateReport
                             if ($break_start == null && $entry->time_start->between($offi_break_start, $offi_break_end)) {
                                 $break_start = $entry->time_start;
                                 $break_end = $entry->time_end;
-                            } else if ($break_start == null && $entry->time_end->between($offi_break_start, $offi_break_end)) {
-                                $break_start = $entry->time_end;
+                            } else if ($break_start == null) {
+                                if ($entry->time_end && $entry->time_end->between($offi_break_start, $offi_break_end)) {
+                                    $break_start = $entry->time_end;
+                                }
                             } else if ($break_start != null) {
                                 $break_end = $entry->time_start;
                             }

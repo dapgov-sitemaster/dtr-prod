@@ -28,7 +28,7 @@ class DailyTimeReport extends Component implements HasForms, HasTable
         return $table
             ->query(
                 Employee::query()
-                    ->with(['time_entries' => fn($query) => $query->whereDate('time_start', now()->format('Y-m-d'))], ['event' => fn($query) => $query->whereDate('start', now()->format('Y-m-d'))])
+                    ->with(['time_entries' => fn($query) => $query->whereDate('time_start', now()->format('Y-m-d')), 'event' => fn($query) => $query->whereDate('start', now()->format('Y-m-d'))])
                     ->departmentCovered()
             )
             // ->heading('Division/Office Daily Time Report ' . now()->format('F d, Y (D)'))
@@ -44,6 +44,10 @@ class DailyTimeReport extends Component implements HasForms, HasTable
                             ->orWhere('last_name', 'like', "%{$search}%");
                     })
                     ->sortable(['first_name', 'last_name']),
+                \Filament\Tables\Columns\TextColumn::make('department.description')
+                    ->label('Department')
+                    ->sortable(['group', 'center', 'office'])
+                    ->visible(fn() => auth()->user()->hasRole(Role::CENTERADMINCOORD) || auth()->user()->hasRole(Role::GROUPADMINCOORD)),
                 \Filament\Tables\Columns\TextColumn::make('event.tag')
                     ->label('Status')
                     ->default('Report On-site')

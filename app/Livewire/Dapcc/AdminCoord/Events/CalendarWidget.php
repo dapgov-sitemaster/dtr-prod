@@ -49,10 +49,13 @@ class CalendarWidget extends FullCalendarWidget
      */
     public function fetchEvents(array $fetchInfo): array
     {
+        $start = Carbon::parse($fetchInfo['start'])->subDays(20);
+        $end = Carbon::parse($fetchInfo['end'])->addDays(20);
+
         return $this->model::query()
-            ->whereHas('employee', fn($query) => $query->departmentCovered())
-            ->whereDate('start', '>=', Carbon::parse($fetchInfo['start'])->subMonth()->format('Y-m-d'))
-            ->whereDate('end', '<=', Carbon::parse($fetchInfo['end'])->addMonth()->format('Y-m-d'))
+            ->with(['employee' => fn($query) => $query->departmentCovered()])
+            ->whereDate('start', '>=', $start)
+            ->whereDate('end', '<=', $end)
             ->get()
             ->map(
                 fn(Event $event) => EventData::make()

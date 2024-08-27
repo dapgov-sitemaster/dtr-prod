@@ -31,7 +31,7 @@ class Index extends Component implements HasForms, HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(OfficialTime::with('employee')->latest())
+            ->query(OfficialTime::with('employee'))
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('employee.hris_number')
                     ->label('HRIS Number')
@@ -51,7 +51,7 @@ class Index extends Component implements HasForms, HasTable
                     ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'pending' => 'warning',
                         'approved' => 'success',
                         'disapproved' => 'danger',
@@ -64,7 +64,7 @@ class Index extends Component implements HasForms, HasTable
                     ->modalHeading('Evaluate all selected Request')
                     // ->icon('heroicon-m-document-magnifying-glass')
                     ->button()
-                    ->action(fn (OfficialTime $record) => $record->advance())
+                    ->action(fn(OfficialTime $record) => $record->advance())
                     // ->modalContent(fn (OfficialTime $record) => view(
                     //     'livewire.hr-admin.official-time-change-request.evaluation',
                     //     ['record' => $record],
@@ -90,7 +90,7 @@ class Index extends Component implements HasForms, HasTable
                     ->modalHeading('Evaluate Request')
                     ->icon('heroicon-m-document-magnifying-glass')
                     ->button()
-                    ->action(fn (OfficialTime $record) => $record->advance())
+                    ->action(fn(OfficialTime $record) => $record->advance())
                     // ->modalContent(fn (OfficialTime $record) => view(
                     //     'livewire.hr-admin.official-time-change-request.evaluation',
                     //     ['record' => $record],
@@ -99,7 +99,7 @@ class Index extends Component implements HasForms, HasTable
                     ->modalContent(function ($record) {
                         return new HtmlString(Blade::render('@livewire(\'hr-admin.official-time-change-request.evaluation\',["type" => "individual", "data" => ["hris_number" => ' . $record->hris_number . ']])'));
                     })
-                    ->hidden(fn ($record) => $record->status !== 'pending')
+                    ->hidden(fn($record) => $record->status !== 'pending')
                     ->modalSubmitAction(false)
             ])
             ->defaultSort('created_at', 'desc');

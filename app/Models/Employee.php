@@ -141,7 +141,7 @@ class Employee extends Model
 
     public function scopeIsDapcc($query)
     {
-        if (auth()->user()->role == Role::SUPERADMIN && !Gate::allows('view-dapcc')) {
+        if (auth()->user()->hasRole(Role::SUPERADMIN) && !Gate::allows('view-dapcc')) {
             return $query;
         }
         return $query->whereHas('department', fn($query) => $query->where('center', 'DAPCC'));

@@ -1,7 +1,13 @@
 <div>
     <div class="w-full bg-white p-8 rounded-xl mb-10">
         <div class="text-3xl font-bold text-dap-primary underline decoration-dap-secondary/50">
-            {{ auth()->user()->employee->department->center.'/'.auth()->user()->employee->department->office }} Daily Time Records
+            @if(auth()->user()->hasRole(App\Enums\Role::GROUPADMINCOORD))
+                {{ auth()->user()->employee->department->group }} Daily Time Records
+            @elseif(auth()->user()->hasRole(App\Enums\Role::CENTERADMINCOORD))
+                {{ auth()->user()->employee->department->center.'/'.auth()->user()->employee->department->office }} Daily Time Records
+            @elseif(auth()->user()->hasRole(App\Enums\Role::ADMINCOORD))
+                {{ auth()->user()->employee->department->description }} Daily Time Records
+            @endif
         </div>
         <div class="mt-6">
             {{ $this->table }}

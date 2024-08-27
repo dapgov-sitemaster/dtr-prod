@@ -39,7 +39,7 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
             ->query(
                 Employee::query()
                     ->withoutGlobalScopes()
-                    ->isDapcc()
+                    ->departmentCovered()
                     ->with('department', 'official_time', 'user')
             )
             ->columns([
@@ -57,7 +57,6 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                     ->sortable(['first_name', 'last_name']),
                 \Filament\Tables\Columns\TextColumn::make('department.description')
                     ->label('Department')
-                    ->searchable(['group', 'center', 'office'])
                     ->sortable(['group', 'center', 'office']),
                 \Filament\Tables\Columns\TextColumn::make('appointment_status')
                     ->label('Appointment Status')
@@ -136,8 +135,8 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                                 \Filament\Forms\Components\Select::make('role')
                                     ->options(function () {
                                         return collect(Role::cases())
-                                            ->filter(fn ($case) => $case !== Role::SUPERADMIN)
-                                            ->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])
+                                            ->filter(fn($case) => $case !== Role::SUPERADMIN)
+                                            ->mapWithKeys(fn($case) => [$case->value => $case->getLabel()])
                                             ->toArray();
                                     })
                                     ->native(false)
@@ -179,12 +178,12 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                     ->button()
                     ->modalWidth('lg')
                     ->label('Update Status')
-                    ->modalHeading(fn ($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
+                    ->modalHeading(fn($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
                     ->requiresConfirmation()
                     ->form([
                         \Filament\Forms\Components\ToggleButtons::make('role')
                             ->inline()
-                            ->default(fn ($record) => $record->employment_status)
+                            ->default(fn($record) => $record->employment_status)
                             ->options([1 => 'Active', 0 => 'Inactive'])
                             ->colors([0 => 'danger', 1 => 'success'])
                             ->icons([1 => 'heroicon-o-check-circle', 0 => 'heroicon-o-x-circle'])
@@ -210,7 +209,7 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                     }),
                 \Filament\Tables\Actions\EditAction::make('edit-employee')
                     ->slideOver()
-                    ->modalHeading(fn ($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
+                    ->modalHeading(fn($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
                     ->modalIcon('heroicon-o-pencil-square')
                     // ->mutateFormDataUsing(function (array $data, $record): array {
                     //     dd($data);
@@ -240,7 +239,6 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                                     ->placeholder('Enter DAP Email Address')
                                     ->email()
                                     ->validationAttribute('DAP Email Address')
-                                    ->unique(table: User::class)
                                     ->autocomplete(false)
                                     ->required(),
                                 \Filament\Forms\Components\Select::make('department_id')
@@ -277,12 +275,12 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                                 \Filament\Forms\Components\Select::make('role')
                                     ->options(function () {
                                         return collect(Role::cases())
-                                            ->filter(fn ($case) => $case !== Role::SUPERADMIN)
-                                            ->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])
+                                            ->filter(fn($case) => $case !== Role::SUPERADMIN)
+                                            ->mapWithKeys(fn($case) => [$case->value => $case->getLabel()])
                                             ->toArray();
                                     })
                                     ->native(false)
-                                    ->hidden(fn ($record) => ($record->user->role->value === 'superadmin'))
+                                    ->hidden(fn($record) => ($record->user->role->value === 'superadmin'))
                                     ->required(),
                             ]),
                     ])

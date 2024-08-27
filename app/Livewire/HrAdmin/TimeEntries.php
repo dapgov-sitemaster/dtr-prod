@@ -268,6 +268,6 @@ class TimeEntries extends Component implements HasForms, HasTable
                     })
             ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
             ->emptyStateHeading('No Time Entries yet')
-            ->defaultSort('time_start', 'ASC');
+            ->defaultSort('time_start', 'desc');
     }
 }

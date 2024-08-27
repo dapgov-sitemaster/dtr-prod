@@ -39,6 +39,7 @@ class CalendarWidget extends FullCalendarWidget
             ],
             'selectable' => true,
             'editable' => true,
+            'initialView' => 'dayGridMonth',
         ];
     }
 
@@ -48,28 +49,46 @@ class CalendarWidget extends FullCalendarWidget
      */
     public function fetchEvents(array $fetchInfo): array
     {
+        $start = Carbon::parse($fetchInfo['start'])->subDays(20);
+        $end = Carbon::parse($fetchInfo['end'])->addDays(20);
+        // dd($this->model::query()
+        //     ->whereHas('employee', fn($query) => $query->departmentCovered())
+        //     // ->with(['employee' => fn($query) => $query->departmentCovered()])
+        //     ->whereIn('tag', [Events::HOL, Events::SUS, Events::FLAG])
+        //     ->orWhereDate('start', '>=', $start)
+        //     ->whereDate('end', '<=', $end)
+        //     ->orderBy('start')
+        //     ->limit(10)
+        //     ->get());
 
         return $this->model::query()
-            ->with(['employee' => fn ($query) => $query->departmentCovered()])
-            ->whereDate('start', '>=', $fetchInfo['start'])
-            ->whereDate('end', '<=', $fetchInfo['end'])
+            ->whereHas('employee', fn($query) => $query->departmentCovered())
+            // ->with(['employee' => fn($query) => $query->departmentCovered()])
+            ->whereDate('start', '>=', $start)
+            ->whereDate('end', '<=', $end)
+            ->orWhereIn('tag', [Events::HOL, Events::SUS, Events::FLAG])
+            ->orderBy('start')
             ->get()
             ->map(
-                fn (Event $event) => EventData::make()
-                    ->id($event->id)
-                    ->title(
-                        ($event->tag == Events::HOL || $event->tag == Events::SUS || $event->tag == Events::FLAG) ?
-                            $event->description :
-                            $event->employee->last_name . ', ' . Str::initials($event->employee->first_name)
-                    )
-                    ->extraProperties([
-                        'tag' => $event->tag->getLabel()
-                    ])
-                    ->backgroundColor($event->tag->getColorT())
-                    ->borderColor($event->tag->getColorT())
-                    ->start($event->start)
-                    ->end($event->end)
-                    ->toArray()
+                function (Event $event) {
+                    $title = $event->hris_number;
+                    if ($event->tag == Events::HOL || $event->tag == Events::SUS || $event->tag == Events::FLAG) {
+                        $title = $event->description;
+                    } else if ($event->employee) {
+                        $title = $event->employee->last_name . ', ' . Str::initials($event->employee->first_name);
+                    }
+                    return EventData::make()
+                        ->id($event->id)
+                        ->title($title)
+                        ->extraProperties([
+                            'tag' => $event->tag->getLabel()
+                        ])
+                        ->backgroundColor($event->tag->getColorT())
+                        ->borderColor($event->tag->getColorT())
+                        ->start($event->start)
+                        ->end($event->end)
+                        ->toArray();
+                }
             )
             ->all();
     }
@@ -246,7 +265,7 @@ class CalendarWidget extends FullCalendarWidget
                     'sm' => 1,
                     'xl' => 2,
                 ])
-                    ->hidden(fn ($record) => match (Events::parse($record->tag)) {
+                    ->hidden(fn($record) => match (Events::parse($record->tag)) {
                         Events::HOL, Events::SUS, Events::FLAG => true,
                         default => false,
                     })
@@ -283,7 +302,7 @@ class CalendarWidget extends FullCalendarWidget
                                 return route('admin.pdf.view-mov', ['mov' => $record->mov]);
                             }, shouldOpenInNewTab: true)
                             ->placeholder('No uploaded file')
-                            ->hidden(fn ($record): bool => $record->tag->value === 'wfh' || $record->tag->value === 'hwfh'),
+                            ->hidden(fn($record): bool => $record->tag->value === 'wfh' || $record->tag->value === 'hwfh'),
                         \Filament\Infolists\Components\TextEntry::make('created_by.first_name')
                             ->label('Created by'),
                     ]),
@@ -291,7 +310,7 @@ class CalendarWidget extends FullCalendarWidget
                     'sm' => 1,
                     'xl' => 2,
                 ])
-                    ->visible(fn ($record) => match (Events::parse($record->tag)) {
+                    ->visible(fn($record) => match (Events::parse($record->tag)) {
                         Events::HOL, Events::SUS, Events::FLAG => true,
                         default => false,
                     })
@@ -303,18 +322,18 @@ class CalendarWidget extends FullCalendarWidget
                             ->label('Event Description'),
                         \Filament\Infolists\Components\TextEntry::make('start')
                             ->dateTime('g:i A')
-                            ->visible(fn ($record) => Events::parse($record->tag) == Events::SUS && $record->start == $record->end)
+                            ->visible(fn($record) => Events::parse($record->tag) == Events::SUS && $record->start == $record->end)
                             ->label('Time Start'),
                         \Filament\Infolists\Components\TextEntry::make('created_by.first_name')
                             ->label('Created by'),
                     ]),
             ])
             ->modalFooterActions(
-                fn (\Filament\Actions\ViewAction $action, FullCalendarWidget $livewire) => [
+                fn(\Filament\Actions\ViewAction $action, FullCalendarWidget $livewire) => [
                     \Filament\Actions\Action::make('upload-mov')
                         ->label('Upload MOV')
                         ->color('success')
-                        ->hidden(fn ($record) => match (Events::parse($record->tag)) {
+                        ->hidden(fn($record) => match (Events::parse($record->tag)) {
                             Events::HOL, Events::SUS, Events::FLAG => true,
                             default => false,
                         })
@@ -440,7 +459,7 @@ class CalendarWidget extends FullCalendarWidget
                         ->required(),
                 ]),
             Forms\Components\Grid::make()
-                ->visible(fn (Get $get) => $get('starts_at') != '' && $get('ends_at') != '')
+                ->visible(fn(Get $get) => $get('starts_at') != '' && $get('ends_at') != '')
                 ->schema([
                     \Filament\Forms\Components\Select::make('tag')
                         ->label('Type of Event')
@@ -477,24 +496,24 @@ class CalendarWidget extends FullCalendarWidget
                         ->label('Employee Name')
                         ->multiple()
                         // ->options(\App\Models\Employee::whereIn('department_id', $this->departments)->where('employment_status', true)->get()->pluck('full_name', 'hris_number'))
-                        ->getSearchResultsUsing(fn (string $search): array => Employee::searchEmployee($search)->departmentCovered()->limit(10)->get()->pluck('full_name', 'hris_number')->toArray())
-                        ->getOptionLabelUsing(fn ($value): ?string => Employee::find($value)?->full_name)
+                        ->getSearchResultsUsing(fn(string $search): array => Employee::searchEmployee($search)->departmentCovered()->limit(10)->get()->pluck('full_name', 'hris_number')->toArray())
+                        ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->full_name)
                         ->native(false)
                         ->searchable(['first_name', 'last_name', 'hris_number'])
                         ->required()
                         ->columnSpanFull()
-                        ->hidden(fn (Get $get) => match (Events::parse($get('tag'))) {
+                        ->hidden(fn(Get $get) => match (Events::parse($get('tag'))) {
                             Events::HOL, Events::SUS, Events::FLAG => true,
                             default => false,
                         }),
                     Forms\Components\Grid::make()
-                        ->visible(fn (Get $get) => Gate::allows('special-events') && Events::parse($get('tag')) == Events::SUS)
+                        ->visible(fn(Get $get) => Gate::allows('special-events') && Events::parse($get('tag')) == Events::SUS)
                         ->schema([
                             Forms\Components\Checkbox::make('whole_day')
                                 ->label('is Whole Day')
                                 ->live(),
                             Forms\Components\TimePicker::make('time')
-                                ->visible(fn (Get $get) => !$get('whole_day'))
+                                ->visible(fn(Get $get) => !$get('whole_day'))
                                 ->label('Suspension Time')
                                 ->required()
                                 ->seconds(false),
@@ -524,7 +543,7 @@ class CalendarWidget extends FullCalendarWidget
                         ->required(),
                 ]),
             Forms\Components\Grid::make()
-                ->visible(fn (Get $get) => $get('starts_at') != '' && $get('ends_at') != '')
+                ->visible(fn(Get $get) => $get('starts_at') != '' && $get('ends_at') != '')
                 ->schema([
                     \Filament\Forms\Components\Select::make('tag')
                         ->label('Type of Event')
@@ -560,24 +579,24 @@ class CalendarWidget extends FullCalendarWidget
                     \Filament\Forms\Components\Select::make('hris_number')
                         ->label('Employee Name')
                         // ->options(\App\Models\Employee::whereIn('department_id', $this->departments)->where('employment_status', true)->get()->pluck('full_name', 'hris_number'))
-                        ->getSearchResultsUsing(fn (string $search): array => Employee::searchEmployee($search)->departmentCovered()->limit(50)->get()->pluck('full_name', 'hris_number')->toArray())
-                        ->getOptionLabelUsing(fn ($value): ?string => Employee::find($value)?->full_name)
+                        ->getSearchResultsUsing(fn(string $search): array => Employee::searchEmployee($search)->departmentCovered()->limit(50)->get()->pluck('full_name', 'hris_number')->toArray())
+                        ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->full_name)
                         ->native(false)
                         ->searchable(['first_name', 'last_name'])
                         ->required()
                         ->columnSpanFull()
-                        ->hidden(fn (Get $get) => match (Events::parse($get('tag'))) {
+                        ->hidden(fn(Get $get) => match (Events::parse($get('tag'))) {
                             Events::HOL, Events::SUS, Events::FLAG => true,
                             default => false,
                         }),
                     Forms\Components\Grid::make()
-                        ->visible(fn (Get $get) => Gate::allows('special-events') && Events::parse($get('tag')) == Events::SUS)
+                        ->visible(fn(Get $get) => Gate::allows('special-events') && Events::parse($get('tag')) == Events::SUS)
                         ->schema([
                             Forms\Components\Checkbox::make('whole_day')
                                 ->label('is Whole Day')
                                 ->live(),
                             Forms\Components\TimePicker::make('time')
-                                ->visible(fn (Get $get) => !$get('whole_day'))
+                                ->visible(fn(Get $get) => !$get('whole_day'))
                                 ->label('Suspension Time')
                                 ->required()
                                 ->seconds(false),

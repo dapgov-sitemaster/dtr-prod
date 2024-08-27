@@ -51,7 +51,7 @@ class OfficialTime extends Component implements HasForms, HasTable
         return $table
             ->query(
                 Employee::query()
-                    ->with(['official_time' => fn ($query) => $query->where('status', 'approved')])
+                    ->with(['official_time' => fn($query) => $query->where('status', 'approved')])
                     ->where('employment_status', true)
                     ->departmentCovered()
             )
@@ -64,6 +64,10 @@ class OfficialTime extends Component implements HasForms, HasTable
                     ->label('Name')
                     ->searchable(['first_name', 'last_name'])
                     ->sortable(['first_name', 'last_name']),
+                \Filament\Tables\Columns\TextColumn::make('department.description')
+                    ->label('Department')
+                    ->sortable(['group', 'center', 'office'])
+                    ->visible(fn() => auth()->user()->hasRole(Role::CENTERADMINCOORD) || auth()->user()->hasRole(Role::GROUPADMINCOORD)),
                 \Filament\Tables\Columns\TextColumn::make('appointment_status')
                     ->label('Appointment Status')
                     ->badge()
@@ -99,7 +103,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                             ->options($time)
                             ->native(false)
                             ->required()
-                            ->hidden(fn (Get $get) => $get('schedule_type') != ScheduleType::FIXED->value),
+                            ->hidden(fn(Get $get) => $get('schedule_type') != ScheduleType::FIXED->value),
                         \Filament\Forms\Components\DatePicker::make('effectivity_date')
                             ->label('Effectivity Date')
                             ->native(false)
@@ -153,7 +157,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                     ->button()
                     ->modal()
                     ->modalWidth('xl')
-                    ->modalHeading(fn ($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
+                    ->modalHeading(fn($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
                     ->hidden(function ($record) {
                         if ($record->latest_official_time) {
                             if ($record->latest_official_time->status == 'pending') {
@@ -176,7 +180,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                                 $parsed = Carbon::parse($state);
                                 return $parsed->format('g:i A') . ' - ' . $parsed->copy()->addHours(9)->format('g:i A');
                             })
-                            ->hidden(fn ($record) => $record->latest_official_time->schedule_type == ScheduleType::FULLFLEXI),
+                            ->hidden(fn($record) => $record->latest_official_time->schedule_type == ScheduleType::FULLFLEXI),
                         \Filament\Infolists\Components\TextEntry::make('latest_official_time.status')
                             ->label('Status')
                             ->formatStateUsing(function ($state) {
@@ -191,7 +195,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                 \Filament\Tables\Actions\Action::make('set-time')
                     ->button()
                     ->modalWidth('sm')
-                    ->modalHeading(fn ($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
+                    ->modalHeading(fn($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
                     ->hidden(function ($record): bool {
                         if ($record->latest_official_time) {
                             if ($record->latest_official_time->status === 'pending') {
@@ -212,7 +216,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                             ->options($time)
                             ->native(false)
                             ->required()
-                            ->hidden(fn (Get $get) => $get('schedule_type') != ScheduleType::FIXED->value),
+                            ->hidden(fn(Get $get) => $get('schedule_type') != ScheduleType::FIXED->value),
                         \Filament\Forms\Components\DatePicker::make('effectivity_date')
                             ->label('Effectivity Date')
                             ->native(false)
@@ -261,6 +265,6 @@ class OfficialTime extends Component implements HasForms, HasTable
                             ->send();
                     })
             ])
-            ->defaultSort('last_name', 'desc');
+            ->defaultSort('last_name');
     }
 }

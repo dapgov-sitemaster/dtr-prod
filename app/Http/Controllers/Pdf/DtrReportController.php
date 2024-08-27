@@ -57,7 +57,7 @@ class DtrReportController extends Controller
             $date_to = Carbon::parse($range['date_to']);
 
             $events = Event::query()
-                ->select('id', 'tag', 'start', 'hris_number')
+                ->select('id', 'tag', 'start', 'end', 'hris_number')
                 ->where('hris_number', $employee->hris_number)
                 ->orWhere('hris_number', NULL)
                 ->whereBetween('start', [$date_from, $date_to])
@@ -90,19 +90,27 @@ class DtrReportController extends Controller
         $title = null;
         $appointment_status = $request->get('appointment_status');
 
-        if (auth()->user()->role == Role::ADMINCOORD || auth()->user()->role == Role::SUPERADMIN) {
+        if (auth()->user()->hasRole(Role::ADMINCOORD) || auth()->user()->hasRole(Role::SUPERADMIN) || auth()->user()->hasRole(Role::HRADMIN)) {
             $title = $department->description;
-        } else if (auth()->user()->role == Role::CENTERADMINCOORD) {
+        } else if (auth()->user()->hasRole(Role::CENTERADMINCOORD)) {
             $title = $department->group . '/' . $department->center;
-        } else if (auth()->user()->role == Role::GROUPADMINCOORD) {
+        } else if (auth()->user()->hasRole(Role::GROUPADMINCOORD)) {
             $title = $department->group;
         }
 
-        $employees = Employee::query()
-            ->with(['official_time', 'department'])
-            ->departmentCovered()
-            ->where('appointment_status', AppointmentStatus::tryFrom($appointment_status))
-            ->get();
+        if (auth()->user()->hasRole(Role::HRADMIN)) {
+            $employees = Employee::query()
+                ->with(['official_time', 'department'])
+                ->where('department_id', $department->id)
+                ->where('appointment_status', AppointmentStatus::tryFrom($appointment_status))
+                ->get();
+        } else {
+            $employees = Employee::query()
+                ->with(['official_time', 'department'])
+                ->departmentCovered()
+                ->where('appointment_status', AppointmentStatus::tryFrom($appointment_status))
+                ->get();
+        }
 
         if ($employees) {
             $yearmonth = $request->get('yearmonth');
@@ -113,7 +121,7 @@ class DtrReportController extends Controller
             $date_to = Carbon::parse($range['date_to']);
 
             $events = Event::query()
-                ->select('id', 'tag', 'start', 'hris_number')
+                ->select('id', 'tag', 'start', 'end', 'hris_number')
                 ->orWhere('hris_number', NULL)
                 ->whereBetween('start', [$date_from, $date_to])
                 ->get();
@@ -191,11 +199,11 @@ class DtrReportController extends Controller
         $title = null;
         $appointment_status = $request->get('appointment_status');
 
-        if (auth()->user()->role == Role::ADMINCOORD || auth()->user()->role == Role::SUPERADMIN) {
+        if (auth()->user()->hasRole(Role::ADMINCOORD) || auth()->user()->hasRole(Role::SUPERADMIN)) {
             $title = $department->description;
-        } else if (auth()->user()->role == Role::CENTERADMINCOORD) {
+        } else if (auth()->user()->hasRole(Role::CENTERADMINCOORD)) {
             $title = $department->group . '/' . $department->center;
-        } else if (auth()->user()->role == Role::GROUPADMINCOORD) {
+        } else if (auth()->user()->hasRole(Role::GROUPADMINCOORD)) {
             $title = $department->group;
         }
 

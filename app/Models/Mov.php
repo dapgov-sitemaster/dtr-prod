@@ -18,6 +18,8 @@ class Mov extends Model
      */
     protected $fillable = [
         'filename',
+        'movable_id',
+        'movable_type',
     ];
 
     /**
