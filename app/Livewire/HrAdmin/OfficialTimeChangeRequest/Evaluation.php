@@ -63,11 +63,11 @@ class Evaluation extends Component implements HasForms, HasTable, HasInfolists
                             ->label('Time In & Time Out')
                             ->description('Time In & Time Out', position: 'above')
                             ->placeholder('Not set')
-                            ->formatStateUsing(fn ($state) => $state->format('g:i A') . ' - ' . $state->addHours(9)->format('g:i A')),
+                            ->formatStateUsing(fn($state) => $state->format('g:i A') . ' - ' . $state->addHours(9)->format('g:i A')),
                         \Filament\Tables\Columns\TextColumn::make('status')
                             ->description('Status', position: 'above')
                             ->badge()
-                            ->color(fn (string $state): string => match ($state) {
+                            ->color(fn(string $state): string => match ($state) {
                                 'pending' => 'warning',
                                 'approved' => 'success',
                                 'disapproved' => 'danger',
@@ -76,11 +76,11 @@ class Evaluation extends Component implements HasForms, HasTable, HasInfolists
                             ->description('Requested At', position: 'above')
                             ->label('Requested At')
                             ->dateTime('M d, Y | g:i A'),
-                        \Filament\Tables\Columns\TextColumn::make('duration')
-                            ->description('Duration from last change', position: 'above')
-                            ->getStateUsing(fn ($record) => $record->created_at)
-                            ->label('Duration from last change')
-                            ->since(),
+                        // \Filament\Tables\Columns\TextColumn::make('duration')
+                        //     ->description('Duration from last change', position: 'above')
+                        //     ->getStateUsing(fn ($record) => $record->created_at)
+                        //     ->label('Duration from last change')
+                        //     ->since(),
                     ])
                         ->from('lg')
                 ])
@@ -166,7 +166,7 @@ class Evaluation extends Component implements HasForms, HasTable, HasInfolists
                             }),
                     ])
                         ->iconButton()
-                        ->hidden(fn ($record) => $record->status !== 'pending'),
+                        ->hidden(fn($record) => $record->status !== 'pending'),
                 ])
                 ->defaultSort('created_at', 'desc');
         } else if ($this->type == "individual") {
@@ -183,12 +183,12 @@ class Evaluation extends Component implements HasForms, HasTable, HasInfolists
                             ->label('Time In & Time Out')
                             ->description('Time In & Time Out', position: 'above')
                             ->placeholder('Not set')
-                            ->formatStateUsing(fn ($state) => $state->format('g:i A') . ' - ' . $state->addHours(9)->format('g:i A'))
+                            ->formatStateUsing(fn($state) => $state->format('g:i A') . ' - ' . $state->addHours(9)->format('g:i A'))
                             ->sortable(),
                         \Filament\Tables\Columns\TextColumn::make('status')
                             ->description('Status', position: 'above')
                             ->badge()
-                            ->color(fn (string $state): string => match ($state) {
+                            ->color(fn(string $state): string => match ($state) {
                                 'pending' => 'warning',
                                 'approved' => 'success',
                                 'disapproved' => 'danger',
@@ -198,12 +198,13 @@ class Evaluation extends Component implements HasForms, HasTable, HasInfolists
                             ->label('Requested At')
                             ->dateTime('M d, Y | g:i A')
                             ->sortable(),
-                        \Filament\Tables\Columns\TextColumn::make('duration')
-                            ->description('Duration from last change', position: 'above')
-                            ->getStateUsing(fn ($record) => $record->created_at)
-                            ->label('Duration from last change')
-                            ->since()
-                            ->sortable(),
+                        // \Filament\Tables\Columns\ViewColumn::make('hris_number')
+                        //     ->view('tables.columns.duration')
+                        //     // ->description('Duration from last change', position: 'above')
+                        //     // ->getStateUsing(fn($record, Table $table) => dd($table))
+                        //     ->label('Duration from last change')
+                        //     // ->since()
+                        //     ->sortable(),
                     ])
                         ->from('lg')
                 ])
@@ -224,7 +225,7 @@ class Evaluation extends Component implements HasForms, HasTable, HasInfolists
                                 ->color('success')
                                 ->send();
                         })
-                        ->hidden(fn ($record) => $record->status !== 'pending'),
+                        ->hidden(fn($record) => $record->status !== 'pending'),
                     \Filament\Tables\Actions\Action::make('disapprove-request')
                         ->label('Disapprove')
                         ->icon('heroicon-m-x-circle')
@@ -241,7 +242,7 @@ class Evaluation extends Component implements HasForms, HasTable, HasInfolists
                                 ->color('success')
                                 ->send();
                         })
-                        ->hidden(fn ($record) => $record->status !== 'pending'),
+                        ->hidden(fn($record) => $record->status !== 'pending'),
                 ])
                 ->defaultSort('created_at', 'desc');
         }

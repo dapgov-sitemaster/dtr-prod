@@ -171,7 +171,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                             ->label('HRIS Number'),
                         \Filament\Infolists\Components\TextEntry::make('full_name')
                             ->label('Full Name'),
-                        \Filament\Infolists\Components\TextEntry::make('latest_official_time.type')
+                        \Filament\Infolists\Components\TextEntry::make('latest_official_time.schedule_type')
                             ->badge()
                             ->label('Requested Schedule Type'),
                         \Filament\Infolists\Components\TextEntry::make('latest_official_time.time_in')
@@ -193,6 +193,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                     ])
                     ->modalSubmitAction(false),
                 \Filament\Tables\Actions\Action::make('set-time')
+                    ->label('Set Schedule')
                     ->button()
                     ->modalWidth('sm')
                     ->modalHeading(fn($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
