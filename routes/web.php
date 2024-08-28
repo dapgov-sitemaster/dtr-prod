@@ -3,20 +3,24 @@
 use App\Http\Controllers\Pdf\QrCodeController;
 use App\Http\Controllers\TestingController;
 use App\Http\Controllers\Testing2Controller;
+use App\Livewire\Auth\ChangePassword;
 use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Auth\Login;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/sign-in');
-Route::get('/testing', TestingController::class);
-Route::get('/testing2', Testing2Controller::class);
+// Route::get('/testing', TestingController::class);
+// Route::get('/testing2', Testing2Controller::class);
+
+
 Route::get('/sign-in', Login::class)->middleware('guest')->name('login');
 Route::get('/forgot-password', ForgotPassword::class)->middleware('guest')->name('forgot-password');
 Route::get('/reset-password/{token}', ResetPassword::class)->middleware('guest')->name('forgot-password.reset');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/home', App\Livewire\Home::class)->name('home');
+    Route::get('/home', App\Livewire\Home::class)->middleware('checkpassword')->name('home');
+    Route::get('/auth/change-default-password', ChangePassword::class)->name('auth.change-password');
     Route::get('/logout', function () {
         Illuminate\Support\Facades\Auth::logout();
         return redirect('/');

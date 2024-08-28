@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'checkrole' => \App\Http\Middleware\CheckRole::class,
             'checkcenter' => \App\Http\Middleware\CheckCenter::class,
             'haswfhsched' => \App\Http\Middleware\HasWfhSchedule::class,
+            'checkpassword' => \App\Http\Middleware\CheckDefaultPassword::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
