@@ -16,7 +16,7 @@
     {{-- @if($is_solo) --}}
     @foreach ($employees as $employee)
         <div>
-            <div style="width: 100%;">
+            <div style="width: 100%;margin-top:10px;">
                 <div style="font-size: 12px; text-align: center;">
                     <img src="{{ public_path().'/image/favicon.png' }}" width="20px" height="27px" draggable="false" /> <br/>
                     <span class="font-semibold">Development Academy of the Philippines</span><br/>

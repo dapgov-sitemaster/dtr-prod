@@ -53,9 +53,10 @@ class CalendarWidget extends FullCalendarWidget
         $end = Carbon::parse($fetchInfo['end'])->addDays(20);
 
         return $this->model::query()
-            ->with(['employee' => fn($query) => $query->departmentCovered()])
+            ->whereHas('employee', fn($query) => $query->departmentCovered())
             ->whereDate('start', '>=', $start)
             ->whereDate('end', '<=', $end)
+            ->orWhereIn('tag', [Events::HOL, Events::SUS, Events::FLAG])
             ->get()
             ->map(
                 fn(Event $event) => EventData::make()
@@ -98,7 +99,7 @@ class CalendarWidget extends FullCalendarWidget
                             'hris_number' => $record->hris_number,
                             'tag' => $record->tag,
                             'starts_at' => $arguments['event']['start'] ?? $record->start->format('Y-m-d'),
-                            'ends_at' => $arguments['event']['end'] ?? $record->end->format('Y-m-d')
+                            // 'ends_at' => $arguments['event']['end'] ?? $record->end->format('Y-m-d')
                         ]);
                     }
                 )
@@ -106,14 +107,16 @@ class CalendarWidget extends FullCalendarWidget
                 ->mutateFormDataUsing(function (array $data, $record): array {
                     $official_time = $record->official_time;
                     $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
-                    $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                    // $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                    $time_end = $time_start->copy()->addHours(9);
 
                     if ($official_time) {
                         $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
-                        $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                        $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '17:00:00');
                     } else if (Events::parse($data['tag']) == Events::SHIFT || Events::parse($data['tag']) == Events::DAYOFF) {
                         $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . $data['timestarts_at']);
-                        $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . $data['timeends_at']);
+                        // $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . $data['timeends_at']);
+                        $time_end = $time_start->copy()->addHours(9);
                     }
 
                     if (Events::parse($data['tag']) == Events::ALA) {

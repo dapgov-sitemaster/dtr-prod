@@ -5,6 +5,8 @@ namespace App\Livewire\Dapcc\AdminCoord;
 use Carbon\Carbon;
 use Livewire\Component;
 use App\Models\Employee;
+use App\Models\Department;
+use App\Enums\Role;
 use Filament\Tables\Table;
 use Livewire\Attributes\Title;
 use App\Enums\AppointmentStatus;
@@ -18,7 +20,20 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
 {
     use InteractsWithTable, InteractsWithForms;
 
+    public $departments;
+
     #[Title('| Daily Time Records')]
+    public function mount()
+    {
+        $user_dept = auth()->user()->employee->department;
+        $this->departments = match (auth()->user()->role) {
+            Role::ADMINCOORD => [$user_dept->id],
+            Role::CENTERADMINCOORD => Department::select('id')->where('center', $user_dept->center)->get()->pluck('id')->toArray(),
+            Role::GROUPADMINCOORD => Department::select('id')->where('group', $user_dept->group)->get()->pluck('id')->toArray(),
+            default => [],
+        };
+    }
+
     public function render()
     {
         return view('livewire.dapcc.admin-coord.daily-time-records');
@@ -47,6 +62,10 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                             ->orWhere('last_name', 'like', "%{$search}%");
                     })
                     ->sortable(['first_name', 'last_name']),
+                \Filament\Tables\Columns\TextColumn::make('department.description')
+                    ->label('Department')
+                    ->sortable(['group', 'center', 'office'])
+                    ->visible(fn() => auth()->user()->hasRole(Role::CENTERADMINCOORD) || auth()->user()->hasRole(Role::GROUPADMINCOORD)),
                 \Filament\Tables\Columns\TextColumn::make('appointment_status')
                     ->label('Appointment Status')
                     ->badge()
@@ -63,11 +82,11 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
             ])
             ->actions([
                 \Filament\Tables\Actions\ActionGroup::make([
-                    \Filament\Tables\Actions\Action::make('time-entries')
-                        ->color('info')
-                        ->icon('heroicon-m-eye')
-                        ->labeledFrom('md')
-                        ->url(fn($record) => route('admin.dtr.emp-time-entries', ['hris_number' => $record->hris_number])),
+                    // \Filament\Tables\Actions\Action::make('time-entries')
+                    //     ->color('info')
+                    //     ->icon('heroicon-m-eye')
+                    //     ->labeledFrom('md')
+                    //     ->url(fn($record) => route('admin.dtr.emp-time-entries', ['hris_number' => $record->hris_number])),
                     \Filament\Tables\Actions\Action::make('generate-report')
                         ->modalHeading(fn($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
                         ->color('secondary')
@@ -109,8 +128,14 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                     ->icon('heroicon-m-document-arrow-down')
                     ->labeledFrom('md')
                     ->form([
-                        \Filament\Forms\Components\Grid::make(3)
+                        \Filament\Forms\Components\Grid::make(2)
                             ->schema([
+                                \Filament\Forms\Components\Select::make('department_id')
+                                    ->label('Select Office/Division')
+                                    ->options(Department::whereIn('id', $this->departments)->get()->pluck('description', 'id'))
+                                    ->native(false)
+                                    ->visible(fn() => auth()->user()->hasRole(Role::CENTERADMINCOORD) || auth()->user()->hasRole(Role::GROUPADMINCOORD))
+                                    ->required(),
                                 \Filament\Forms\Components\TextInput::make('yearmonth')
                                     ->label('Select Year and Month')
                                     ->type('month')
@@ -129,7 +154,12 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                             ])
                     ])
                     ->action(function ($data) {
-                        $this->generate('office', ['office_id' => auth()->user()->employee->department_id, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff'], 'appointment_status' => $data['appointment_status']]);
+                        if (auth()->user()->hasRole(Role::ADMINCOORD)) {
+                            $department = auth()->user()->employee->department_id;
+                        } else {
+                            $department = $data['department_id'];
+                        }
+                        $this->generate('office', ['office_id' => $department, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff'], 'appointment_status' => $data['appointment_status']]);
                         // $livewire->redirectRoute('admin.dtr.emp-dtr-report', ['hris_number' => $record->hris_number, 'date_from' => '2024-07-01', 'date_to' => '2024-07-15']);
                         // return redirect()->route('admin.dtr.bulk-dtr-report', ['department' => auth()->user()->employee->department_id, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff'], 'appointment_status' => $data['appointment_status']]);
                     })

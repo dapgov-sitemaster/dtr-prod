@@ -9,12 +9,14 @@ enum AppointmentStatus: string implements HasLabel, HasColor
 {
     case PBP = 'pbp';
     case NPP = 'npp';
+    case JOBBER = 'jobber';
 
     public function getLabel(): ?string
     {
         return match ($this) {
             self::PBP => 'Plantilla based Position',
             self::NPP => 'Non-plantilla Position',
+            self::JOBBER => 'Jobber',
         };
     }
 
@@ -23,6 +25,7 @@ enum AppointmentStatus: string implements HasLabel, HasColor
         return match ($this) {
             self::PBP => 'info',
             self::NPP => 'gray',
+            self::JOBBER => 'gray',
         };
     }
 }

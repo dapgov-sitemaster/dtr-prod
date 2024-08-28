@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Livewire\HrAdmin;
+namespace App\Livewire\Dapcc\HrAdmin;
 
 use App\Enums\Role;
+use Livewire\Component;
 use App\Models\User;
 use Filament\Forms\Get;
-use Livewire\Component;
 use App\Models\Employee;
 use Filament\Forms\Form;
 use App\Models\Department;
@@ -30,7 +30,7 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
     #[Title('| Employee Masterlist')]
     public function render()
     {
-        return view('livewire.hr-admin.employee-masterlist');
+        return view('livewire.dapcc.hr-admin.employee-masterlist');
     }
 
     public function table(Table $table): Table
@@ -39,7 +39,7 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
             ->query(
                 Employee::query()
                     ->withoutGlobalScopes()
-                    ->departmentCovered()
+                    ->isDapcc()
                     ->with('department', 'official_time', 'user')
             )
             ->columns([
@@ -99,10 +99,11 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                                     ->validationAttribute('DAP Email Address')
                                     ->unique(table: User::class)
                                     ->autocomplete(false)
-                                    ->required(fn(Get $get) => $get('appointment_status') != AppointmentStatus::JOBBER),
+                                    ->lazy()
+                                    ->required(fn(Get $get) => $get('appointment_status') != AppointmentStatus::JOBBER->value),
                                 \Filament\Forms\Components\Select::make('department_id')
                                     ->label('Department')
-                                    ->options(Department::all()->pluck('description', 'id'))
+                                    ->options(Department::isDapcc()->get()->pluck('description', 'id'))
                                     ->native(false)
                                     ->searchable()
                                     ->required()
@@ -131,6 +132,7 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                                 \Filament\Forms\Components\Select::make('appointment_status')
                                     ->options(AppointmentStatus::class)
                                     ->native(false)
+                                    ->live()
                                     ->required(),
                                 \Filament\Forms\Components\Select::make('role')
                                     ->options(function () {
@@ -157,6 +159,7 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                             'first_name' => $data['first_name'],
                             'middle_name' => $data['middle_name'],
                             'appointment_status' => $data['appointment_status'],
+                            'role' => $data['role'],
                             'department_id' => $data['department_id'],
                         ]);
 
@@ -242,7 +245,7 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                                     ->required(),
                                 \Filament\Forms\Components\Select::make('department_id')
                                     ->label('Department')
-                                    ->options(Department::all()->pluck('description', 'id'))
+                                    ->options(Department::isDapcc()->get()->pluck('description', 'id'))
                                     ->native(false)
                                     ->searchable()
                                     ->required(),
@@ -312,24 +315,10 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                     ->label('Select Department')
                     ->multiple()
                     ->preload()
-                    ->options(Department::all()->pluck('description', 'id'))
+                    ->options(Department::isDapcc()->get()->pluck('description', 'id'))
                     ->searchable()
                     ->native(false),
             ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
             ->defaultSort('created_at');
     }
-
-    // public function employeeAction()
-    // {
-    //     if() {
-
-    //     }
-    //     else {
-    //         return [
-    //             'create' => [
-
-    //             ]
-    //         ];
-    //     }
-    // }
 }

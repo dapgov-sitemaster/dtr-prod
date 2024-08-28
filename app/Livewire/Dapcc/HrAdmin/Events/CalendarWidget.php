@@ -53,8 +53,10 @@ class CalendarWidget extends FullCalendarWidget
         $end = Carbon::parse($fetchInfo['end'])->addDays(20);
         return $this->model::query()
             ->whereHas('employee', fn($query) => $query->isDapcc())
+            ->where('created_by', auth()->user()->hris_number)
             ->whereDate('start', '>=', $start)
             ->whereDate('end', '<=', $end)
+            ->orWhereIn('tag', [Events::HOL, Events::SUS, Events::FLAG])
             ->get()
             ->map(
                 fn(Event $event) => EventData::make()

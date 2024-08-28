@@ -57,6 +57,9 @@ class AttendanceController extends Controller
         try {
             // $hris_number = Crypt::decryptString($hris_number);
             $employee = Employee::with('department')->where('hris_number', $hris_number)->first();
+            if (!$employee) {
+                return response()->json(['message' => 'HRIS Number could not be found!'], 422);
+            }
 
             if ($employee->department->center == 'DAPCC') {
                 return $this->dapcc_time_entry($request);

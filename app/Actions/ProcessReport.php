@@ -3,7 +3,7 @@
 namespace App\Actions;
 
 use Carbon\Carbon;
-use App\Enums\Events;
+use App\Enums\Dapcc\Events;
 use App\Models\Event;
 use Carbon\CarbonPeriod;
 use App\Enums\ScheduleType;

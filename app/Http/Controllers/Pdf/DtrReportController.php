@@ -154,7 +154,6 @@ class DtrReportController extends Controller
 
     public function dapcc_individual($hris_number, Request $request, ProcessDapccReport $process)
     {
-        // dd($hris_number);
         $employee = Employee::with(['official_time', 'department'])->where('hris_number', $hris_number)->first();
         if ($employee) {
             $appointment_status = $employee->appointment_status->value;
@@ -172,7 +171,7 @@ class DtrReportController extends Controller
                 ->select('id', 'tag', 'start', 'end', 'hris_number')
                 ->whereBetween('start', [$date_from, $date_to->copy()->addDay()])
                 ->where('hris_number', $employee->hris_number)
-                ->orWhere('hris_number', NULL)
+                ->orWhereIn('tag', [\App\Enums\Dapcc\Events::HOL, \App\Enums\Dapcc\Events::SUS, \App\Enums\Dapcc\Events::FLAG])
                 ->get();
 
             $processed = $process->handle($date_from->format('Y-m-d'), $date_to->copy()->addDay()->format('Y-m-d'), $employee, $events);
@@ -222,7 +221,7 @@ class DtrReportController extends Controller
 
             $events = Event::query()
                 ->select('id', 'tag', 'start', 'hris_number')
-                ->Where('hris_number', NULL)
+                ->whereIn('tag', [\App\Enums\Dapcc\Events::HOL, \App\Enums\Dapcc\Events::SUS, \App\Enums\Dapcc\Events::FLAG])
                 ->whereBetween('start', [$date_from, $date_to])
                 ->get();
 

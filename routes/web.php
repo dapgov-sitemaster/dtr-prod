@@ -67,6 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('dapcc')->middleware('checkcenter:DAPCC')->group(function () {
         // DAPCC HR Admin modules
         Route::prefix('hr-admin')->middleware('checkrole:hradmin')->group(function () {
+            Route::get('/master-list', App\Livewire\Dapcc\HrAdmin\EmployeeMasterlist::class)->name('dapcc.hr-admin.master-list');
             Route::get('/events', App\Livewire\Dapcc\HrAdmin\Events\Index::class)->name('dapcc.hr-admin.events');
             Route::get('/dtr-report', App\Livewire\Dapcc\HrAdmin\GenerateDtrReports::class)->name('dapcc.hr-admin.generate-dtr-report');
             Route::get('/dtr-report/employee/{hris_number}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'dapcc_individual'])->name('dapcc.hradmin.dtr.emp-dtr-report');

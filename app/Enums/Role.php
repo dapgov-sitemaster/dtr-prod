@@ -13,7 +13,7 @@ enum Role: string implements HasLabel, HasColor
     case GROUPADMINCOORD = 'groupadmincoord';
     case HRADMIN = 'hradmin';
     case TIMEKEEPER = 'timekeeper';
-    case JOBBER = 'jobber';
+        // case JOBBER = 'jobber';
     case SUPERADMIN = 'superadmin';
 
     public function getLabel(): ?string
@@ -25,7 +25,7 @@ enum Role: string implements HasLabel, HasColor
             self::GROUPADMINCOORD => 'Group Admin Coordinator',
             self::HRADMIN => 'HR Administrator',
             self::TIMEKEEPER => 'Timekeeper',
-            self::JOBBER => 'Jobber',
+            // self::JOBBER => 'Jobber',
             self::SUPERADMIN => 'SuperAdmin',
         };
     }
@@ -39,7 +39,7 @@ enum Role: string implements HasLabel, HasColor
             self::GROUPADMINCOORD => 'success',
             self::HRADMIN => 'primary',
             self::TIMEKEEPER => 'warning',
-            self::JOBBER => 'gray',
+            // self::JOBBER => 'gray',
             self::SUPERADMIN => 'danger',
         };
     }

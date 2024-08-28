@@ -109,7 +109,7 @@
                         <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
                     </li>
                     <x-sidebar.group label="DAPCC HR Administrator Panel">
-                        {{-- <x-sidebar.item tooltip="Employee Masterlist" :url="route('hr-admin.master-list')" :active="request()->routeIs('hr-admin.master-list')">
+                        <x-sidebar.item tooltip="Employee Masterlist" :url="route('dapcc.hr-admin.master-list')" :active="request()->routeIs('dapcc.hr-admin.master-list')">
                             <x-filament::icon
                                 icon="heroicon-m-user-group"
                                 class="w-6 shrink-0"
@@ -117,7 +117,7 @@
                             <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
                                 Employee Masterlist
                             </div>
-                        </x-sidebar.item> --}}
+                        </x-sidebar.item>
                         <x-sidebar.item tooltip="Generate DTR Report" :url="route('dapcc.hr-admin.generate-dtr-report')" :active="request()->routeIs('dapcc.hr-admin.generate-dtr-report')">
                             <x-filament::icon
                                 icon="heroicon-m-clipboard-document-list"
