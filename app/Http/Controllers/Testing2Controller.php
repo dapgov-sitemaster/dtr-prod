@@ -20,8 +20,8 @@ class Testing2Controller extends Controller
         $id = 23731;
         $num = 0;
 
-        for ($f = 4; $f <= 9; $f++) {
-            $entries = json_decode(Storage::disk('local')->get('/newer/timentries-' . $f . '.json'), true);
+        for ($f = 1; $f <= 9; $f++) {
+            $entries = json_decode(Storage::disk('local')->get('/newest_27/timentries-' . $f . '.json'), true);
 
             $time_entries = [];
             for ($i = 0; $i < count($entries); $i++) {
@@ -29,7 +29,6 @@ class Testing2Controller extends Controller
                 if ($emp) {
                     $id++;
                     $time_entries[] = [
-                        'id' => $id,
                         'hris_number' => $entries[$i]['hris_number'],
                         'time_start' => $entries[$i]['time_start'],
                         'time_end' => $entries[$i]['time_end'],

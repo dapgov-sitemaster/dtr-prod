@@ -9,9 +9,9 @@ enum Events: string implements HasLabel, HasColor
 {
     case SHIFT = 'dapcc_shift';
     case DAYOFF = 'dapcc_dayoff';
-    case ALA = 'dapcc_ala';
-    case OB = 'dapcc_ob';
-    case CDO = 'dapcc_cdo';
+    case ALA = 'ala';
+    case OB = 'ob';
+    case CDO = 'cdo';
     case SUS = 'dapcc_suspended';
     case HOL = 'dapcc_holiday';
     case FLAG = 'dapcc_flag';

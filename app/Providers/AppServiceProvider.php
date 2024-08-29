@@ -29,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('view-dapcc', function (\App\Models\User $user) {
-            return $user->role == \App\Enums\Role::SUPERADMIN || $user->employee->department->center == 'DAPCC';
+            return $user->employee->department->center == 'DAPCC';
         });
 
         Gate::define('view-pasig', function (\App\Models\User $user) {
