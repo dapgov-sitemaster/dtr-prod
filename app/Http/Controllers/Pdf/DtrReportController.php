@@ -159,13 +159,20 @@ class DtrReportController extends Controller
             $appointment_status = $employee->appointment_status->value;
             $yearmonth = $request->get('yearmonth');
             $cutoff = $request->get('cutoff');
+            $week = $request->get('week');
             $date_from = null;
             $date_to = null;
 
-            $range = $this->date_range($appointment_status, $cutoff, $yearmonth);
-
-            $date_from = Carbon::parse($range['date_from']);
-            $date_to = Carbon::parse($range['date_to']);
+            if ($week == "null") {
+                $range = $this->date_range($appointment_status, $cutoff, $yearmonth);
+                $date_from = Carbon::parse($range['date_from']);
+                $date_to = Carbon::parse($range['date_to']);
+            } else {
+                $range['date_from'] = Carbon::parse($week);
+                $range['date_to'] = Carbon::parse($week)->addDays(6);
+                $date_from = Carbon::parse($range['date_from']);
+                $date_to = Carbon::parse($range['date_to']);
+            }
 
             $events = Event::query()
                 ->select('id', 'tag', 'start', 'end', 'hris_number')
@@ -214,10 +221,18 @@ class DtrReportController extends Controller
         if ($employees) {
             $yearmonth = $request->get('yearmonth');
             $cutoff = $request->get('cutoff');
-            $range = $this->date_range($appointment_status, $cutoff, $yearmonth);
+            $week = $request->get('week');
 
-            $date_from = Carbon::parse($range['date_from']);
-            $date_to = Carbon::parse($range['date_to']);
+            if ($week == "null") {
+                $range = $this->date_range($appointment_status, $cutoff, $yearmonth);
+                $date_from = Carbon::parse($range['date_from']);
+                $date_to = Carbon::parse($range['date_to']);
+            } else {
+                $range['date_from'] = Carbon::parse($week);
+                $range['date_to'] = Carbon::parse($week)->addDays(6);
+                $date_from = Carbon::parse($range['date_from']);
+                $date_to = Carbon::parse($range['date_to']);
+            }
 
             $events = Event::query()
                 ->select('id', 'tag', 'start', 'hris_number')
@@ -241,7 +256,11 @@ class DtrReportController extends Controller
                 $employee['total'] = $processed['total'];
             }
 
-            $file_title = $title . '_DTR_report_(' . $request->get('yearmonth') . ' ' . (new NumberFormatter('en_US', NumberFormatter::ORDINAL))->format($request->get('cutoff')) . '-cutoff).pdf';
+            if ($week == null) {
+                $file_title = $title . '_DTR_report_(' . $request->get('yearmonth') . ' ' . (new NumberFormatter('en_US', NumberFormatter::ORDINAL))->format($request->get('cutoff')) . '-cutoff).pdf';
+            } else {
+                $file_title = $title . ' DTR Report - ' . $appointment_status . ' (' . $date_from . ' to ' . $date_to . ').pdf';
+            }
             $pdf = App::make('dompdf.wrapper');
             $pdf->setOption(['dpi' => 100, 'defaultFont' => 'sans-serif']);
             $pdf->loadView('components.layouts.pdf.dapcc.dtr-report', [

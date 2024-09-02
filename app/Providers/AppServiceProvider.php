@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Event;
 use Illuminate\Support\Str;
+use App\Observers\EventObserver;
 use Filament\Support\Colors\Color;
 use Illuminate\Support\Stringable;
 use Illuminate\Support\Facades\Gate;
