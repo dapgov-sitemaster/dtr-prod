@@ -242,7 +242,8 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                                     ->email()
                                     ->validationAttribute('DAP Email Address')
                                     ->autocomplete(false)
-                                    ->required(),
+                                    ->live()
+                                    ->required(fn($record) => $record->appointment_status != AppointmentStatus::JOBBER),
                                 \Filament\Forms\Components\Select::make('department_id')
                                     ->label('Department')
                                     ->options(Department::isDapcc()->get()->pluck('description', 'id'))

@@ -13,11 +13,10 @@
         $wire.on('redirectToDtrReport', (data) => {
             let url;
             if(data.dtrtype == 'employee') {
-                url = `daily-time-records/${data.dtrtype}/${data.hris_number}/dtr-report?yearmonth=${data.yearmonth}&cutoff=${data.cutoff}`;
+                url = `daily-time-records/${data.dtrtype}/${data.hris_number}/dtr-report?yearmonth=${data.yearmonth}&cutoff=${data.cutoff}&week=${data.week}`;
             }
             else if(data.dtrtype == 'bulk')  {
-                url = `daily-time-records/${data.dtrtype}/${data.office_id}/dtr-report?yearmonth=${data.yearmonth}&cutoff=${data.cutoff}&appointment_status=${data.appointment_status}`;
-
+                url = `daily-time-records/${data.dtrtype}/${data.office_id}/dtr-report?yearmonth=${data.yearmonth}&cutoff=${data.cutoff}&appointment_status=${data.appointment_status}&week=${data.week}`;
             }
             window.open(url, '_blank');
         });
