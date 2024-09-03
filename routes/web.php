@@ -26,7 +26,7 @@ Route::middleware('auth')->group(function () {
         return redirect('/');
     })->name('logout');
 
-    Route::get('/profile/pdf/qr-code', [QrCodeController::class, 'employee'])->name('pdf.empqrcode');
+    Route::get('/profile/pdf/{employee}/qr-code', [QrCodeController::class, 'employee'])->name('pdf.empqrcode');
 
     // Employee modules
 

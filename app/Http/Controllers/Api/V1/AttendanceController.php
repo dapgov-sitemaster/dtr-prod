@@ -49,13 +49,8 @@ class AttendanceController extends Controller
 
     public function old_time_capture(Request $request)
     {
-        $hris_number = $request->hris;
-        if ($hris_number == null) {
-            return "hris is required";
-        }
-
         try {
-            $hris_number = Crypt::decryptString($hris_number);
+            $hris_number = Crypt::decryptString($request->hris);
             $employee = Employee::with('department')->where('hris_number', $hris_number)->first();
             if (!$employee) {
                 return response()->json(['message' => 'HRIS Number could not be found!'], 422);
@@ -77,7 +72,6 @@ class AttendanceController extends Controller
         try {
             $hris_number = Crypt::decryptString($request->hris);
             $employee = Employee::where('hris_number', $hris_number)->first();
-            return response()->json(['capture_status' => 'error', 'remarks' => 'PASIG employees only!'], 200);
 
             if ($employee->department->center != "DAPCC") {
                 $schedule = Event::where('hris_number', $employee->hris_number)->whereDate('start', now()->format('Y-m-d'))->where('tag', 'wfh')->first();
