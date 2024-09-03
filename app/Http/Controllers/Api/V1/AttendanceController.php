@@ -55,7 +55,7 @@ class AttendanceController extends Controller
         }
 
         try {
-            // $hris_number = Crypt::decryptString($hris_number);
+            $hris_number = Crypt::decryptString($hris_number);
             $employee = Employee::with('department')->where('hris_number', $hris_number)->first();
             if (!$employee) {
                 return response()->json(['message' => 'HRIS Number could not be found!'], 422);
@@ -75,10 +75,12 @@ class AttendanceController extends Controller
     public function time_capture(Request $request)
     {
         try {
-            $employee = Employee::where('hris_number', $request->hris)->first();
+            $hris_number = Crypt::decryptString($request->hris);
+            $employee = Employee::where('hris_number', $hris_number)->first();
+            return response()->json(['capture_status' => 'error', 'remarks' => 'PASIG employees only!'], 200);
 
             if ($employee->department->center != "DAPCC") {
-                $schedule = Event::where('hris_number', $employee->hris_number)->whereDate('start', now()->format('Y-m-d'))->where('description', 'Work From Home (Hybrid)')->first();
+                $schedule = Event::where('hris_number', $employee->hris_number)->whereDate('start', now()->format('Y-m-d'))->where('tag', 'wfh')->first();
 
                 if ($schedule) {
                     return response()->json([
@@ -94,7 +96,7 @@ class AttendanceController extends Controller
                 // $official_time = (!$employee->official_time->isEmpty()) ? $employee->official_time->time_in : date('H:i:s', strtotime('08:00:00'));
                 $timestart = now();
 
-                $latest = TimeEntry::where('hris_number', $request->hris)->whereDate('time_start', now()->format('Y-m-d'))->latest()->first();
+                $latest = TimeEntry::where('hris_number', $hris_number)->whereDate('time_start', now()->format('Y-m-d'))->orderBy('time_start', 'desc')->first();
 
                 // return auth()->user()->employee;
 
@@ -105,7 +107,7 @@ class AttendanceController extends Controller
                             'time_end' => $timestart,
                         ]);
 
-                        return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'time_only' => $timestart->copy()->format('g:i A')], 200);
+                        return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A')], 200);
                     }
                 }
 
@@ -119,7 +121,7 @@ class AttendanceController extends Controller
                     'timekeeper_id' => auth()->user()->id
                 ]);
 
-                return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'time_only' => $timestart->copy()->format('g:i A')], 200);
+                return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A')], 200);
 
                 // if ($latest?->time_end) {
                 //     TimeEntryJob::dispatch(type: 'new', data: [
@@ -191,7 +193,7 @@ class AttendanceController extends Controller
                     // $time_entry->save();
 
                     if ($diffHours < 25) {
-                        return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'time_only' => $timestart->copy()->format('g:i A'), 'remarks' => $shift_remarks], 200);
+                        return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A'), 'remarks' => $shift_remarks], 200);
                         // return response()->json([
                         //     'capture_status' => 'timein',
                         //     'timeentry' => $timeentry_formatted,
@@ -205,7 +207,7 @@ class AttendanceController extends Controller
                     //     'time_only' => $time_only,
                     //     'remarks' => 'Hey! It seems like you forgot to logout and you have rendered more than 24 hours. This is your Time out for date '.$time_entry->time_start->format('M d, Y').'. You have to Scan again to log your Time in for today. Thank you.'
                     // ]);
-                    return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'time_only' => $timestart->copy()->format('g:i A'), 'remarks' => 'Hey! It seems like you forgot to logout and you have rendered more than 24 hours. This is your Time out for date ' . $time_entry->time_start->format('M d, Y') . '. You have to Scan again to log your Time in for today. Thank you.'], 200);
+                    return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A'), 'remarks' => 'Hey! It seems like you forgot to logout and you have rendered more than 24 hours. This is your Time out for date ' . $time_entry->time_start->format('M d, Y') . '. You have to Scan again to log your Time in for today. Thank you.'], 200);
                 } else {
                     $official_time = null;
                     $sched_type = ($employee->official_time) ? $employee->official_time->schedule_type : ScheduleType::FULLFLEXI;
@@ -223,7 +225,7 @@ class AttendanceController extends Controller
                         'timekeeper_id' => auth()->user()->id
                     ]);
 
-                    return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'time_only' => $timestart->copy()->format('g:i A'), 'remarks' => $shift_remarks], 200);
+                    return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A'), 'remarks' => $shift_remarks], 200);
                 }
             }
             return response()->json(['message' => 'DAPCC employees only!'], 422);
@@ -276,7 +278,7 @@ class AttendanceController extends Controller
                         ],
                     ]);
 
-                    return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'time_only' => $timestart->copy()->format('g:i A')], 200);
+                    return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A'), 'start' => true], 200);
                 }
             }
 
@@ -319,7 +321,7 @@ class AttendanceController extends Controller
             //     $new_loc->save();
             // }
 
-            return response()->json(['start' => ($time_entries_count % 2 == 0) ? true : false, 'timeonly' => $timeonly]);
+            return response()->json(['start' => ($time_entries_count % 2 == 0) ? true : false, 'timeonly' => $timeonly, 'start' => false]);
         } catch (\Throwable $th) {
             return response()->json(['capture_status' => 'error', 'remarks' => 'Something went wrong.']);
         }

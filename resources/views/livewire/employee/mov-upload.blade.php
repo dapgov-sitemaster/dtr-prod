@@ -1,4 +1,5 @@
 <div>
+    <x-loading wire:loading />
     <div class="w-full bg-white rounded-xl mb-10 p-4">
         <div class="flex p-4 font-semibold text-xl items-center">
             <div class="w-full lg:flex lg:justify-between p-2">

@@ -152,7 +152,7 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                                     ->required(),
                                 \Filament\Forms\Components\Select::make('appointment_status')
                                     ->label('Select Appointment Status')
-                                    ->options(AppointmentStatus::class)
+                                    ->options([AppointmentStatus::PBP->value => AppointmentStatus::PBP->getLabel(), AppointmentStatus::NPP->value => AppointmentStatus::NPP->getLabel()])
                                     ->native(false)
                                     ->required(),
                             ])

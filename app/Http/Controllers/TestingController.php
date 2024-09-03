@@ -19,8 +19,8 @@ class TestingController extends Controller
     {
         $id = 0;
         $num = 0;
-        for ($f = 1; $f <= 1; $f++) {
-            $schedules = json_decode(Storage::disk('local')->get('/newest_27/schedules-' . $f . '.json'), true);
+        for ($f = 1; $f <= 4; $f++) {
+            $schedules = json_decode(Storage::disk('local')->get('/schedules/schedules-' . $f . '.json'), true);
 
             $event = [];
             $mov = [];

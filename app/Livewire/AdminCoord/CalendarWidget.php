@@ -423,7 +423,7 @@ class CalendarWidget extends FullCalendarWidget
                             if ($record->tag == Events::HOL || $record->tag == Events::SUS || $record->tag == Events::FLAG) {
                                 return false;
                             }
-                            if ($record->start->format('Y-m-d') >= now()->format('Y-m-d')) {
+                            if ($record->start->format('Y-m-d') >= '2024-08-12') {
                                 return true;
                             }
                             return false;
@@ -442,7 +442,8 @@ class CalendarWidget extends FullCalendarWidget
                         ->weekStartsOnSunday()
                         ->native(false)
                         ->closeOnDateSelection()
-                        ->minDate(now()->format('Y-m-d'))
+                        // ->minDate(now()->format('Y-m-d'))
+                        ->minDate('2024-08-12')
                         ->afterStateUpdated(fn(Set $set) => $set('tag', null))
                         ->live()
                         ->required(),
@@ -526,7 +527,8 @@ class CalendarWidget extends FullCalendarWidget
                         ->weekStartsOnSunday()
                         ->native(false)
                         ->closeOnDateSelection()
-                        ->minDate(now()->format('Y-m-d'))
+                        // ->minDate(now()->format('Y-m-d'))
+                        ->minDate('2024-08-12')
                         ->live()
                         ->afterStateUpdated(fn(Set $set) => $set('tag', null))
                         ->required(),
