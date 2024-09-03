@@ -19,9 +19,10 @@ Route::post('/mvpool/login', [AuthController::class, 'mvpool_login'])->name('mvp
 
 Route::post('/get_info', [AttendanceController::class, 'info'])->middleware('auth:sanctum')->name('v1.time_entry.info');
 
-Route::post('/time_entry', [AttendanceController::class, 'old_time_capture'])->middleware('auth:sanctum')->name('v1.time_entry');
+Route::post('/time_entry', [AttendanceController::class, 'old_time_capture'])->middleware('auth:sanctum')->name('old.time_entry');
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Route::post('/attendance/employee-info', [AttendanceController::class, 'info']); // this is for qr scanner app, i guess....
+    Route::post('/time_entry/capture', [AttendanceController::class, 'old_time_capture'])->name('v1.time_entry');
 
 
     Route::post('/attendance/time-capture', [AttendanceController::class, 'time_capture'])->name('pasig.time_entry');
