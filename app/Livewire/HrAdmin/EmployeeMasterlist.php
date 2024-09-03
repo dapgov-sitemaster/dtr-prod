@@ -374,6 +374,24 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                     ->options(Department::all()->pluck('description', 'id'))
                     ->searchable()
                     ->native(false),
+                \Filament\Tables\Filters\Filter::make('appointment_status')
+                    ->form([
+                        \Filament\Forms\Components\CheckboxList::make('appointment_status')
+                            ->label('Select Appointment Status')
+                            ->options(AppointmentStatus::class)
+                            ->bulkToggleable()
+                            ->default(['jobber', 'npp', 'pbp'])
+                            ->columns(3)
+                            ->columnSpanFull(),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['appointment_status'],
+                                fn(Builder $query, $data): Builder => $query->whereIn('appointment_status', $data),
+                            );
+                    })
+                    ->columnSpanFull(),
             ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
             ->defaultSort('created_at', 'desc');
     }
