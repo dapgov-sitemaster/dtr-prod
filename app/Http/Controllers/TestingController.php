@@ -19,8 +19,8 @@ class TestingController extends Controller
     {
         $id = 0;
         $num = 0;
-        for ($f = 1; $f <= 16; $f++) {
-            $schedules = json_decode(Storage::disk('local')->get('/new_schedule/schedules-' . $f . '.json'), true);
+        for ($f = 1; $f <= 4; $f++) {
+            $schedules = json_decode(Storage::disk('local')->get('/schedules/schedules-' . $f . '.json'), true);
 
             $event = [];
             $mov = [];
@@ -30,7 +30,6 @@ class TestingController extends Controller
                 if ($emp) {
                     $id++;
                     $event[] = [
-                        'id' => $id,
                         'hris_number' => $schedules[$i]['hris_number'],
                         'start' => $schedules[$i]['start'],
                         'end' => $schedules[$i]['end'],
@@ -44,12 +43,11 @@ class TestingController extends Controller
 
                     if ($schedules[$i]['mov'] != null) {
                         $num++;
-                        $mov[] = ['id' => $num, 'filename' => $schedules[$i]['mov'], 'movable_id' => $id, 'movable_type' => 'App\Modes\Event', 'created_at' => now()->format('Y-m-d H:i:s'), 'updated_at' => now()->format('Y-m-d H:i:s')];
+                        $mov[] = ['filename' => $schedules[$i]['mov'], 'movable_id' => $id, 'movable_type' => 'App\Modes\Event', 'created_at' => now()->format('Y-m-d H:i:s'), 'updated_at' => now()->format('Y-m-d H:i:s')];
                     }
                 } else if ($schedules[$i]['hris_number'] == null) {
                     $id++;
                     $event[] = [
-                        'id' => $id,
                         'hris_number' => null,
                         'start' => $schedules[$i]['start'],
                         'end' => $schedules[$i]['end'],
