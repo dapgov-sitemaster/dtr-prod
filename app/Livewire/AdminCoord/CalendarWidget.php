@@ -38,7 +38,7 @@ class CalendarWidget extends FullCalendarWidget
                 'center' => 'title',
                 'right' => 'prev,next today',
             ],
-            'selectable' => true,
+            // 'selectable' => true,
             'editable' => true,
             'initialView' => 'dayGridMonth',
         ];
@@ -379,13 +379,14 @@ class CalendarWidget extends FullCalendarWidget
                                 $form->fill([
                                     'hris_number' => $record->hris_number,
                                     'tag' => $record->tag,
+                                    'description_leave' => OfficialLeaves::parse($record->description) ?? $record->description,
                                     'starts_at' => $arguments['event']['start'] ?? $record->start->format('Y-m-d'),
                                     // 'ends_at' => $arguments['event']['end'] ?? $record->end->format('Y-m-d')
                                 ]);
                             }
                         )
                         ->form($this->editActionFormSchema())
-                        ->mutateFormDataUsing(function (array $data, $record): array {
+                        ->mutateFormDataUsing(function (array $data, $record) {
                             $official_time = $record->official_time;
                             $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
                             // $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
@@ -398,7 +399,7 @@ class CalendarWidget extends FullCalendarWidget
                             if ($data['tag'] == Events::ALA) {
                                 $description = $data['description_leave'];
                             } else {
-                                $description = Role::tryfrom($data['tag'])->getLabel();
+                                $description = Events::tryfrom($data['tag'])->getLabel();
                             }
 
                             $data['start'] = $time_start->format('Y-m-d H:i:s');
@@ -443,6 +444,7 @@ class CalendarWidget extends FullCalendarWidget
                         ->closeOnDateSelection()
                         // ->minDate(now()->format('Y-m-d'))
                         ->minDate('2024-08-12')
+                        ->afterStateUpdated(fn(Set $set) => $set('tag', null))
                         ->live()
                         ->required(),
                     // Forms\Components\DatePicker::make('ends_at')
@@ -471,6 +473,7 @@ class CalendarWidget extends FullCalendarWidget
                             }
                             return $options;
                         })
+                        ->reactive()
                         ->native(false)
                         ->required()
                         ->live(),
@@ -527,7 +530,7 @@ class CalendarWidget extends FullCalendarWidget
                         // ->minDate(now()->format('Y-m-d'))
                         ->minDate('2024-08-12')
                         ->live()
-                        ->afterStateUpdated(fn(Set $set) => $set('tag', ''))
+                        ->afterStateUpdated(fn(Set $set) => $set('tag', null))
                         ->required(),
                     // Forms\Components\DatePicker::make('ends_at')
                     //     ->weekStartsOnSunday()

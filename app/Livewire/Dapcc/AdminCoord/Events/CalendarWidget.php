@@ -98,6 +98,9 @@ class CalendarWidget extends FullCalendarWidget
                         $form->fill([
                             'hris_number' => $record->hris_number,
                             'tag' => $record->tag,
+                            'description_leave' => $record->description,
+                            'timestarts_at' => ($record->tag == Events::SHIFT || $record->tag == Events::DAYOFF) ? $record->start->format('H:i') : null,
+                            'timeends_at' => ($record->tag == Events::SHIFT || $record->tag == Events::DAYOFF) ? $record->end->format('H:i') : null,
                             'starts_at' => $arguments['event']['start'] ?? $record->start->format('Y-m-d'),
                             // 'ends_at' => $arguments['event']['end'] ?? $record->end->format('Y-m-d')
                         ]);
@@ -384,6 +387,7 @@ class CalendarWidget extends FullCalendarWidget
                                 $form->fill([
                                     'hris_number' => $record->hris_number,
                                     'tag' => $record->tag,
+                                    'description_leave' => $record->description,
                                     'timestarts_at' => ($record->tag == Events::SHIFT || $record->tag == Events::DAYOFF) ? $record->start->format('H:i') : null,
                                     'timeends_at' => ($record->tag == Events::SHIFT || $record->tag == Events::DAYOFF) ? $record->end->format('H:i') : null,
                                     'starts_at' => $arguments['event']['start'] ?? $record->start->format('Y-m-d'),
@@ -475,7 +479,8 @@ class CalendarWidget extends FullCalendarWidget
                         })
                         ->native(false)
                         ->required()
-                        ->live(),
+                        ->live()
+                        ->columnSpanFull(),
                     Forms\Components\Grid::make()
                         ->schema([
                             Forms\Components\TimePicker::make('timestarts_at')
@@ -565,7 +570,8 @@ class CalendarWidget extends FullCalendarWidget
                         })
                         ->native(false)
                         ->required()
-                        ->live(),
+                        ->live()
+                        ->columnSpanFull(),
                     Forms\Components\Grid::make()
                         ->schema([
                             Forms\Components\TimePicker::make('timestarts_at')

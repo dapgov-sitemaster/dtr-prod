@@ -3,10 +3,12 @@
 namespace App\Livewire\Dapcc\AdminCoord;
 
 use Carbon\Carbon;
+use App\Enums\Role;
+use Filament\Forms\Get;
 use Livewire\Component;
 use App\Models\Employee;
+use Carbon\CarbonPeriod;
 use App\Models\Department;
-use App\Enums\Role;
 use Filament\Tables\Table;
 use Livewire\Attributes\Title;
 use App\Enums\AppointmentStatus;
@@ -99,16 +101,49 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                                         ->label('Select Year and Month')
                                         ->type('month')
                                         ->default(now()->format('Y-m'))
-                                        ->required(),
+                                        ->required()
+                                        ->hidden(fn($record) => $record->appointment_status == AppointmentStatus::JOBBER),
                                     \Filament\Forms\Components\Select::make('cutoff')
                                         ->label('Select Cut-off')
                                         ->options([1 => "First Cut-off", 2 => "Second Cut-off"])
                                         ->native(false)
-                                        ->required(),
+                                        ->required()
+                                        ->hidden(fn($record) => $record->appointment_status == AppointmentStatus::JOBBER),
+                                    \Filament\Forms\Components\DatePicker::make('week')
+                                        ->label('Select Week Start')
+                                        ->format('Y-m-d')
+                                        ->displayFormat('Y-m-d')
+                                        ->weekStartsOnSunday()
+                                        ->native(false)
+                                        ->closeOnDateSelection()
+                                        ->disabledDates(function () {
+                                            $start = Carbon::now()->startOfYear();
+                                            $end = Carbon::now()->endOfYear();
+                                            $period = CarbonPeriod::create($start, $end);
+
+                                            $disables = [];
+                                            foreach ($period as $date) {
+                                                if (!$date->isSunday()) {
+                                                    $disables[] = $date->format('Y-m-d');
+                                                }
+                                            }
+
+                                            return $disables;
+                                        })
+                                        ->required()
+                                        ->visible(fn($record) => $record->appointment_status == AppointmentStatus::JOBBER),
                                 ])
                         ])
                         ->action(function ($data, $record) {
-                            $this->generate('individual', ['hris_number' => $record->hris_number, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff']]);
+                            $this->generate(
+                                'individual',
+                                [
+                                    'hris_number' => $record->hris_number,
+                                    'yearmonth' => (array_key_exists('yearmonth', $data) ? $data['yearmonth'] : null),
+                                    'cutoff' => (array_key_exists('cutoff', $data) ? $data['cutoff'] : null),
+                                    'week' => (array_key_exists('week', $data) ? $data['week'] : null),
+                                ]
+                            );
                             // $livewire->redirectRoute('admin.dtr.emp-dtr-report', ['hris_number' => $record->hris_number, 'date_from' => '2024-07-01', 'date_to' => '2024-07-15']);
                             // return redirect()->route('admin.dtr.emp-dtr-report', ['hris_number' => $record->hris_number, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff']]);
                         })
@@ -136,21 +171,47 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                                     ->native(false)
                                     ->visible(fn() => auth()->user()->hasRole(Role::CENTERADMINCOORD) || auth()->user()->hasRole(Role::GROUPADMINCOORD))
                                     ->required(),
-                                \Filament\Forms\Components\TextInput::make('yearmonth')
-                                    ->label('Select Year and Month')
-                                    ->type('month')
-                                    ->default(now()->format('Y-m'))
-                                    ->required(),
-                                \Filament\Forms\Components\Select::make('cutoff')
-                                    ->label('Select Cut-off')
-                                    ->options([1 => "First Cut-off", 2 => "Second Cut-off"])
-                                    ->native(false)
-                                    ->required(),
                                 \Filament\Forms\Components\Select::make('appointment_status')
                                     ->label('Select Appointment Status')
                                     ->options(AppointmentStatus::class)
                                     ->native(false)
+                                    ->live()
                                     ->required(),
+                                \Filament\Forms\Components\TextInput::make('yearmonth')
+                                    ->label('Select Year and Month')
+                                    ->type('month')
+                                    ->default(now()->format('Y-m'))
+                                    ->required()
+                                    ->hidden(fn(Get $get) => $get('appointment_status') == AppointmentStatus::JOBBER->value),
+                                \Filament\Forms\Components\Select::make('cutoff')
+                                    ->label('Select Cut-off')
+                                    ->options([1 => "First Cut-off", 2 => "Second Cut-off"])
+                                    ->native(false)
+                                    ->required()
+                                    ->hidden(fn(Get $get) => $get('appointment_status') == AppointmentStatus::JOBBER->value),
+                                \Filament\Forms\Components\DatePicker::make('week')
+                                    ->label('Select Week Start')
+                                    ->format('Y-m-d')
+                                    ->displayFormat('Y-m-d')
+                                    ->weekStartsOnSunday()
+                                    ->native(false)
+                                    ->closeOnDateSelection()
+                                    ->disabledDates(function () {
+                                        $start = Carbon::now()->startOfYear();
+                                        $end = Carbon::now()->endOfYear();
+                                        $period = CarbonPeriod::create($start, $end);
+
+                                        $disables = [];
+                                        foreach ($period as $date) {
+                                            if (!$date->isSunday()) {
+                                                $disables[] = $date->format('Y-m-d');
+                                            }
+                                        }
+
+                                        return $disables;
+                                    })
+                                    ->required()
+                                    ->visible(fn(Get $get) => $get('appointment_status') == AppointmentStatus::JOBBER->value),
                             ])
                     ])
                     ->action(function ($data) {
@@ -159,7 +220,16 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                         } else {
                             $department = $data['department_id'];
                         }
-                        $this->generate('office', ['office_id' => $department, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff'], 'appointment_status' => $data['appointment_status']]);
+                        $this->generate(
+                            'office',
+                            [
+                                'office_id' => $department,
+                                'appointment_status' => $data['appointment_status'],
+                                'yearmonth' => (array_key_exists('yearmonth', $data) ? $data['yearmonth'] : null),
+                                'cutoff' => (array_key_exists('cutoff', $data) ? $data['cutoff'] : null),
+                                'week' => (array_key_exists('week', $data) ? $data['week'] : null),
+                            ]
+                        );
                         // $livewire->redirectRoute('admin.dtr.emp-dtr-report', ['hris_number' => $record->hris_number, 'date_from' => '2024-07-01', 'date_to' => '2024-07-15']);
                         // return redirect()->route('admin.dtr.bulk-dtr-report', ['department' => auth()->user()->employee->department_id, 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff'], 'appointment_status' => $data['appointment_status']]);
                     })
@@ -171,10 +241,10 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
     {
         if ($type == 'individual') {
             // $data = $this->individualForm->getState();
-            $this->dispatch('redirectToDtrReport', dtrtype: 'employee', hris_number: $data['hris_number'], yearmonth: $data['yearmonth'], cutoff: $data['cutoff']);
+            $this->dispatch('redirectToDtrReport', dtrtype: 'employee', hris_number: $data['hris_number'], yearmonth: $data['yearmonth'], cutoff: $data['cutoff'], week: $data['week']);
         } else if ($type == 'office') {
             // $data = $this->bulkForm->getState();
-            $this->dispatch('redirectToDtrReport', dtrtype: 'bulk', office_id: $data['office_id'], yearmonth: $data['yearmonth'], cutoff: $data['cutoff'], appointment_status: $data['appointment_status']);
+            $this->dispatch('redirectToDtrReport', dtrtype: 'bulk', office_id: $data['office_id'], yearmonth: $data['yearmonth'], cutoff: $data['cutoff'], appointment_status: $data['appointment_status'], week: $data['week']);
             // return redirect()->route('admin.dtr.bulk-dtr-report', ['department' => $data['office_id'], 'yearmonth' => $data['yearmonth'], 'cutoff' => $data['cutoff'], 'appointment_status' => $data['appointment_status']]);
         }
     }
