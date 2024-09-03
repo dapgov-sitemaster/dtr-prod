@@ -56,34 +56,54 @@ class OfficialTime extends Component implements HasForms, HasTable
                     ->departmentCovered()
             )
             ->columns([
-                \Filament\Tables\Columns\TextColumn::make('hris_number')
-                    ->label('HRIS Number')
-                    ->searchable()
-                    ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('full_name')
-                    ->label('Name')
-                    ->searchable(['first_name', 'last_name'])
-                    ->sortable(['first_name', 'last_name']),
-                \Filament\Tables\Columns\TextColumn::make('department.description')
-                    ->label('Department')
-                    ->sortable(['group', 'center', 'office'])
-                    ->visible(fn() => auth()->user()->hasRole(Role::CENTERADMINCOORD) || auth()->user()->hasRole(Role::GROUPADMINCOORD)),
-                \Filament\Tables\Columns\TextColumn::make('appointment_status')
-                    ->label('Appointment Status')
-                    ->badge()
-                    ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('official_time.type')
-                    ->label('Schedule Type')
-                    ->badge()
-                    ->placeholder('Not set')
-                    ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('official_time.time_in')
-                    ->label('Official Time')
-                    ->formatStateUsing(function ($state) {
-                        return Carbon::parse($state)->format('g:i A') . ' - ' . Carbon::parse($state)->copy()->addHours(9)->format('g:i A');
-                    })
-                    ->placeholder('Not set')
-                    ->sortable(),
+                \Filament\Tables\Columns\Layout\Stack::make([
+                    \Filament\Tables\Columns\Layout\Split::make([
+                        \Filament\Tables\Columns\TextColumn::make('hris_number')
+                            ->label('HRIS Number')
+                            ->description('HRIS Number', position: 'above')
+                            ->searchable()
+                            ->sortable(),
+                        \Filament\Tables\Columns\TextColumn::make('full_name')
+                            ->label('Employee Name')
+                            ->description('Employee Name', position: 'above')
+                            ->searchable(['first_name', 'last_name'])
+                            ->sortable(['first_name', 'last_name']),
+                        \Filament\Tables\Columns\TextColumn::make('appointment_status')
+                            ->label('Appointment Status')
+                            ->description('Appointment Status', position: 'above')
+                            ->badge()
+                            ->sortable(),
+                    ])
+                        ->from('lg'),
+                    \Filament\Tables\Columns\Layout\Panel::make([
+                        \Filament\Tables\Columns\Layout\Split::make([
+                            \Filament\Tables\Columns\TextColumn::make('department.description')
+                                ->label('Department')
+                                ->description('Department', position: 'above')
+                                ->sortable(['group', 'center', 'office'])
+                                ->visible(fn() => auth()->user()->hasRole(Role::CENTERADMINCOORD) || auth()->user()->hasRole(Role::GROUPADMINCOORD)),
+                            \Filament\Tables\Columns\TextColumn::make('official_time.type')
+                                ->label('Schedule Type')
+                                ->description('Schedule Type', position: 'above')
+                                ->badge()
+                                ->placeholder('Not set')
+                                ->sortable(),
+                            \Filament\Tables\Columns\TextColumn::make('official_time.time_in')
+                                ->label('Official Time')
+                                ->description('Official Time', position: 'above')
+                                ->formatStateUsing(function ($state) {
+                                    return Carbon::parse($state)->format('g:i A') . ' - ' . Carbon::parse($state)->copy()->addHours(9)->format('g:i A');
+                                })
+                                ->placeholder('Not set')
+                                ->sortable(),
+                        ])
+                            ->from('lg')
+                    ])->collapsible(),
+                ])
+                    ->space(3)
+
+
+
             ])
             ->bulkActions([
                 \Filament\Tables\Actions\BulkAction::make('set-bulk-time')
