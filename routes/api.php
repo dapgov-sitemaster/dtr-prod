@@ -6,9 +6,9 @@ use App\Http\Controllers\Api\V1\TimeEntryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Route::get('/user', function (Request $request) {
+//     return $request->user();
+// })->middleware('auth:sanctum');
 
 // Route::post('/login', [AuthController::class, 'login'])->name('v1.login'); // this is for new qr scanner app, i guess....
 Route::prefix('v1')->group(function () {
@@ -17,12 +17,12 @@ Route::prefix('v1')->group(function () {
 
 Route::post('/mvpool/login', [AuthController::class, 'mvpool_login'])->name('mvpool.login');
 
-Route::post('/get_info', [AttendanceController::class, 'info'])->name('v1.time_entry.info');
+Route::post('/get_info', [AttendanceController::class, 'info'])->middleware('auth:sanctum')->name('v1.time_entry.info');
 
+Route::post('/time_entry', [AttendanceController::class, 'old_time_capture'])->middleware('auth:sanctum')->name('v1.time_entry');
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Route::post('/attendance/employee-info', [AttendanceController::class, 'info']); // this is for qr scanner app, i guess....
 
-    Route::post('/time_entry/capture', [AttendanceController::class, 'old_time_capture'])->name('v1.time_entry');
 
     Route::post('/attendance/time-capture', [AttendanceController::class, 'time_capture'])->name('pasig.time_entry');
     Route::post('/attendance/dapcc/time-capture', [AttendanceController::class, 'dapcc_time_entry'])->name('dapcc.time_entry');

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\TimeEntry;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
@@ -19,13 +21,19 @@ class AuthController extends Controller
         $attempt = Auth::guard('web')->attempt($validated);
 
         if ($attempt) {
-            $user = User::where('email', $request->email)->first();
-            $token = $user->createToken($user->id)->plainTextToken;
+            $user = User::with('employee')->where('email', $request->email)->first();
 
-            $endpoint = env('AZURE_STORAGE_API_ENDPOINT');
-            $sas_token = env('AZURE_STORAGE_SAS_TOKEN');
+            if ($user->employee->department->office == 'GSD' || $user->role == Role::SUPERADMIN) {
+                $token = $user->createToken($user->hris_number . '-access')->plainTextToken;
+                $time_entry = TimeEntry::where('hris_number', $user->hris_number)->whereDate('time_start', now()->format('Y-m-d'))->orderBy('time_start', 'desc')->first();
+                return response()->json(['status' => 'success', 'token' => $token, 'start' => ($time_entry->time_end == null ? false : true)]);
+            } else {
+                $token = $user->createToken($user->id)->plainTextToken;
+                $endpoint = env('AZURE_STORAGE_API_ENDPOINT');
+                $sas_token = env('AZURE_STORAGE_SAS_TOKEN');
 
-            return response()->json(['token' => $token, 'endpoint' => $endpoint, 'sas_token' => $sas_token], 200);
+                return response()->json(['token' => $token, 'endpoint' => $endpoint, 'sas_token' => $sas_token], 200);
+            }
         } else {
             return response()->json(['message' => 'User credentials are not correct.'], 422);
         }
@@ -37,7 +45,6 @@ class AuthController extends Controller
             'email' => 'required',
             'password' => 'required'
         ]);
-
         if (Auth::guard('web')->attempt($fields)) {
             $user = User::where('email', $request->email)->first();
 
