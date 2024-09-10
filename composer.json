@@ -14,7 +14,8 @@
         "predis/predis": "^2.0",
         "saade/filament-fullcalendar": "^3.0",
         "simplesoftwareio/simple-qrcode": "2.0",
-        "spatie/laravel-activitylog": "^4.8"
+        "spatie/laravel-activitylog": "^4.8",
+        "z3d0x/filament-logger": "^0.7.2"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.13",
