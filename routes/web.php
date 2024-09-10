@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DtrTestController;
 use App\Http\Controllers\Pdf\QrCodeController;
 use App\Http\Controllers\TestingController;
 use App\Http\Controllers\Testing2Controller;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/sign-in');
 // Route::get('/testing', TestingController::class);
 // Route::get('/testing2', Testing2Controller::class);
+// Route::get('/test-dtr', DtrTestController::class);
 
 
 Route::get('/sign-in', Login::class)->middleware('guest')->name('login');
@@ -27,6 +29,7 @@ Route::middleware('auth')->group(function () {
     })->name('logout');
 
     Route::get('/profile/pdf/{employee}/qr-code', [QrCodeController::class, 'employee'])->name('pdf.empqrcode');
+    Route::get('/bulk/qr-code', [QrCodeController::class, 'bulk'])->name('pdf.bulkqrcode');
 
     // Employee modules
 

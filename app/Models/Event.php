@@ -49,7 +49,7 @@ class Event extends Model
             ->logFillable()
             ->logOnlyDirty()
             ->useLogName('event')
-            ->setDescriptionForEvent(fn(string $eventName) => $this->employee->full_name . " has {$eventName} an event")
+            ->setDescriptionForEvent(fn(string $eventName) => auth()->user()->employee->full_name . " has {$eventName} an event")
             ->dontSubmitEmptyLogs();
     }
 

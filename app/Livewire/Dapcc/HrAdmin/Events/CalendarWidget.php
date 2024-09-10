@@ -175,10 +175,13 @@ class CalendarWidget extends FullCalendarWidget
                         if ($official_time) {
                             $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
                             $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '17:00:00');
-                        } else if (Events::parse($data['tag']) == Events::SHIFT || Events::parse($data['tag']) == Events::DAYOFF) {
+                        } else if (Events::parse($data['tag']) == Events::SHIFT) {
                             $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . $data['timestarts_at']);
                             // $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . $data['timeends_at']);
                             $time_end = $time_start->copy()->addHours(9);
+                        } else {
+                            $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
+                            $time_end = \Carbon\Carbon::parse($data['starts_at'] . ' ' . '17:00:00');
                         }
 
                         if (Events::parse($data['tag']) == Events::ALA) {
@@ -372,14 +375,14 @@ class CalendarWidget extends FullCalendarWidget
                                 ->visibility('private'),
                         ])
                         ->action(function ($data, \App\Actions\Azure $azure, $record) {
-                            // if ($record->mov) {
-                            //     $azure->delete($record->mov);
-                            // }
+                            if ($record->mov) {
+                                $azure->delete($record->mov);
+                            }
 
                             $file = Storage::disk('public')->get($data['attachment']);
                             $file_explode = explode('/', $data['attachment']);
                             $filename = $file_explode[1];
-                            // $azure->put("movs", $file, $filename);
+                            $azure->put("movs", $file, $filename);
                             Storage::disk('public')->delete($data['attachment']);
 
                             $record->mov()->create(['filename' => 'movs/' . $filename]);
@@ -464,7 +467,7 @@ class CalendarWidget extends FullCalendarWidget
                         ->weekStartsOnSunday()
                         ->native(false)
                         ->closeOnDateSelection()
-                        ->minDate(now()->format('Y-m-d'))
+                        ->minDate('2024-08-12')
                         ->live()
                         ->required(),
                     // Forms\Components\DatePicker::make('ends_at')
@@ -503,7 +506,7 @@ class CalendarWidget extends FullCalendarWidget
                                 ->seconds(false)
                                 ->required(),
                         ])
-                        ->visible(fn(Get $get) => Events::parse($get('tag')) == Events::SHIFT || Events::parse($get('tag')) == Events::DAYOFF),
+                        ->visible(fn(Get $get) => Events::parse($get('tag')) == Events::SHIFT),
                     \Filament\Forms\Components\Select::make('description_leave')
                         ->label('Type of Official Leave')
                         ->options(OfficialLeaves::class)
@@ -558,7 +561,7 @@ class CalendarWidget extends FullCalendarWidget
                         ->weekStartsOnSunday()
                         ->native(false)
                         ->closeOnDateSelection()
-                        ->minDate(now()->format('Y-m-d'))
+                        ->minDate('2024-08-12')
                         ->live()
                         ->required(),
                     // Forms\Components\DatePicker::make('ends_at')
@@ -597,7 +600,7 @@ class CalendarWidget extends FullCalendarWidget
                                 ->seconds(false)
                                 ->required(),
                         ])
-                        ->visible(fn(Get $get) => Events::parse($get('tag')) == Events::SHIFT || Events::parse($get('tag')) == Events::DAYOFF),
+                        ->visible(fn(Get $get) => Events::parse($get('tag')) == Events::SHIFT),
                     \Filament\Forms\Components\Select::make('description_leave')
                         ->label('Type of Official Leave')
                         ->options(OfficialLeaves::class)

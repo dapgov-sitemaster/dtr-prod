@@ -14,6 +14,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Crypt;
 use App\Http\Resources\EmployeeResource;
+use App\Http\Resources\TimeEntryResource;
 
 class AttendanceController extends Controller
 {
@@ -39,7 +40,7 @@ class AttendanceController extends Controller
                 'group' => $employee->department->group,
                 'center' => $employee->department->center,
                 'office' => $employee->department->office,
-                'image_path' => $employee->image_path,
+                'image_path' => $employee->identity_photo_path,
                 'remarks' => ""
             ]);
         } catch (\Throwable $th) {
@@ -96,6 +97,12 @@ class AttendanceController extends Controller
 
                 if ($latest != null) {
                     if ($latest->time_end == null) {
+                        if ($latest->time_start->format('Y-m-d H:i') == $timestart->format('Y-m-d H:i')) {
+                            return response()->json([
+                                'message' => 'Time captured already. Please stop spamming!'
+                            ], 422);
+                        }
+
                         TimeEntryJob::dispatch(type: 'update', data: [
                             'latest' => $latest,
                             'time_end' => $timestart,
@@ -156,7 +163,8 @@ class AttendanceController extends Controller
     public function dapcc_time_entry(Request $request)
     {
         try {
-            $employee = Employee::with('department')->where('hris_number', $request->hris)->first();
+            $hris_number = Crypt::decryptString($request->hris);
+            $employee = Employee::with('department')->where('hris_number', $hris_number)->first();
 
             if ($employee->department->center == 'DAPCC') {
                 $timestart = Carbon::now();
@@ -301,7 +309,13 @@ class AttendanceController extends Controller
             // $start->tag = 'MVPOOL';
             // $start->save();
 
-            $time_entries_count = TimeEntry::where('hris_number', $employee->hris_number)->whereDate('time_start', now()->format('Y-m-d'))->count();
+            $first_time_entry = TimeEntry::where('hris_number', $employee->hris_number)->whereDate('time_start', now()->format('Y-m-d'))->first();
+            if ($first_time_entry) {
+                $start = ($first_time_entry->time_end == null) ? false : true;
+            } else {
+                $start = true;
+            }
+
             // $maps_api = "https://atlas.microsoft.com/search/address/reverse/json?subscription-key=WYk5KFvt_gxcLFXFN9TfbruJYxXv_HtTCJX-aftj5GU&api-version=1.0&query=" . $validated['latitude'] . "," . $validated['longitude'];
 
             // $response = Http::get($maps_api);
@@ -315,7 +329,7 @@ class AttendanceController extends Controller
             //     $new_loc->save();
             // }
 
-            return response()->json(['start' => ($time_entries_count % 2 == 0) ? true : false, 'timeonly' => $timeonly, 'start' => false]);
+            return response()->json(['timeonly' => $timeonly, 'start' => $start]);
         } catch (\Throwable $th) {
             return response()->json(['capture_status' => 'error', 'remarks' => 'Something went wrong.']);
         }
@@ -341,9 +355,10 @@ class AttendanceController extends Controller
     {
         try {
             // disabled mvpool_time_entries
-            // $user = auth()->user();
-            // $time_entries = TimeEntryResource::collection(TimeEntry::where('hris_number', $user->hris_number)->whereDate('time_start', now()->format('Y-m-d'))->get());
-            return response()->json(['time_entries' => collect()]);
+            $user = auth()->user();
+            $time_entries = TimeEntryResource::collection(TimeEntry::where('hris_number', $user->hris_number)->whereDate('time_start', now()->format('Y-m-d'))->get())->additional(['date' => now()->format('F d, Y')]);
+            return $time_entries;
+            return response()->json(['time_entries' => $time_entries]);
         } catch (\Throwable $th) {
             return response()->json(['capture_status' => 'error', 'remarks' => 'Somethin went wrong.']);
         }

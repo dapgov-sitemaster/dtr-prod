@@ -26,13 +26,29 @@ class AuthController extends Controller
             if ($user->employee->department->office == 'GSD' || $user->role == Role::SUPERADMIN) {
                 $token = $user->createToken($user->hris_number . '-access')->plainTextToken;
                 $time_entry = TimeEntry::where('hris_number', $user->hris_number)->whereDate('time_start', now()->format('Y-m-d'))->orderBy('time_start', 'desc')->first();
-                return response()->json(['status' => 'success', 'token' => $token, 'start' => ($time_entry->time_end == null ? false : true)]);
-            } else {
-                $token = $user->createToken($user->id)->plainTextToken;
-                $endpoint = env('AZURE_STORAGE_API_ENDPOINT');
-                $sas_token = env('AZURE_STORAGE_SAS_TOKEN');
+                if ($time_entry) {
+                    $start = true;
+                    if ($time_entry->time_end) {
+                        $start = false;
+                    } else {
+                        $start = true;
+                    }
+                } else {
+                    $start = false;
+                }
 
-                return response()->json(['token' => $token, 'endpoint' => $endpoint, 'sas_token' => $sas_token], 200);
+                return response()->json(['status' => 'success', 'token' => $token, 'start' => $start]);
+            } else {
+                if ($user->email == 'dapsec@dap.edu.ph' || $user->email == 'dapcc-sec@dap.edu.ph') {
+                    $token = $user->createToken($user->id)->plainTextToken;
+                    $endpoint = env('AZURE_STORAGE_API_ENDPOINT');
+                    $sas_token = env('AZURE_STORAGE_SAS_TOKEN');
+
+                    return response()->json(['token' => $token, 'endpoint' => $endpoint, 'sas_token' => $sas_token], 200);
+                } else {
+                    activity('user logged in in apks')->log($user->employee->employee->full_name . ' tried to login in DAP official mobile applications');
+                    return response()->json(['message' => 'You do not have any right to login into this application! This activity will be logged.'], 422);
+                }
             }
         } else {
             return response()->json(['message' => 'User credentials are not correct.'], 422);
@@ -61,6 +77,57 @@ class AuthController extends Controller
         }
     }
 
+    public function v1_mvpool_login(Request $request)
+    {
+        if ($request->email == null || $request->password == null) {
+            return response()->json(['response' => 'The email/password field is required!'], 400);
+        }
+
+        if (Auth::guard('web')->attempt(['email' => $request->email, 'password' => $request->password])) {
+            $user = User::where('email', $request->email)->first();
+            // info($user);
+            // $response = $user->createToken($user->hris_number . '-access')->plainTextToken;
+
+            if ($request->token == "not-exists") {
+                $response = $user->createToken($user->hris_number . '-access')->plainTextToken;
+            } else {
+                $response = "token-exists";
+            }
+            // if (count($user->tokens->where('name', $user->hris_number . '-access')) > 0) {
+            //     $response = "token-existed";
+            // } else {
+            // }
+            // $token = $user->createToken($user->hris_number.'-access', ['mvpool:access'])->plainTextToken;
+
+            return response()->json(['response' => $response], 200);
+
+            // if ($user->employee->department->office == 'GSD' || $user->role == Role::SUPERADMIN) {
+            //     if ($request->token == "not-exists") {
+            //         $token = $user->createToken($user->hris_number . '-access')->plainTextToken;
+            //     } else {
+            //         $token = "token-exists";
+            //     }
+            //     $time_entry = TimeEntry::where('hris_number', $user->hris_number)->whereDate('time_start', now()->format('Y-m-d'))->orderBy('time_start', 'desc')->first();
+            //     if ($time_entry) {
+            //         $start = true;
+            //         if ($time_entry->time_end) {
+            //             $start = false;
+            //         } else {
+            //             $start = true;
+            //         }
+            //     } else {
+            //         $start = false;
+            //     }
+
+            //     return response()->json(['status' => 'success', 'token' => $token, 'start' => $start], 200);
+            // } else {
+            //     activity('user logged in in apks')->log($user->employee->full_name . ' tried to sign in into DAP official mobile applications');
+            //     return response()->json(['response' => 'You do not have any right to login into this application! This activity will be logged.'], 400);
+            // }
+        } else {
+            return response()->json(['response' => 'Incorrect Credentials provided!'], 400);
+        }
+    }
     // public function old_login(Request $request)
     // {
     //     $validated = $request->validate([

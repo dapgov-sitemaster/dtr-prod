@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use App\Actions\ProcessDapccReport;
 use Illuminate\Support\Facades\App;
 use App\Http\Controllers\Controller;
+use App\Actions\Azure;
 
 class DtrReportController extends Controller
 {
@@ -68,8 +69,10 @@ class DtrReportController extends Controller
             $processed = $process->handle($employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->copy()->addDay()->format('Y-m-d'), $events);
 
 
+            $azure = new Azure;
             $employee['reports'] = $processed['reports'];
             $employee['total'] = $processed['total'];
+            $employee['blob'] = ($employee->signature_path) ? $azure->get($employee->signature_path) : null;
 
             $title = 'DTR Report-' . $date_from->format('m/d/Y') . '-' . $date_to->format('m/d/Y') . ' (' . $employee->hris_number . ').pdf';
             $pdf = App::make('dompdf.wrapper');
@@ -98,19 +101,11 @@ class DtrReportController extends Controller
             $title = $department->group;
         }
 
-        if (auth()->user()->hasRole(Role::HRADMIN)) {
-            $employees = Employee::query()
-                ->with(['official_time', 'department'])
-                ->where('department_id', $department->id)
-                ->where('appointment_status', AppointmentStatus::tryFrom($appointment_status))
-                ->get();
-        } else {
-            $employees = Employee::query()
-                ->with(['official_time', 'department'])
-                ->departmentCovered()
-                ->where('appointment_status', AppointmentStatus::tryFrom($appointment_status))
-                ->get();
-        }
+        $employees = Employee::query()
+            ->with(['official_time', 'department'])
+            ->where('department_id', $department->id)
+            ->where('appointment_status', AppointmentStatus::tryFrom($appointment_status))
+            ->get();
 
         if ($employees) {
             $yearmonth = $request->get('yearmonth');
@@ -120,6 +115,7 @@ class DtrReportController extends Controller
             $date_from = Carbon::parse($range['date_from']);
             $date_to = Carbon::parse($range['date_to']);
 
+            $azure = new Azure;
             $events = Event::query()
                 ->select('id', 'tag', 'start', 'end', 'hris_number')
                 ->orWhere('hris_number', NULL)
@@ -138,6 +134,7 @@ class DtrReportController extends Controller
 
                 $employee['reports'] = $processed['reports'];
                 $employee['total'] = $processed['total'];
+                $employee['blob'] = ($employee->signature_path) ? $azure->get($employee->signature_path) : null;
             }
 
             $file_title = $title . '_DTR_report_(' . $request->get('yearmonth') . ' ' . (new NumberFormatter('en_US', NumberFormatter::ORDINAL))->format($request->get('cutoff')) . '-cutoff).pdf';

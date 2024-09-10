@@ -159,23 +159,27 @@ class CalendarWidget extends FullCalendarWidget
                         if (Events::parse($data['tag']) == Events::SUS) {
                             if ($data['whole_day']) {
                                 $data['start'] = $data['starts_at'] . ' 08:00:00';
-                                $data['end'] = $data['ends_at'] . ' 17:00:00';
+                                $data['end'] = $data['starts_at'] . ' 17:00:00';
+                                // $data['end'] = $data['ends_at'] . ' 17:00:00';
                             } else {
                                 $data['start'] = $data['starts_at'] . ' ' . $data['time'] . ':00';
-                                $data['end'] = $data['ends_at'] . ' ' . $data['time'] . ':00';
+                                $data['end'] = $data['starts_at'] . ' ' . $data['time'] . ':00';
+                                // $data['end'] = $data['ends_at'] . ' ' . $data['time'] . ':00';
                             }
                         } else if (Events::parse($data['tag']) == Events::HOL || Events::parse($data['tag']) == Events::FLAG) {
                             $data['description'] = (Events::parse($data['tag']) == Events::HOL) ? $data['description'] : Events::parse($data['tag'])->getLabel();
                             $data['start'] = $data['starts_at'] . ' 08:00:00';
-                            $data['end'] = $data['ends_at'] . ' 17:00:00';
+                            $data['end'] = $data['starts_at'] . ' 17:00:00';
+                            // $data['end'] = $data['ends_at'] . ' 17:00:00';
                         }
                     } else {
                         $official_time = \App\Models\OfficialTime::where('hris_number', $data['hris_number'])->where('status', 'approved')->first();
                         $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
-                        $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                        // $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                        $time_end = $time_start->copy()->addHours(9);
                         if ($official_time) {
                             $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
-                            $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                            $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '17:00:00');
                         }
 
                         if (Events::parse($data['tag']) == Events::ALA) {
@@ -360,14 +364,14 @@ class CalendarWidget extends FullCalendarWidget
                                 ->visibility('private'),
                         ])
                         ->action(function ($data, \App\Actions\Azure $azure, $record) {
-                            // if ($record->mov) {
-                            //     $azure->delete($record->mov);
-                            // }
+                            if ($record->mov) {
+                                $azure->delete($record->mov->filename);
+                            }
 
                             $file = Storage::disk('public')->get($data['attachment']);
                             $file_explode = explode('/', $data['attachment']);
                             $filename = $file_explode[1];
-                            // $azure->put("movs", $file, $filename);
+                            $azure->put("movs", $file, $filename);
                             Storage::disk('public')->delete($data['attachment']);
 
                             $record->mov()->create(['filename' => 'movs/' . $filename]);
@@ -392,7 +396,7 @@ class CalendarWidget extends FullCalendarWidget
                                     'description_leave' => OfficialLeaves::parse($record->description) ?? $record->description,
                                     'description' => $record->description,
                                     'starts_at' => $arguments['event']['start'] ?? $record->start->format('Y-m-d'),
-                                    'ends_at' => $arguments['event']['end'] ?? $record->end->format('Y-m-d')
+                                    // 'ends_at' => $arguments['event']['end'] ?? $record->end->format('Y-m-d')
                                 ]);
                             }
                         )
@@ -400,10 +404,11 @@ class CalendarWidget extends FullCalendarWidget
                         ->mutateFormDataUsing(function (array $data, $record): array {
                             $official_time = $record->official_time;
                             $time_start = \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
-                            $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                            // $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                            $time_end = $time_start->copy()->addHours(9);
                             if ($record->official_time) {
                                 $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '08:00:00');
-                                $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['ends_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
+                                $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['starts_at'] . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['starts_at'] . ' ' . '17:00:00');
                             }
 
                             if ($data['tag'] == Events::ALA) {
@@ -448,19 +453,19 @@ class CalendarWidget extends FullCalendarWidget
                         ->weekStartsOnSunday()
                         ->native(false)
                         ->closeOnDateSelection()
-                        ->minDate(now()->format('Y-m-d'))
+                        // ->minDate(now()->format('Y-m-d'))
                         ->live()
                         ->required(),
-                    Forms\Components\DatePicker::make('ends_at')
-                        ->weekStartsOnSunday()
-                        ->native(false)
-                        ->closeOnDateSelection()
-                        ->minDate(now()->format('Y-m-d'))
-                        ->live()
-                        ->required(),
+                    // Forms\Components\DatePicker::make('ends_at')
+                    //     ->weekStartsOnSunday()
+                    //     ->native(false)
+                    //     ->closeOnDateSelection()
+                    //     // ->minDate(now()->format('Y-m-d'))
+                    //     ->live()
+                    //     ->required(),
                 ]),
             Forms\Components\Grid::make()
-                ->visible(fn(Get $get) => $get('starts_at') != '' && $get('ends_at') != '')
+                ->visible(fn(Get $get) => $get('starts_at') != '')
                 ->schema([
                     \Filament\Forms\Components\Select::make('tag')
                         ->label('Type of Event')
@@ -469,9 +474,7 @@ class CalendarWidget extends FullCalendarWidget
                             foreach (Events::cases() as $case) {
                                 if ($case == Events::WFH || $case == Events::HWFH) {
                                     if (Carbon::parse($get('starts_at'))->dayOfWeek == Carbon::FRIDAY) {
-                                        if (Carbon::parse($get('starts_at')) == Carbon::parse($get('ends_at'))) {
-                                            $options[$case->value] = $case->getLabel();
-                                        }
+                                        $options[$case->value] = $case->getLabel();
                                     }
                                 } else {
                                     $options[$case->value] = $case->getLabel();
@@ -541,16 +544,16 @@ class CalendarWidget extends FullCalendarWidget
                         ->minDate(now()->format('Y-m-d'))
                         ->live()
                         ->required(),
-                    Forms\Components\DatePicker::make('ends_at')
-                        ->weekStartsOnSunday()
-                        ->native(false)
-                        ->closeOnDateSelection()
-                        ->minDate(now()->format('Y-m-d'))
-                        ->live()
-                        ->required(),
+                    // Forms\Components\DatePicker::make('ends_at')
+                    //     ->weekStartsOnSunday()
+                    //     ->native(false)
+                    //     ->closeOnDateSelection()
+                    //     ->minDate(now()->format('Y-m-d'))
+                    //     ->live()
+                    //     ->required(),
                 ]),
             Forms\Components\Grid::make()
-                ->visible(fn(Get $get) => $get('starts_at') != '' && $get('ends_at') != '')
+                ->visible(fn(Get $get) => $get('starts_at') != '')
                 ->schema([
                     \Filament\Forms\Components\Select::make('tag')
                         ->label('Type of Event')
@@ -559,9 +562,7 @@ class CalendarWidget extends FullCalendarWidget
                             foreach (Events::cases() as $case) {
                                 if ($case == Events::WFH || $case == Events::HWFH) {
                                     if (Carbon::parse($get('starts_at'))->dayOfWeek == Carbon::FRIDAY) {
-                                        if (Carbon::parse($get('starts_at'))->format('Y-m-d') == Carbon::parse($get('ends_at'))->format('Y-m-d')) {
-                                            $options[$case->value] = $case->getLabel();
-                                        }
+                                        $options[$case->value] = $case->getLabel();
                                     }
                                 } else {
                                     $options[$case->value] = $case->getLabel();

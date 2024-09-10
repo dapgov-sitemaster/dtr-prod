@@ -76,6 +76,7 @@ class DailyTimeReport extends Component implements HasForms, HasTable
                 //     ->formatStateUsing(fn ($state) => $state->format('g:i A'))
                 //     ->searchable()
                 //     ->sortable(),
-            ]);
+            ])
+            ->defaultSort('full_name');
     }
 }

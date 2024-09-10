@@ -44,17 +44,35 @@ class ForgotPassword extends Component
         } else {
             $tokenData = (string) str()->uuid();
             $timestamp = now();
+            $prev = DB::table('password_reset_tokens')->where('email', $user->email)->first();
+            if ($prev) {
+                $created_at = \Carbon\Carbon::parse($prev->created_at);
+                if (now()->between($created_at, $created_at->copy()->addSeconds(60))) {
+                    $this->addError('spam', 'Please, try again after 60 seconds.');
+                    $this->status = false;
+                } else {
+                    DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+                    DB::table('password_reset_tokens')->insert([
+                        'email' => $user->email,
+                        'token' => $tokenData,
+                        'created_at' => $timestamp
+                    ]);
 
-            DB::table('password_reset_tokens')->insert([
-                'email' => $user->email,
-                'token' => $tokenData,
-                'created_at' => $timestamp
-            ]);
+                    Mail::to($user->email)->queue(new SendResetPasswordMail($tokenData));
+                    $this->status = true;
+                    $this->email = "";
+                }
+            } else {
+                DB::table('password_reset_tokens')->insert([
+                    'email' => $user->email,
+                    'token' => $tokenData,
+                    'created_at' => $timestamp
+                ]);
 
-            Mail::to($user->email)->queue(new SendResetPasswordMail($tokenData));
-
-            $this->status = true;
-            $this->email = "";
+                Mail::to($user->email)->queue(new SendResetPasswordMail($tokenData));
+                $this->status = true;
+                $this->email = "";
+            }
         }
     }
 }

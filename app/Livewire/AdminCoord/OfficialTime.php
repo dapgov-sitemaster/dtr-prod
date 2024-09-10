@@ -140,7 +140,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                         $file = Storage::disk('public')->get($data['attachment']);
                         $file_explode = explode('/', $data['attachment']);
                         $filename = $file_explode[1];
-                        // $azure->put("movs", $file, $filename);
+                        $azure->put("movs", $file, $filename);
                         Storage::disk('public')->delete($data['attachment']);
 
                         foreach ($records as $record) {
@@ -256,7 +256,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                         $file = Storage::disk('public')->get($data['attachment']);
                         $file_explode = explode('/', $data['attachment']);
                         $filename = $file_explode[1];
-                        // $azure->put("movs", $file, $filename);
+                        $azure->put("movs", $file, $filename);
                         Storage::disk('public')->delete($data['attachment']);
 
                         if ($data['schedule_type'] == ScheduleType::FULLFLEXI->value) {

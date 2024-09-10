@@ -208,11 +208,11 @@ class TimeEntries extends Component implements HasForms, HasTable
                             'lg' => 2,
                         ])
                             ->schema([
-                                \Filament\Forms\Components\TimePicker::make('time_start')
+                                \Filament\Forms\Components\DateTimePicker::make('time_start')
                                     ->label('Select Time In')
                                     ->seconds(false)
                                     ->required(),
-                                \Filament\Forms\Components\TimePicker::make('time_end')
+                                \Filament\Forms\Components\DateTimePicker::make('time_end')
                                     ->label('Select Time Out')
                                     ->seconds(false),
                             ])

@@ -38,22 +38,21 @@ class EmployeeTimeEntries extends Component implements HasForms, HasTable
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('date')
                     ->label('Date')
-                    ->getStateUsing(fn ($record) => $record->time_start->format('Y-m-d'))
-                    ->searchable()
-                    ->sortable(),
+                    ->getStateUsing(fn($record) => $record->time_start->format('Y-m-d'))
+                    ->searchable(),
                 \Filament\Tables\Columns\TextColumn::make('time_start')
                     ->label('Time In')
-                    ->formatStateUsing(fn ($state) => $state->format('g:i A'))
+                    ->formatStateUsing(fn($state) => $state->format('g:i A'))
                     ->searchable()
                     ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('time_end')
                     ->label('Time Out')
-                    ->formatStateUsing(fn ($state) => $state->format('g:i A'))
+                    ->formatStateUsing(fn($state) => $state->format('g:i A'))
                     ->searchable()
                     ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('tag')
                     ->label('Type of Time Entry')
-                    ->formatStateUsing(fn ($state) => ($state === 'ros') ? 'Report On-site' : 'Work from Home')
+                    ->formatStateUsing(fn($state) => ($state === 'ros') ? 'Report On-site' : 'Work from Home')
                     ->searchable()
                     ->sortable(),
             ])
@@ -90,7 +89,7 @@ class EmployeeTimeEntries extends Component implements HasForms, HasTable
                         return $query
                             ->when(
                                 $data['tag'],
-                                fn (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder => $query->whereIn('tag', $data['tag']),
+                                fn(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder => $query->whereIn('tag', $data['tag']),
                             );
                     })
             ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)

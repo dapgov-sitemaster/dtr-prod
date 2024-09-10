@@ -212,14 +212,14 @@ class CalendarWidget extends FullCalendarWidget
                 ->warning()
                 ->color('warning')
                 ->send();
-        } else if (Carbon::parse($event['start'])->format('Y-m-d') < $this->record->start->format('Y-m-d') && $this->record->start->format('Y-m-d') < now()->format('Y-m-d')) {
+        } else if (Carbon::parse($event['start'])->format('Y-m-d') < $this->record->start->format('Y-m-d') && $this->record->start->format('Y-m-d') < '2024-08-12') {
             Notification::make()
                 ->title("Unable to move event!")
                 ->body("Event can't be move backwards from the current Date.")
                 ->warning()
                 ->color('warning')
                 ->send();
-        } else if ($this->record->start->format('Y-m-d') < now()->format('Y-m-d')) {
+        } else if ($this->record->start->format('Y-m-d') < '2024-08-12') {
             Notification::make()
                 ->title("Unable to move event!")
                 ->body("Event can't be moved! Event's date already passed.")
@@ -339,17 +339,18 @@ class CalendarWidget extends FullCalendarWidget
                                 ->label('Upload MOV (optional)')
                                 ->acceptedFileTypes(['application/pdf', 'application/msword'])
                                 ->directory('event-movs')
-                                ->visibility('private'),
+                                ->visibility('private')
+                                ->maxSize(5000),
                         ])
                         ->action(function ($data, \App\Actions\Azure $azure, $record) {
-                            // if ($record->mov) {
-                            //     $azure->delete($record->mov);
-                            // }
+                            if ($record->mov) {
+                                $azure->delete($record->mov);
+                            }
 
                             $file = Storage::disk('public')->get($data['attachment']);
                             $file_explode = explode('/', $data['attachment']);
                             $filename = $file_explode[1];
-                            // $azure->put("movs", $file, $filename);
+                            $azure->put("movs", $file, $filename);
                             Storage::disk('public')->delete($data['attachment']);
 
                             $record->mov()->create(['filename' => 'movs/' . $filename]);
@@ -399,7 +400,7 @@ class CalendarWidget extends FullCalendarWidget
                             if ($data['tag'] == Events::ALA) {
                                 $description = $data['description_leave'];
                             } else {
-                                $description = Events::tryfrom($data['tag'])->getLabel();
+                                $description = $data['tag']->getLabel();
                             }
 
                             $data['start'] = $time_start->format('Y-m-d H:i:s');
@@ -412,7 +413,7 @@ class CalendarWidget extends FullCalendarWidget
                             if ($record->tag == Events::HOL || $record->tag == Events::SUS || $record->tag == Events::FLAG) {
                                 return false;
                             }
-                            if ($record->start->format('Y-m-d') >= now()->format('Y-m-d')) {
+                            if ($record->start->format('Y-m-d') >= '2024-08-12') {
                                 return true;
                             }
                             return false;

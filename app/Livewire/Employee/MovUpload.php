@@ -76,14 +76,14 @@ class MovUpload extends Component implements HasForms, HasTable
                             ->required(),
                     ])
                     ->action(function ($data, \App\Actions\Azure $azure, $record) {
-                        // if ($record->mov) {
-                        //     $azure->delete($record->mov);
-                        // }
+                        if ($record->mov) {
+                            $azure->delete($record->mov);
+                        }
 
                         $file = Storage::disk('public')->get($data['attachment']);
                         $file_explode = explode('/', $data['attachment']);
                         $filename = $file_explode[1];
-                        // $azure->put("movs", $file, $filename);
+                        $azure->put("movs", $file, $filename);
                         Storage::disk('public')->delete($data['attachment']);
 
                         $record->mov()->create(['filename' => 'movs/' . $filename]);

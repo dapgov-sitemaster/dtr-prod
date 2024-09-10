@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta charset="UTF-8">
-    <title>{{ $employee->hris_number.'-qrcode.pdf' }}</title>
+    <title>{{ 'edtr-qrcode-idcard.pdf' }}</title>
     <!-- Styles -->
     <style>
         html { margin-top: 155px;padding-top:155px;margin-bottom: 0px; }
@@ -16,7 +16,8 @@
     <div class="bg-image">
     </div> --}}
 
-    <div style="">
+    @foreach($employees as $employee)
+    <div style="display: inline-block;">
         <div style="display: inline-block;text-align: center;" >
             <div style="position: relative; top:42;">
                 <img src="{{ public_path().'/image/id-front.jpg' }}" style="" width="202px" height="322px"  />
@@ -40,6 +41,7 @@
             <img src="{{ public_path().'/image/id-back.jpg' }}" width="202px" height="322px" style="margin-right: 12px;margin-top: -8px" />
         </div>
     </div>
+    @endforeach
     {{-- <img src="{{ public_path().'/image/id-front.jpg' }}" width="200px" style="margin-right: 10px;" />
     <img src="{{ public_path().'/image/id-front.jpg' }}" width="200px" style="margin-right: 10px;" />
 

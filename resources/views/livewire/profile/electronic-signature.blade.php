@@ -43,7 +43,7 @@
 </div>
 @push('scripts')
 <script type="text/javascript">
-    let result = document.querySelector('.result'),
+    var result = document.querySelector('.result'),
             img_result = document.querySelector('.img-result'),
             cropped = document.querySelector('.cropped'),
             cropper = "";

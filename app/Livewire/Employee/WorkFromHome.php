@@ -15,6 +15,7 @@ class WorkFromHome extends Component
 {
     public Employee $employee;
     public $start;
+    public $empty_entries = true;
     public $entries;
     public $current_timediff;
     // public $start = false;
@@ -29,9 +30,13 @@ class WorkFromHome extends Component
     public function render()
     {
         $this->entries = TimeEntry::where('hris_number', $this->employee->hris_number)->whereDate('time_start', now()->format('Y-m-d'))->orderBy('created_at', 'DESC')->get();
-        $this->start = ($this->entries->first()->time_end) ? null : $this->entries->first()->time_start;
-        if ($this->entries->first()->time_end != null) {
-            $this->current_timediff = $this->entries->first()->time_start->diff($this->entries->first()->time_end)->format('%H:%I:%s');
+        $this->start = null;
+        if ($this->entries->isNotEmpty()) {
+            $this->empty_entries = false;
+            $this->start = ($this->entries->first()->time_end) ? null : $this->entries->first()->time_start;
+            if ($this->entries->first()->time_end != null) {
+                $this->current_timediff = $this->entries->first()->time_start->diff($this->entries->first()->time_end)->format('%H:%I:%s');
+            }
         }
         return view('livewire.employee.work-from-home');
     }
@@ -78,6 +83,7 @@ class WorkFromHome extends Component
                 'department_id' => $this->employee->department_id,
                 'official_time' => $official_time,
                 'tag' => 'wfh',
+                'timekeeper_id' => auth()->user()->id,
             ]);
         }
     }

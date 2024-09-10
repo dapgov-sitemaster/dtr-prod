@@ -10,6 +10,7 @@ use Illuminate\Support\Stringable;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Filament\Support\Facades\FilamentColor;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +27,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        JsonResource::withoutWrapping();
+
         Gate::define('special-events', function (\App\Models\User $user) {
             return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::HRADMIN;
         });

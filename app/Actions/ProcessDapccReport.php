@@ -101,7 +101,12 @@ class ProcessDapccReport
 
                             // $end = Carbon::parse($date->format('Y-m-d') . ' ' . $official_end_time);
                             $end = $official_end_time;
-                            if ($time_end->format('Y-m-d H:i') < $end->format('Y-m-d H:i')) {
+                            if ($time_end == null) {
+                                $tardy = intdiv(480, 60) . ':' . (480 % 60);
+                                // $tardies[$date->format('Y-m-d')] = [480, [ScheduleType::FULLFLEXI->value, $official_start_time], $time_in, true];
+                                $tardies[] = 480;
+                                $not_completed_hrs[] = $date->format('Y-m-d');
+                            } else if ($time_end->format('Y-m-d H:i') < $end->format('Y-m-d H:i')) {
                                 $end_minsdiff = $time_end->diffInMinutes($end);
                                 $undertime = intdiv($end_minsdiff, 60) . ':' . ($end_minsdiff % 60);
                                 $undertimes[] = $end_minsdiff;

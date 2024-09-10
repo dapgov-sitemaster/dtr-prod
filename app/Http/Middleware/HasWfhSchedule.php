@@ -15,7 +15,7 @@ class HasWfhSchedule
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $event = auth()->user()->employee->event()->whereDate('start', now()->format('Y-m-d'))->first();
+        $event = \App\Models\Event::where('hris_number', auth()->user()->hris_number)->whereDate('start', now()->format('Y-m-d'))->first();
         if ($event?->tag == \App\Enums\Events::WFH) {
             return $next($request);
         }

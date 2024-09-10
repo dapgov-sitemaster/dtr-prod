@@ -10,7 +10,7 @@
                     @if($employee->official_time)
                         <span>Your Official Time: <strong>{{ $employee->official_time->time_in->format('g:i A'). ' - ' .$employee->official_time->time_in->copy()->addHours(9)->format('g:i A') }}</strong></span>
                     @else
-                        <span>Your Official Time: <strong>8:00 AM - 5:00 PM</strong></span>
+                        <span>Your Official Time: <strong>Full Flexitime</strong></span>
                     @endif
                 </div>
             </div>
@@ -63,8 +63,9 @@
                                     </div>
                                 @endif
                             @endif --}}
-                            @if($entries->first()->time_end != null)
-                                <span>{{ $current_timediff }}</span>
+                            @if($entries->isNotEmpty())
+                                @if($entries->first()->time_end != null)
+                                    <span>{{ $current_timediff }}</span>
                                 @else
                                     <div x-data="{
                                             endDate: new Date('{{ $start }}').getTime(),
@@ -97,6 +98,7 @@
                                         </div>
                                     </div>
                                 @endif
+                            @endif
                         </div>
                         <div class="flex justify-between  mx-14">
                             <div class="mx-4">Hours</div><div class="mx-4">Minutes</div><div class="mx-4">Seconds</div>
@@ -154,10 +156,29 @@
 
 
                 <div class="my-4">
-                    <x-button x-on:click="$wire.$refresh()" wire:click="time_capture" disabled="{{ ($entries->first()->time_end == null) ? 'true' : 'false' }}" color="primary" class="py-1 px-5 mx-1">
+                    @php
+                        if($entries->isNotEmpty()) {
+                            if(($entries->first()->time_end != null)) {
+                                $disabled_stop = "true";
+                                $disabled_start = "false";
+                            }
+                            else {
+                                $disabled_stop = "false";
+                                $disabled_start = "true";
+                            }
+                        }
+                        else {
+                            $disabled_stop = "true";
+                            $disabled_start = "false";
+                        }
+                    @endphp
+                    <x-button x-on:click="$wire.$refresh()" wire:click="time_capture" color="primary" class="py-1 px-5 mx-1"
+                    disabled="{{ $disabled_start }}">
                         Start
                     </x-button>
-                    <x-button x-on:click="$wire.$refresh()" wire:click="time_capture" disabled="{{ ($entries->first()->time_end != null) ? 'true' : 'false' }}" color="primary" class="py-1 px-5 mx-1">
+                    <x-button x-on:click="$wire.$refresh()" wire:click="time_capture" color="primary" class="py-1 px-5 mx-1"
+
+                        disabled="{{ $disabled_stop }}">
                         Stop
                     </x-button>
                 </div>

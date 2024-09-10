@@ -373,7 +373,8 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                     ->preload()
                     ->options(Department::all()->pluck('description', 'id'))
                     ->searchable()
-                    ->native(false),
+                    ->native(false)
+                    ->columnSpanFull(),
                 \Filament\Tables\Filters\Filter::make('appointment_status')
                     ->form([
                         \Filament\Forms\Components\CheckboxList::make('appointment_status')

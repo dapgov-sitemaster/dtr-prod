@@ -39,6 +39,9 @@
                         A reset link has been sent to your email address.
                     </div>
                     @endif
+                    @error('spam')
+                        <span class="text-xs text-red-500">{{ $message }}</span>
+                    @enderror
                     <div class="text-right">
                         <x-filament::button wire:click.prevent="submit">
                             {{ __('Email Password Reset Link') }}

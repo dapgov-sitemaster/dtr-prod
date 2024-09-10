@@ -71,13 +71,6 @@ class User extends Authenticatable implements FilamentUser, HasName
             ->logFillable()
             ->logOnlyDirty()
             ->useLogName('user')
-            ->setDescriptionForEvent(function (string $eventName) {
-                return match ($eventName) {
-                    'created' => auth()->user()->employee->full_name . " has created a new employee",
-                    'updated' => auth()->user()->employee->full_name . " has updated info of",
-                    default => auth()->user()->employee->full_name . " has {$eventName} a employee"
-                };
-            })
             ->dontSubmitEmptyLogs();
     }
 

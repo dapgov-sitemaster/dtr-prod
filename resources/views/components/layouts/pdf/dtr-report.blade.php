@@ -77,7 +77,7 @@
         }
     </style>
 </head>
-<body style="font-size: 11px">
+<body style="font-size: 10px">
     @foreach ($employees as $employee)
         <div class="w-full" style="margin-top: 10px;">
             <div class="text-center" style="font-size: 12px">
@@ -101,7 +101,8 @@
                 </tr>
                 <tr>
                     <td><span class="font-semibold">Group/Center/Office</span>: {{ $employee->department->description }}</td>
-                    <td><span>Note: <span style="color: red;">*</span> Grace Period</span> | <span style="color:red">•</span> = Full Flexitime | <span style="color:blue">•</span> = Fixed Official Time</td>
+                    {{-- <td><span>Note: <span style="color: red;">*</span> Grace Period</span> | <span style="color:red">•</span> = Full Flexitime | <span style="color:blue">•</span> = Fixed Official Time</td> --}}
+                    <td><span>Note: <span style="color:red">•</span> = Full Flexitime | <span style="color:blue">•</span> = Fixed Official Time</td>
                 </tr>
             </table>
 
@@ -238,20 +239,21 @@
                 </table>
             </div>
 
-            <table class="w-full"  style="font-size: 10px">
+            <table class="w-full"  style="font-size: 9px">
                 <tr>
                     <td class="w-full text-center">I certify on my honor that the above are true and correct entries of the hours of work performed, record of which was made daily at the time of arrival and departure from office.</td>
                     <td class="w-full text-center">Verified in the prescribed office hours.</td>
                 </tr>
                 <tr>
                     <td class="text-center w-full">
-                        @if($employee['signature_blob'])
+                        {{-- @if($employee['blob'])
                             <div class="w-96 border-b-2 h-5 mx-auto" style="border-bottom: 1px solid;">
-                                {{-- <img src="data:image/png;base64, {{ base64_encode($employee['signature_blob']) }}" height="40px" alt="" draggable="false"> --}}
+                                <img src="data:image/png;base64, {{ $employee['blob'] }}" height="40px" alt="" draggable="false">
                             </div>
                         @else
                             <div class="w-96 border-b-2 mx-auto" style="border-bottom: 1px solid;height:40px;"></div>
-                        @endif
+                        @endif --}}
+                        <div class="w-96 border-b-2 mx-auto" style="border-bottom: 1px solid;height:40px;"></div>
 
                         <div>Employee</div>
                     </td>
@@ -263,7 +265,7 @@
             </table>
 
             @if(($loop->iteration % 2) != 0)
-                <div class="w-full mt-6" style="border-bottom: 2px dashed;"></div>
+                <div class="w-full mt-4" style="border-bottom: 2px dashed;"></div>
             @endif
 
             @if($loop->iteration != $loop->count)
