@@ -46,7 +46,7 @@ class AuthController extends Controller
 
                     return response()->json(['token' => $token, 'endpoint' => $endpoint, 'sas_token' => $sas_token], 200);
                 } else {
-                    activity('user logged in in apks')->log($user->employee->employee->full_name . ' tried to login in DAP official mobile applications');
+                    activity('user logged in in apks')->log($user->employee->full_name . ' tried to login in DAP official mobile applications');
                     return response()->json(['message' => 'You do not have any right to login into this application! This activity will be logged.'], 422);
                 }
             }

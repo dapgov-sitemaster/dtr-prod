@@ -182,6 +182,11 @@ class TimeEntries extends Component implements HasForms, HasTable
                         $time_entry->timekeeper_id = auth()->user()->id;
                         $time_entry->save();
 
+                        activity('time entry')
+                            ->performedOn($time_entry)
+                            ->event('created')
+                            ->log(auth()->user()->employee->full_name . ' updated the time entry of ' . $employee->full_name);
+
                         Notification::make()
                             ->title("New Time Entry has been added!")
                             ->success()
@@ -222,6 +227,11 @@ class TimeEntries extends Component implements HasForms, HasTable
                             'time_start' => $data['time_start'],
                             'time_end' => $data['time_end']
                         ]);
+
+                        activity('time entry')
+                            ->performedOn($record)
+                            ->event('updated')
+                            ->log(auth()->user()->employee->full_name . ' updated the time entry of ' . $record->employee->full_name);
 
                         Notification::make()
                             ->title("Time Entry has been updated!")

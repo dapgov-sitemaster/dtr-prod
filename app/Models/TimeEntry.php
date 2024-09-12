@@ -45,9 +45,9 @@ class TimeEntry extends Model
             ->useLogName('time_entries')
             ->setDescriptionForEvent(function (string $eventName) {
                 return match ($eventName) {
-                    'created' => $this->employee->full_name . " has created a new employee",
-                    'updated' => $this->employee->full_name . " has updated info",
-                    default => $this->employee->full_name . " has {$eventName} a employee"
+                    'created' => $this->employee->full_name . " has created a time entry",
+                    'updated' => $this->employee->full_name . " has updated time entry",
+                    default => $this->employee->full_name . " has {$eventName} a time entry"
                 };
             })
             ->dontSubmitEmptyLogs();

@@ -34,7 +34,7 @@ class CalendarWidget extends FullCalendarWidget
             'schedulerLicenseKey' => 'GPL-My-Project-Is-Open-Source',
             'firstDay' => 0,
             'headerToolbar' => [
-                'left' => 'dayGridWeek,dayGridDay,dayGridMonth',
+                'left' => '',
                 'center' => 'title',
                 'right' => 'prev,next today',
             ],
@@ -50,14 +50,14 @@ class CalendarWidget extends FullCalendarWidget
      */
     public function fetchEvents(array $fetchInfo): array
     {
-        $start = Carbon::parse($fetchInfo['start'])->subDays(20);
-        $end = Carbon::parse($fetchInfo['end'])->addDays(20);
+        // $start = Carbon::parse($fetchInfo['start'])->subDays(20);
+        // $end = Carbon::parse($fetchInfo['end'])->addDays(20);
 
         return $this->model::query()
             ->whereHas('employee', fn($query) => $query->departmentCovered())
             // ->with(['employee' => fn($query) => $query->departmentCovered()])
-            ->whereDate('start', '>=', $start)
-            ->whereDate('end', '<=', $end)
+            ->whereDate('start', '>=', $fetchInfo['start'])
+            ->whereDate('end', '<=', $fetchInfo['end'])
             ->orWhereIn('tag', [Events::HOL, Events::SUS, Events::FLAG])
             ->orderBy('start')
             ->get()
@@ -67,6 +67,7 @@ class CalendarWidget extends FullCalendarWidget
                     if ($event->tag == Events::HOL || $event->tag == Events::SUS || $event->tag == Events::FLAG) {
                         $title = $event->description;
                     } else if ($event->employee) {
+                        info($event->hris_number);
                         $title = $event->employee->last_name . ', ' . Str::initials($event->employee->first_name);
                     }
                     return EventData::make()

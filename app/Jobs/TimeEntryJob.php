@@ -38,6 +38,7 @@ class TimeEntryJob implements ShouldQueue
     {
         if ($this->type == 'new') {
             $time_entry = new TimeEntry();
+            $time_entry->disableLogging();
             $time_entry->hris_number = $this->data['hris_number'];
             $time_entry->time_start = $this->data['timestart'];
             $time_entry->department_id = $this->data['department_id'];
@@ -48,6 +49,7 @@ class TimeEntryJob implements ShouldQueue
             $time_entry->save();
         } else if ($this->type == 'update') {
             $time_entry = $this->data['latest'];
+            $time_entry->disableLogging();
             $time_entry->time_end = $this->data['time_end'];
             $time_entry->save();
         }

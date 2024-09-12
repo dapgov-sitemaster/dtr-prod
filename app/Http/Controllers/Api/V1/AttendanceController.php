@@ -109,20 +109,33 @@ class AttendanceController extends Controller
                         ]);
 
                         return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A')], 200);
+                    } else {
+                        TimeEntryJob::dispatch(type: 'new', data: [
+                            'hris_number' => $employee->hris_number,
+                            'timestart' => $timestart,
+                            'department_id' => $employee->department_id,
+                            'sched_type' => $sched_type,
+                            'official_time' => $official_time,
+                            'tag' => 'ROS',
+                            'timekeeper_id' => auth()->user()->id
+                        ]);
+
+                        return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A')], 200);
                     }
+                } else {
+                    TimeEntryJob::dispatch(type: 'new', data: [
+                        'hris_number' => $employee->hris_number,
+                        'timestart' => $timestart,
+                        'department_id' => $employee->department_id,
+                        'sched_type' => $sched_type,
+                        'official_time' => $official_time,
+                        'tag' => 'ROS',
+                        'timekeeper_id' => auth()->user()->id
+                    ]);
+
+                    return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A')], 200);
                 }
 
-                TimeEntryJob::dispatch(type: 'new', data: [
-                    'hris_number' => $employee->hris_number,
-                    'timestart' => $timestart,
-                    'department_id' => $employee->department_id,
-                    'sched_type' => $sched_type,
-                    'official_time' => $official_time,
-                    'tag' => 'ROS',
-                    'timekeeper_id' => auth()->user()->id
-                ]);
-
-                return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A')], 200);
 
                 // if ($latest?->time_end) {
                 //     TimeEntryJob::dispatch(type: 'new', data: [
@@ -168,7 +181,7 @@ class AttendanceController extends Controller
 
             if ($employee->department->center == 'DAPCC') {
                 $timestart = Carbon::now();
-                $time_entry = TimeEntry::where('hris_number', $employee->hris_number)->where('tag', 'ros')->orderBy('time_start', 'desc')->get();
+                $time_entry = TimeEntry::where('hris_number', $employee->hris_number)->where('time_end', null)->where('tag', 'ros')->whereDate('time_start', $timestart->format('Y-m-d'))->orderBy('time_start', 'desc')->get();
                 $shift = Event::where('hris_number', $employee->hris_number)->where('tag', \App\Enums\Dapcc\Events::SHIFT)->whereDate('start', $timestart->format('Y-m-d'))->first();
 
                 $timecapture = $timestart->copy()->toDateTimeString();
@@ -178,12 +191,12 @@ class AttendanceController extends Controller
                     $shift_remarks = $employee->full_name . ', you have no schedule of duty for today. But we will record your Time Entry. Please contact your Admin Coordinator to schedule your duty today. Thank you.';
                 }
 
-                if ($time_entry->count() == 1) {
+                if ($time_entry->isNotEmpty()) {
                     if ($time_entry->first()->time_end != null) {
                         return response()->json([
                             'capture_status' => 'error',
                             'remarks' => "You have already completed your time entries for today`s duty. Your Time in: " . $time_entry->first()->time_start->format('g:i A') . ", your Time out: " . $time_entry->first()->time_end->format('g:i A')
-                        ]);
+                        ], 422);
                     }
 
                     $diffHours = $time_entry->first()->time_start->diffInHours($timecapture, true);

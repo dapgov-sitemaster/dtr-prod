@@ -118,7 +118,14 @@ class GenerateReport
                         }
 
                         $time_start = $day_entry->first()->time_start;
-                        $time_end = ($day_entry->last()->time_end) ? $day_entry->last()->time_end : $day_entry->last()->time_start;
+
+                        if ($day_entry->last()->time_end) {
+                            $time_end = $day_entry->last()->time_end;
+                        } else if ($day_entry->last()->time_start == $time_start) {
+                            $time_end = $day_entry->first()->time_end;
+                        } else {
+                            $time_end = $day_entry->last()->time_start;
+                        }
 
                         if ($break_start == null && $break_end == null) {
                             $break_start = $time_start->copy()->addHours(4);

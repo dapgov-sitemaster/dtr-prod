@@ -159,6 +159,10 @@
                                             {{ $report['break_end'] }}
                                         @endif
                                     @endif
+                                {{-- @else
+                                    @if (date('H:i:s', strtotime($report['time_in'])) > date('H:i:s', strtotime('12:00:00')))
+                                        {{ $report['time_in'] }}
+                                    @endif --}}
                                 @endif
                             </td>
                             {{-- <td class="border text-center">
@@ -184,7 +188,15 @@
                                 @endif
                             </td> --}}
                             <td class="border text-center">
-                                {{ (date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00'))) ? date('g:i A', strtotime($report['time_end'])) : '' }}
+                                @if($report['time_end'])
+                                    @if(date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00')))
+                                        {{ $report['time_end'] }}
+                                    @endif
+                                @else
+                                    {{ $report['time_in'] }}
+                                @endif
+                                
+                                {{-- {{ (date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00'))) ? date('g:i A', strtotime($report['time_end'])) : '' }} --}}
                             </td>
                             {{-- TARDY --}}
                             <td class="border text-center">

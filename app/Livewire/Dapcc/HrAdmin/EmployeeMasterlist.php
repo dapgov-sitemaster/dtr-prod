@@ -137,7 +137,7 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                                 \Filament\Forms\Components\Select::make('role')
                                     ->options(function () {
                                         return collect(Role::cases())
-                                            ->filter(fn($case) => $case !== Role::SUPERADMIN)
+                                            ->filter(fn($case) => $case !== Role::SUPERADMIN && $case !== Role::TIMEKEEPER)
                                             ->mapWithKeys(fn($case) => [$case->value => $case->getLabel()])
                                             ->toArray();
                                     })
@@ -278,7 +278,7 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                                 \Filament\Forms\Components\Select::make('role')
                                     ->options(function () {
                                         return collect(Role::cases())
-                                            ->filter(fn($case) => $case !== Role::SUPERADMIN)
+                                            ->filter(fn($case) => $case !== Role::SUPERADMIN && $case !== Role::TIMEKEEPER)
                                             ->mapWithKeys(fn($case) => [$case->value => $case->getLabel()])
                                             ->toArray();
                                     })

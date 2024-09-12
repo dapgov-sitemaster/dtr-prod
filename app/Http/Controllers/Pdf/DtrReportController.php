@@ -61,12 +61,12 @@ class DtrReportController extends Controller
                 ->select('id', 'tag', 'start', 'end', 'hris_number')
                 ->where('hris_number', $employee->hris_number)
                 ->orWhere('hris_number', NULL)
-                ->whereBetween('start', [$date_from, $date_to])
+                ->whereBetween('start', [$date_from->copy()->subDay(), $date_to->copy()->addDay()])
                 ->get();
 
-            $dtr_report = $generate->handle($employee, $date_from->format('Y-m-d'), $date_to->copy()->addDay()->format('Y-m-d'));
+            $dtr_report = $generate->handle($employee, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'));
             // dd($dtr_report);
-            $processed = $process->handle($employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->copy()->addDay()->format('Y-m-d'), $events);
+            $processed = $process->handle($employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'), $events);
 
 
             $azure = new Azure;
@@ -119,14 +119,14 @@ class DtrReportController extends Controller
             $events = Event::query()
                 ->select('id', 'tag', 'start', 'end', 'hris_number')
                 ->orWhere('hris_number', NULL)
-                ->whereBetween('start', [$date_from, $date_to])
+                ->whereBetween('start', [$date_from->copy()->subDay(), $date_to->copy()->addDay()])
                 ->get();
 
             foreach ($employees as $employee) {
                 $employee_event = Event::query()
                     ->select('id', 'tag', 'start', 'hris_number')
                     ->where('hris_number', $employee->hris_number)
-                    ->whereBetween('start', [$date_from, $date_to])
+                    ->whereBetween('start', [$date_from->copy()->subDay(), $date_to->copy()->addDay()])
                     ->get();
 
                 $dtr_report = $generate->handle($employee, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'));
