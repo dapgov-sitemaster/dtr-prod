@@ -63,7 +63,7 @@ class Event extends Model
         return $this->hasOne(OfficialTime::class, 'hris_number', 'hris_number')->where('status', 'approved')->latest();
     }
 
-    public function created_by(): HasOne
+    public function event_created_by(): HasOne
     {
         return $this->hasOne(Employee::class, 'hris_number', 'created_by');
     }

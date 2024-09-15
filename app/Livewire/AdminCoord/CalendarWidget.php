@@ -63,13 +63,13 @@ class CalendarWidget extends FullCalendarWidget
             ->get()
             ->map(
                 function (Event $event) {
-                    $title = $event->hris_number;
-                    if ($event->tag == Events::HOL || $event->tag == Events::SUS || $event->tag == Events::FLAG) {
-                        $title = $event->description;
-                    } else if ($event->employee) {
-                        info($event->hris_number);
-                        $title = $event->employee->last_name . ', ' . Str::initials($event->employee->first_name);
-                    }
+                    $title = $event->description;
+                    // if ($event->tag == Events::HOL || $event->tag == Events::SUS || $event->tag == Events::FLAG) {
+                    //     $title = $event->description;
+                    // } else if ($event->employee) {
+                    //     info($event->hris_number);
+                    //     $title = $event->employee->last_name . ', ' . Str::initials($event->employee->first_name);
+                    // }
                     return EventData::make()
                         ->id($event->id)
                         ->title($title)
