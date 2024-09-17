@@ -136,7 +136,14 @@ class Employee extends Model
             Role::GROUPADMINCOORD => Department::select('id')->where('group', $user_dept->group)->get()->pluck('id')->toArray(),
             default => [],
         };
-        return (empty($departments)) ? $query : $query->whereIn('department_id', $departments);
+
+        if ($user_dept->center == "DAPCC" && $user_dept->office == "ORD") {
+            return (empty($departments)) ? $query : $query->whereIn('department_id', $departments)->orWhereIn('hris_number', ['212469', '210798']);
+        } else if ($user_dept->center == "ADMIN" && $user_dept->office == "ICTD") {
+            return (empty($departments)) ? $query : $query->whereIn('department_id', $departments);
+        } else {
+            return (empty($departments)) ? $query : $query->whereIn('department_id', $departments);
+        }
     }
 
     public function scopeIsDapcc($query)

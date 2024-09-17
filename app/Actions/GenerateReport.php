@@ -101,6 +101,16 @@ class GenerateReport
                         }
                     } else if ($day_entry->count() > 1) {
                         // dd($day_entry);
+                        $time_start = $day_entry->first()->time_start;
+
+                        if ($day_entry->last()->time_end) {
+                            $time_end = $day_entry->last()->time_end;
+                        } else if ($day_entry->last()->time_start == $time_start) {
+                            $time_end = $day_entry->first()->time_end;
+                        } else {
+                            $time_end = $day_entry->last()->time_start;
+                        }
+
                         foreach ($day_entry as $entry) {
                             $offi_break_start = Carbon::parse($entry->time_start->format('Y-m-d') . ' 11:00:00');
                             $offi_break_end = Carbon::parse($entry->time_start->format('Y-m-d') . ' 14:00:00');
@@ -114,17 +124,13 @@ class GenerateReport
                                 }
                             } else if ($break_start != null) {
                                 $break_end = $entry->time_start;
+                                // info($entry->time_start . ' | ' . $time_end);
+                                if ($entry->time_start == $time_end) {
+                                    $break_end = null;
+                                } else {
+                                    $break_end = $entry->time_start;
+                                }
                             }
-                        }
-
-                        $time_start = $day_entry->first()->time_start;
-
-                        if ($day_entry->last()->time_end) {
-                            $time_end = $day_entry->last()->time_end;
-                        } else if ($day_entry->last()->time_start == $time_start) {
-                            $time_end = $day_entry->first()->time_end;
-                        } else {
-                            $time_end = $day_entry->last()->time_start;
                         }
 
                         if ($break_start == null && $break_end == null) {
