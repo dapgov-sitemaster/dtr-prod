@@ -39,7 +39,7 @@ class ProcessDapccReport
                 $schedule_remarks = $schedule->map(fn($item) => ['value' => ($item->mov) ? '<a href="' . route('admin.dtr.pdf.view-mov', ['mov' => $item->mov?->id]) . '" target="_blank">' . strtoupper($item->tag->value) . '</a>' : strtoupper($item->tag->getLabel())])->toArray();
                 $flag_remarks = $flag->map(fn($item) => ['value' => strtoupper($item->tag->value)])->toArray();
                 $suspended_remarks = $suspended->map(fn($item) => ['value' => strtoupper($item->tag->value)])->toArray();
-                $holiday_remarks = $holiday->map(fn($item) => ['value' => strtoupper($item->tag->getLabel())])->toArray();
+                $holiday_remarks = $holiday->map(fn($item) => ['value' => strtoupper($item->tag->value)])->toArray();
                 $remarks = collect()->merge($schedule_remarks)->merge($flag_remarks)->merge($suspended_remarks)->merge($holiday_remarks);
 
                 // dd($date);

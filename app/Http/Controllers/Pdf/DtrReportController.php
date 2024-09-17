@@ -42,16 +42,10 @@ class DtrReportController extends Controller
         return ['date_from' => $date_from, 'date_to' => $date_to];
     }
 
-    public function individual($hris_number, Request $request, GenerateReport $generate)
+    public function individual($hris_number, Request $request, GenerateReport $generate, ProcessReport $process)
     {
         $employee = Employee::with(['official_time', 'department'])->where('hris_number', $hris_number)->first();
         if ($employee) {
-            if ($employee->hris_number == "212469" || $employee->hris_number == "210798") {
-                $request->merge(['week' => "null"]);
-                $process = new ProcessDapccReport;
-                return $this->dapcc_individual($employee->hris_number, $request, $process);
-            }
-
             $appointment_status = $employee->appointment_status->value;
             $yearmonth = $request->get('yearmonth');
             $cutoff = $request->get('cutoff');
@@ -72,7 +66,6 @@ class DtrReportController extends Controller
 
             $dtr_report = $generate->handle($employee, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'));
             // dd($dtr_report);
-            $process = new ProcessReport;
             $processed = $process->handle($employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'), $events);
 
 

@@ -201,20 +201,9 @@ class CalendarWidget extends FullCalendarWidget
                     return $data;
                 })
                 ->using(function (array $data, string $model) {
-                    if (array_key_exists('hris_number', $data)) {
-                        foreach ($data['hris_number'] as $hris_number) {
-                            $model::create([
-                                'hris_number' => $hris_number,
-                                'start' => $data['start'],
-                                'end' => $data['end'],
-                                'tag' => $data['tag'],
-                                'description' => $data['description'],
-                                'status' => $data['status'],
-                                'created_by' => $data['created_by'],
-                            ]);
-                        }
-                    } else {
+                    foreach ($data['hris_number'] as $hris_number) {
                         $model::create([
+                            'hris_number' => $hris_number,
                             'start' => $data['start'],
                             'end' => $data['end'],
                             'tag' => $data['tag'],

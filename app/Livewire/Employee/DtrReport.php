@@ -10,7 +10,6 @@ use App\Models\Employee;
 use App\Actions\ProcessReport;
 use Livewire\Attributes\Title;
 use App\Actions\GenerateReport;
-use App\Actions\ProcessDapccReport;
 use Livewire\Attributes\Computed;
 
 class DtrReport extends Component
@@ -50,21 +49,12 @@ class DtrReport extends Component
         $date_to = Carbon::parse($range['date_to'])->addDay();
 
         if ($date_to < now()) {
-            if ($this->employee->department->center == "DAPCC") {
-                $events = Event::query()
-                    ->select('id', 'tag', 'start', 'hris_number')
-                    ->where('hris_number', $this->employee->hris_number)
-                    ->where('tag', 'LIKE', 'dapcc_%')
-                    ->whereBetween('start', [$date_from, $date_to])
-                    ->get();
-            } else {
-                $events = Event::query()
-                    ->select('id', 'tag', 'start', 'hris_number')
-                    ->where('hris_number', $this->employee->hris_number)
-                    ->orWhere('hris_number', NULL)
-                    ->whereBetween('start', [$date_from, $date_to])
-                    ->get();
-            }
+            $events = Event::query()
+                ->select('id', 'tag', 'start', 'hris_number')
+                ->where('hris_number', $this->employee->hris_number)
+                ->orWhere('hris_number', NULL)
+                ->whereBetween('start', [$date_from, $date_to])
+                ->get();
 
             // $dtr_report = Report::query()
             //     ->where('hris_number', $this->employee->hris_number)
@@ -75,13 +65,8 @@ class DtrReport extends Component
 
             if ($dtr_report->isNotEmpty()) {
                 $this->showDtr = true;
-                if ($this->employee->department->center == "DAPCC") {
-                    $process = new ProcessDapccReport;
-                    $processed = $process->handle($date_from->format('Y-m-d'), $date_to->format('Y-m-d'), $this->employee, $events);
-                } else {
-                    $process = new ProcessReport;
-                    $processed = $process->handle($this->employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->format('Y-m-d'), $events);
-                }
+                $process = new ProcessReport;
+                $processed = $process->handle($this->employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->format('Y-m-d'), $events);
                 // dd($processed);
                 // info($this->showDtr);
                 return $processed;
