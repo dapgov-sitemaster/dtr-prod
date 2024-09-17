@@ -58,6 +58,7 @@ class CalendarWidget extends FullCalendarWidget
             // ->with(['employee' => fn($query) => $query->departmentCovered()])
             ->whereDate('start', '>=', $fetchInfo['start'])
             ->whereDate('end', '<=', $fetchInfo['end'])
+            ->when(auth()->user()->employee->department->office == "ICTD", fn($query) => $query->whereNotIn('hris_number', ['212469', '210798']))
             ->orWhereIn('tag', [Events::HOL, Events::SUS, Events::FLAG])
             ->orderBy('start')
             ->get()
@@ -67,7 +68,6 @@ class CalendarWidget extends FullCalendarWidget
                     if ($event->tag == Events::HOL || $event->tag == Events::SUS || $event->tag == Events::FLAG) {
                         $title = $event->description;
                     } else if ($event->employee) {
-                        info($event->hris_number);
                         $title = $event->employee->last_name . ', ' . Str::initials($event->employee->first_name);
                     }
                     return EventData::make()
