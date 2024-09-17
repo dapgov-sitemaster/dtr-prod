@@ -5,9 +5,11 @@ namespace App\Providers;
 use App\Models\Event;
 use Illuminate\Support\Str;
 use App\Observers\EventObserver;
+use App\View\Components\Custom\Calendar;
 use Filament\Support\Colors\Color;
 use Illuminate\Support\Stringable;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Filament\Support\Facades\FilamentColor;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -105,5 +107,7 @@ class AppServiceProvider extends ServiceProvider
             'success' => Color::Green,
             'warning' => Color::Amber,
         ]);
+
+        Blade::component('calendar', Calendar::class);
     }
 }

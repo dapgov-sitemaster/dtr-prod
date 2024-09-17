@@ -52,7 +52,7 @@
                 </li>
                 <li>
                     <span class="font-bold">Calendar User Interface</span>
-                    <div class="indent-8">We are reverting back the old Event Calendar. There are multiple reports that the last Event Calendar was too slow to reload. We also did improve the display when viewing an Event, and the creation of the Event.</div>
+                    <div class="indent-8">We are reverting back the old Event Calendar. There are multiple reports that the last Event Calendar was too slow to reload when there are too many events was set. We also did improve the display when viewing an Event, and the creation of the Event.</div>
                     <div class="indent-8">If you have any concerns regarding this changes, please do fill up this link (<a href="https://forms.gle/4jdH3KnLu1HKnx6L8" target="_blank" class="underline text-blue-700">https://forms.gle/4jdH3KnLu1HKnx6L8</a>), for us to document the Bug/Error Report in the system. This will help us track the changes in the system. Thank you.</div>
                 </li>
             </div>

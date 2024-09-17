@@ -29,7 +29,8 @@
             </div>
         </div>
     </div>
-    <div class="border-2 rounded-xl p-6">
+    <x-calendar :items="$this->days" />
+    {{-- <div class="border-2 rounded-xl p-6">
         <div class="lg:grid lg:grid-cols-7 lg:gap-1 text-center mb-2 hidden ">
             <div>Sunday</div>
             <div>Monday</div>
@@ -82,5 +83,5 @@
                 @endif
             @endforeach
         </div>
-    </div>
+    </div> --}}
 </div>
