@@ -10,8 +10,9 @@
             <div class="font-semibold mt-6">I. Creating an Event</div>
             <div class="ml-8">
                 <ul class="list-decimal">
-                    <li>First you have to click the <strong>New Event</strong> button to the top right to create an event.</li>
-                    <li>Select the <strong>Date</strong> of the event. <span class="italic">Note: You can not select the date beyond the current Date</span></li>
+                    {{-- <li>First you have to click the <strong>New Event</strong> button to the top right to create an event.</li> --}}
+                    <li>First you have to click the <strong>Specific Date</strong> to create an event.</li>
+                    {{-- <li>Select the <strong>Date</strong> of the event. <span class="italic">Note: You can not select the date beyond the current Date</span></li> --}}
                     <li>Select the <strong>Type</strong> of the event.</li>
                     <div class="ml-4">3.1. These are the types of the Event that you can schedule.
                         <div class="ml-16">
@@ -46,7 +47,7 @@
 
             </div>
             <div class="font-semibold mt-4">II. Viewing an Event</div>
-            <div class="indent-6">To view an Event, simply click the Event on the calendar and it will pop-up a window that previewing the details of the Event. Some of the events like Official Leave and Official Business have an option to upload an MOV, you can simply click the button to Upload the MOV (It will relfect also to the DTR Report of the Employee).</div>
+            <div class="indent-6">To view an Event, simply click the Event on the calendar and it will pop-up a window that previewing the details of the Event. <span class="line-through">Some of the events like Official Leave and Official Business have an option to upload an MOV, you can simply click the button to Upload the MOV (It will relfect also to the DTR Report of the Employee).</span></div>
             <div class="font-semibold mt-4">III. Updating an Event</div>
             <div class="indent-6 italic">Note: You can not edit the events beyond the current Date</div>
             <div class="ml-6">
@@ -54,12 +55,12 @@
                     <li>To update an Event, click the event that you want to edit, it will pop-up the window that previewing the details of the Event. On the bottom, you can see the <strong>Edit</strong> button.</li>
                     <li>It will pop-up the same form on the create Event. Simply, edit the details.</li>
                     <li>After you are done editing the event. Just click <strong>Save Changes</strong> button to update the event</li>
-                    <li>In some types of event (e.g. Official Leave and Official Business), you can also upload the MOV of that event. You can do this by clicking the <strong>Upload MOV</strong> button and it will pop-up a window with an upload form. Simply upload the document and click <strong>Submit</strong> to add MOV to that event.</li>
+                    <li class="line-through">In some types of event (e.g. Official Leave and Official Business), you can also upload the MOV of that event. You can do this by clicking the <strong>Upload MOV</strong> button and it will pop-up a window with an upload form. Simply upload the document and click <strong>Submit</strong> to add MOV to that event.</li>
                 </ul>
             </div>
-            <div class="indent-8 font-semibold italic">Tip: You can also edit the Event by dragging the event and drop it on another Date.</div>
+            {{-- <div class="indent-8 font-semibold italic">Tip: You can also edit the Event by dragging the event and drop it on another Date.</div> --}}
             <div class="font-semibold mt-4">IV. Deleting an Event</div>
-            <div class="indent-6 italic">Note: You can not delete the events beyond the current Date</div>
+            {{-- <div class="indent-6 italic">Note: You can not delete the events beyond the current Date</div> --}}
             <div class="indent-6">To delete an Event, click the event that you want to delete and the preview window will pop-up. On the bottom, you can see the <strong>Delete</strong> button. Simply click the delete button and the confirmation window will pop-up to confirm you action. Just click the <strong>Confirm</strong> button to confirm the deletion of the Event.</div>
             <div class="mt-6"></div>
         </div>

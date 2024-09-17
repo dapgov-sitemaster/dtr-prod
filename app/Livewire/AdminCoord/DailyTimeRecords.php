@@ -92,7 +92,7 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                         ->labeledFrom('md')
                         ->url(fn($record) => route('admin.dtr.emp-time-entries', ['hris_number' => $record->hris_number])),
                     \Filament\Tables\Actions\Action::make('generate-report')
-                        ->modalHeading(fn($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
+                        ->modalHeading(fn($record) => 'Generate ' . $record->apost_first_name . " DTR Report")
                         ->color('secondary')
                         ->icon('heroicon-m-document-arrow-down')
                         ->labeledFrom('md')

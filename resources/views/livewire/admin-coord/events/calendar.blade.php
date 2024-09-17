@@ -2,9 +2,6 @@
 
     <div class="w-full mb-4">
         <div class="block md:flex md:justify-between text-center mx-auto">
-            <div class="w-full mx-auto hidden md:block">
-                &nbsp;
-            </div>
             <div class="w-full mx-auto text-2xl font-semibold">
                 {{ Carbon\Carbon::create($selectedYear, $selectedMonth)->format('F Y') }}
             </div>
@@ -66,11 +63,11 @@
 
                                     @if($item->tags)
                                         @foreach($item->tags as $event)
-                                        <div class="px-2 pb-1 lg:flex hidden w-full text-sm"
+                                        <div class="px-2 pb-1 lg:flex hidden w-full text-xs"
                                             >
                                             <button
                                             wire:click.stop="$parent.viewEvent('{{ $event }}', '{{ $item->day->format('Y-m-d') }}')"
-                                            class="w-full rounded-md text-left p-1 focus:shadow focus:border-1 text-gray-700 hover:bg-gray-100 focus:text-white @if($event == 'holiday') focus:bg-green-500 focus:border-green-800 @elseif($event == 'suspension') focus:bg-red-500 focus:border-red-800 @else focus:bg-blue-500 focus:border-blue-800 @endif">
+                                            class="w-full rounded-md text-left py-1 px-2 focus:shadow focus:border-1 text-gray-700 hover:bg-gray-100 focus:text-white @if($event == 'holiday') focus:bg-green-500 focus:border-green-800 @elseif($event == 'suspension') focus:bg-red-500 focus:border-red-800 @else focus:bg-blue-500 focus:border-blue-800 @endif">
                                                 {{ App\Enums\Events::parse($event)->getLabel() }}
                                             </button>
                                         </div>

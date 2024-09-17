@@ -39,7 +39,6 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
             ->query(
                 Employee::query()
                     ->withoutGlobalScopes()
-                    ->departmentCovered()
                     ->with('department', 'official_time', 'user')
             )
             ->columns([

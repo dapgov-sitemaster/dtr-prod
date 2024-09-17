@@ -12,6 +12,11 @@ class Index extends Component
     public $eventView;
     public $eventCreate;
 
+    public function mount()
+    {
+        $this->dispatch('open-modal', id: 'changes-notice');
+    }
+
     public function render()
     {
         return view('livewire.admin-coord.events.index');

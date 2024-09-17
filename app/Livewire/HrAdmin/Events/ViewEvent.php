@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\AdminCoord\Events;
+namespace App\Livewire\HrAdmin\Events;
 
 use Carbon\Carbon;
 use App\Enums\Events;
@@ -24,11 +24,12 @@ use Filament\Infolists\Concerns\InteractsWithInfolists;
 class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
 {
     use InteractsWithTable, InteractsWithForms, InteractsWithInfolists;
+    #[Reactive]
     public $events;
 
     public function render()
     {
-        return view('livewire.admin-coord.events.view-event');
+        return view('livewire.hr-admin.events.view-event');
     }
 
     #[On('viewing-event')]
@@ -44,7 +45,7 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
             ->query(
                 Event::query()
                     ->with(['event_created_by', 'mov'])
-                    ->whereHas('employee', fn($query) => $query->departmentCovered())
+                    ->where('created_by', auth()->user()->hris_number)
                     ->whereDate('start', $this->events?->date)
                     ->where('tag', $this->events?->tag)
             )

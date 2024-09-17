@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Livewire\AdminCoord\Events;
+namespace App\Livewire\Dapcc\AdminCoord\Events;
 
 use Carbon\Carbon;
-use App\Enums\Events;
 use App\Models\Event;
 use Livewire\Component;
+use App\Enums\Dapcc\Events;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Attributes\Computed;
@@ -28,14 +28,11 @@ class Calendar extends Component
     {
         $this->selectedMonth = now()->month;
         $this->selectedYear = now()->year;
-        // $this->month = now()->format("m");
-        // $this->year = now()->format("Y");
-        // $this->day = now()->format("d");
     }
 
     public function render()
     {
-        return view('livewire.admin-coord.events.calendar');
+        return view('livewire.dapcc.admin-coord.events.calendar');
     }
 
     #[On('refresh-calendar')]
@@ -46,7 +43,6 @@ class Calendar extends Component
         $firstDay = Carbon::create($this->selectedYear, $this->selectedMonth, 1);
         $events = Event::query()
             ->whereHas('employee', fn($query) => $query->departmentCovered())
-            ->when(auth()->user()->employee->department->office == "ICTD", fn($query) => $query->whereNotIn('hris_number', ['212469', '210798']))
             ->whereDate('start', '>=', $firstDay->copy()->startOfMonth())
             ->whereDate('end', '<=', $firstDay->copy()->endOfMonth())
             ->orWhereIn('tag', [Events::HOL, Events::SUS, Events::FLAG])

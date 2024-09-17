@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\AdminCoord\Events;
+namespace App\Livewire\HrAdmin\Events;
 
 use Carbon\Carbon;
 use App\Enums\Events;
@@ -26,16 +26,14 @@ class Calendar extends Component
 
     public function mount()
     {
+
         $this->selectedMonth = now()->month;
         $this->selectedYear = now()->year;
-        // $this->month = now()->format("m");
-        // $this->year = now()->format("Y");
-        // $this->day = now()->format("d");
     }
 
     public function render()
     {
-        return view('livewire.admin-coord.events.calendar');
+        return view('livewire.hr-admin.events.calendar');
     }
 
     #[On('refresh-calendar')]
@@ -45,12 +43,12 @@ class Calendar extends Component
         $days = collect();
         $firstDay = Carbon::create($this->selectedYear, $this->selectedMonth, 1);
         $events = Event::query()
-            ->whereHas('employee', fn($query) => $query->departmentCovered())
-            ->when(auth()->user()->employee->department->office == "ICTD", fn($query) => $query->whereNotIn('hris_number', ['212469', '210798']))
             ->whereDate('start', '>=', $firstDay->copy()->startOfMonth())
             ->whereDate('end', '<=', $firstDay->copy()->endOfMonth())
+            ->where('created_by', auth()->user()->hris_number)
             ->orWhereIn('tag', [Events::HOL, Events::SUS, Events::FLAG])
             ->get();
+
         $dayOfWeek = $firstDay->dayOfWeek;
         for ($i = 0; $i <= $dayOfWeek - 1; $i++) {
             $days[] = null;
