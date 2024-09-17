@@ -21,6 +21,7 @@ Route::get('/forgot-password', ForgotPassword::class)->middleware('guest')->name
 Route::get('/reset-password/{token}', ResetPassword::class)->middleware('guest')->name('forgot-password.reset');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/calendar/test', App\Livewire\AdminCoord\Events\Index::class)->name('calendar.test');
     Route::get('/home', App\Livewire\Home::class)->middleware('checkpassword')->name('home');
     Route::get('/auth/change-default-password', ChangePassword::class)->name('auth.change-password');
     Route::get('/logout', function () {
