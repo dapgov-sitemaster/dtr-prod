@@ -33,91 +33,130 @@
         <div class="mt-6 hidden md:block">
             @if ($showDtr)
                 <div id="main" class="border-2 border-gray-700 rounded-t-xl px-1">
-                    <table class="w-full text-center">
-                        <thead class="border-b-2 border-gray-600">
-                            <th class="py-4">Date</th>
-                            <th class="py-4">AM IN</th>
-                            <th class="py-4">AM OUT</th>
-                            <th class="py-4">PM IN</th>
-                            <th class="py-4">PM OUT</th>
-                            <th class="py-4">TARDY</th>
-                            <th class="py-4">UNDERTIME</th>
-                            {{-- <th class="py-4">HALF-DAY</th> --}}
-                            <th class="py-4">FLEXI</th>
-                            <th class="py-4">REMARKS</th>
-                        </thead>
-                        <tbody>
-                            @foreach ($this->dtrReport['reports'] as $date => $report)
-                            <tr class="border-t-2 border-b-2 border-gray-600">
-                                <td class="py-2 text-left pl-2">
-                                    {{ Carbon\Carbon::parse($date)->format('m-d-Y, D') }}
-                                </td>
-                                <td class="py-2">
-                                    @if($report['time_in'])
-                                        {{ (date('H:i:s', strtotime($report['time_in'])) < date('H:i:s', strtotime('12:00:00'))) ? date('g:i A', strtotime($report['time_in'])) : '' }}
-                                    @endif
-                                    @if($report['graced'])
-                                        <span style="color: red;">*</span>
-                                    @endif
-                                </td>
-                                <td class="py-2">
-                                    @if($report['time_end'])
-                                        @if(date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00')))
-                                            @if (date('H:i:s', strtotime($report['time_in'])) < date('H:i:s', strtotime('12:00:00')))
-                                                12:00 PM
-                                            @endif
-                                        @else
-                                            {{ $report['time_end'] }}
+                    @can('view-dapcc')
+                        <table class="w-full text-center">
+                            <thead class="border-b-2 border-gray-600">
+                                <th class="py-4">DATE</th>
+                                <th class="py-4">SHIFT</th>
+                                <th class="py-4">TIME IN</th>
+                                <th class="py-4">TIME OUT</th>
+                                <th class="py-4">TARDY</th>
+                                <th class="py-4">UNDERTIME</th>
+                                <th class="py-4">REMARKS</th>
+                            </thead>
+                            <tbody>
+                                @foreach($this->dtrReport['reports'] as $date => $report)
+                                    @php
+                                        $date = Carbon\Carbon::parse($date);
+                                        // $shift = Carbon\Carbon::parse($report['shift']);
+                                        // $shift_sched = ($report['w_shift']) ? $shift->format('g:i A') . '-' . $shift->copy()->addHours(8)->format('g:i A') : '';
+                                    @endphp
+                                    <tr class="border-t-2 border-b-2 border-gray-600">
+                                        <td class="py-2 text-left pl-2">{{ $date->format('Y-m-d, D') }}</td>
+                                        <td class="py-2 text-left pl-2">{{ $report['shift'] }}</td>
+                                        <td class="py-2 text-left pl-2">{{ $report['time_in'] }}</td>
+                                        <td class="py-2 text-left pl-2">{{ $report['time_end'] }}</td>
+                                        <td class="py-2 text-left pl-2">{{ $report['tardy'] }}</td>
+                                        <td class="py-2 text-left pl-2">{{ $report['undertime'] }}</td>
+                                        <td class="py-2 text-left pl-2">{!! $report['remarks']->where('value', '<>', 'SHIFT')->pluck('value')->implode(',') !!}</td>
+                                    </tr>
+                                @endforeach
+                                <tr class="border-t-2 border-b-2 border-gray-600">
+                                    <td class="py-2 text-right font-semibold" colspan="5">Total Deducted Time</td>
+                                    <td class="py-2">
+                                        {{ $this->dtrReport['total']['tardy'][1] }}
+                                    </td>
+                                    <td class="py-2">{{ $this->dtrReport['total']['undertime'][1] }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    @else
+                        <table class="w-full text-center">
+                            <thead class="border-b-2 border-gray-600">
+                                <th class="py-4">Date</th>
+                                <th class="py-4">AM IN</th>
+                                <th class="py-4">AM OUT</th>
+                                <th class="py-4">PM IN</th>
+                                <th class="py-4">PM OUT</th>
+                                <th class="py-4">TARDY</th>
+                                <th class="py-4">UNDERTIME</th>
+                                {{-- <th class="py-4">HALF-DAY</th> --}}
+                                <th class="py-4">FLEXI</th>
+                                <th class="py-4">REMARKS</th>
+                            </thead>
+                            <tbody>
+                                @foreach ($this->dtrReport['reports'] as $date => $report)
+                                <tr class="border-t-2 border-b-2 border-gray-600">
+                                    <td class="py-2 text-left pl-2">
+                                        {{ Carbon\Carbon::parse($date)->format('m-d-Y, D') }}
+                                    </td>
+                                    <td class="py-2">
+                                        @if($report['time_in'])
+                                            {{ (date('H:i:s', strtotime($report['time_in'])) < date('H:i:s', strtotime('12:00:00'))) ? date('g:i A', strtotime($report['time_in'])) : '' }}
                                         @endif
-                                    @endif
-                                </td>
-                                <td class="py-2">
-                                    @if($report['time_end'])
-                                        @if (date('H:i:s', strtotime($report['time_in'])) > date('H:i:s', strtotime('12:00:00')))
-                                            {{ $report['time_in'] }}
-                                        @else
-                                            @if (date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('13:00:00')))
-                                                1:00 PM
+                                        @if($report['graced'])
+                                            <span style="color: red;">*</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-2">
+                                        @if($report['time_end'])
+                                            @if(date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00')))
+                                                @if (date('H:i:s', strtotime($report['time_in'])) < date('H:i:s', strtotime('12:00:00')))
+                                                    12:00 PM
+                                                @endif
+                                            @else
+                                                {{ $report['time_end'] }}
                                             @endif
                                         @endif
-                                    @endif
-                                </td>
-                                <td class="py-2">
-                                    {{ (date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00'))) ? date('g:i A', strtotime($report['time_end'])) : '' }}
-                                </td>
-                                <td class="py-2">
-                                    @if($report['no_out'])
-                                        08:00:00
-                                    @else
-                                        {{ $report['tardy'] }}
-                                    @endif
-                                </td>
-                                <td class="py-2">
-                                    {{ $report['undertime'] }}
-                                </td>
-                                <td class="py-2">
-                                    {{ $report['flexied'] ? 'Yes' : '' }}
-                                </td>
-                                <td class="py-2 text-center">
-                                    {!! $report['remarks']->pluck('value')->implode(',') !!}
-                                </td>
-                            </tr>
-                            @endforeach
-                            <tr class="border-t-2 border-b-2 border-gray-600">
-                                <td class="py-2 text-right font-semibold" colspan="5">Total Deducted Time</td>
-                                <td class="py-2">
-                                    {{ $this->dtrReport['total']['tardy'][1] }}
-                                </td>
-                                <td class="py-2">{{ $this->dtrReport['total']['undertime'][1] }}</td>
-                            </tr>
-                            <tr class="border-t-2 border-b-2 border-gray-600">
-                                <td class="py-2 text-right font-semibold" colspan="5">Total Frequency</td>
-                                <td class="py-2">{{ $this->dtrReport['total']['tardy'][0] }}</td>
-                                <td class="py-2">{{ $this->dtrReport['total']['undertime'][0] }}</td>
-                                <td class="py-2">{{ $this->dtrReport['total']['total_flexi'] }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                    </td>
+                                    <td class="py-2">
+                                        @if($report['time_end'])
+                                            @if (date('H:i:s', strtotime($report['time_in'])) > date('H:i:s', strtotime('12:00:00')))
+                                                {{ $report['time_in'] }}
+                                            @else
+                                                @if (date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('13:00:00')))
+                                                    1:00 PM
+                                                @endif
+                                            @endif
+                                        @endif
+                                    </td>
+                                    <td class="py-2">
+                                        {{ (date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00'))) ? date('g:i A', strtotime($report['time_end'])) : '' }}
+                                    </td>
+                                    <td class="py-2">
+                                        @if($report['no_out'])
+                                            08:00:00
+                                        @else
+                                            {{ $report['tardy'] }}
+                                        @endif
+                                    </td>
+                                    <td class="py-2">
+                                        {{ $report['undertime'] }}
+                                    </td>
+                                    <td class="py-2">
+                                        {{ $report['flexied'] ? 'Yes' : '' }}
+                                    </td>
+                                    <td class="py-2 text-center">
+                                        {!! $report['remarks']->pluck('value')->implode(',') !!}
+                                    </td>
+                                </tr>
+                                @endforeach
+                                <tr class="border-t-2 border-b-2 border-gray-600">
+                                    <td class="py-2 text-right font-semibold" colspan="5">Total Deducted Time</td>
+                                    <td class="py-2">
+                                        {{ $this->dtrReport['total']['tardy'][1] }}
+                                    </td>
+                                    <td class="py-2">{{ $this->dtrReport['total']['undertime'][1] }}</td>
+                                </tr>
+                                <tr class="border-t-2 border-b-2 border-gray-600">
+                                    <td class="py-2 text-right font-semibold" colspan="5">Total Frequency</td>
+                                    <td class="py-2">{{ $this->dtrReport['total']['tardy'][0] }}</td>
+                                    <td class="py-2">{{ $this->dtrReport['total']['undertime'][0] }}</td>
+                                    <td class="py-2">{{ $this->dtrReport['total']['total_flexi'] }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    @endcan
                 </div>
             @else
             <div class="bg-dap-secondary p-8 flex justify-between rounded-2xl shadow-lg">
