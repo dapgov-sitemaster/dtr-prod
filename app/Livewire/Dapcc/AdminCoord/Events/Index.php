@@ -13,15 +13,14 @@ class Index extends Component
         return view('livewire.dapcc.admin-coord.events.index');
     }
 
-    public function createEvent($date)
+    public function createEvent()
     {
 
         // $this->eventCreate = (object) [
         //     'date' => Carbon::parse($date),
         // ];
         $this->dispatch(
-            'creating-event',
-            date: $date
+            'creating-event'
         )->to(CreateEvent::class);
     }
 }

@@ -12,7 +12,7 @@ class Calendar extends Component
     /**
      * Create a new component instance.
      */
-    public function __construct(public Collection $items)
+    public function __construct(public string $type, public Collection $items)
     {
         //
     }

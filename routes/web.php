@@ -48,7 +48,8 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->middleware(['checkrole:admincoord,centeradmincoord,groupadmincoord', 'checkcenter:PASIG'])->group(function () {
         Route::get('/official-time', App\Livewire\AdminCoord\OfficialTime::class)->name('admin.official-time');
 
-        Route::get('/event-calendar', App\Livewire\AdminCoord\Events\Index::class)->name('admin.event-calendar');
+        // Route::get('/event-calendar', App\Livewire\AdminCoord\Events\Index::class)->name('admin.event-calendar');
+        Route::get('/event-calendar', App\Livewire\AdminCoord\EventCalendar::class)->name('admin.event-calendar');
         Route::get('/event-calendar/{mov}/view-mov', App\Http\Controllers\Pdf\ShowMovController::class)->name('admin.pdf.view-mov');
 
         Route::get('/daily-time-records', App\Livewire\AdminCoord\DailyTimeRecords::class)->name('admin.dtr.index');

@@ -59,9 +59,9 @@ class Calendar extends Component
             $dayEvent = $events->filter(function ($item) use ($day) {
                 return $item->start->format('Y-m-d') == $day->format('Y-m-d');
             });
-            $tags = $dayEvent->groupBy('tag')->keys();
+            $tags = $dayEvent->groupBy('tag');
 
-            $days->push((object) ['day' => $day, 'tags' => $tags]);
+            $days->push((object) ['day' => $day, 'events' => $tags]);
         }
 
         return $days;

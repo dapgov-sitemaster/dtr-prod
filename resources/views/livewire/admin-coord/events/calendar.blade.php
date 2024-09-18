@@ -29,7 +29,7 @@
             </div>
         </div>
     </div>
-    <x-calendar :items="$this->days" />
+    <x-calendar type="pasig" :items="$this->days" />
     {{-- <div class="border-2 rounded-xl p-6">
         <div class="lg:grid lg:grid-cols-7 lg:gap-1 text-center mb-2 hidden ">
             <div>Sunday</div>

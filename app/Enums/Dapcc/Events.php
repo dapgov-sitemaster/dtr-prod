@@ -8,6 +8,7 @@ use Filament\Support\Contracts\HasLabel;
 enum Events: string implements HasLabel, HasColor
 {
     case SHIFT = 'dapcc_shift';
+    case MULTISHIFT = 'dapcc_multishift';
     case DAYOFF = 'dapcc_dayoff';
     case ALA = 'ala';
     case OB = 'ob';
@@ -20,6 +21,7 @@ enum Events: string implements HasLabel, HasColor
     {
         return match ($this) {
             self::SHIFT => 'Shift',
+            self::MULTISHIFT => 'Multiple Shift',
             self::DAYOFF => 'Day-off',
             self::ALA => 'Official Leave',
             self::OB => 'Official Business',
@@ -34,6 +36,7 @@ enum Events: string implements HasLabel, HasColor
     {
         return match ($this) {
             self::SHIFT => 'info',
+            self::MULTISHIFT => 'info',
             self::DAYOFF => 'warning',
             self::ALA => 'warning',
             self::OB => 'gray',
@@ -48,6 +51,7 @@ enum Events: string implements HasLabel, HasColor
     {
         return match ($this) {
             self::SHIFT => '#2E3192',
+            self::MULTISHIFT => '#2E3192',
             self::DAYOFF => 'orange',
             self::ALA => 'orange',
             self::OB => 'darkgray',
