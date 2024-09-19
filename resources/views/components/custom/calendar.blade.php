@@ -40,21 +40,24 @@
                                         </x-slot>
                                     </x-filament::button> --}}
                                         @foreach($item->events as $event => $value)
+                                        @php
+                                            $event_enum = ($type == "pasig") ? App\Enums\Events::parse($event) : App\Enums\Dapcc\Events::parse($event);
+                                        @endphp
                                         <div class="px-2 pb-1 lg:flex w-full text-xs relative inline-flex"
                                             >
                                             <button
                                             x-data="{}"
                                             x-tooltip="{
-                                                content: @js(App\Enums\Events::parse($event)->getLabel()),
+                                                content: @js($event_enum->getLabel()),
                                             }"
                                             wire:click.stop="$parent.viewEvent('{{ $event }}', '{{ $item->day->format('Y-m-d') }}')"
-                                            class="w-full rounded-md text-left py-1 px-2 focus:shadow focus:border-2 text-gray-700 focus:text-white truncate ... {{ App\Enums\Events::parse($event)->customColor() }}"
+                                            class="w-full rounded-md text-left py-1 px-2 focus:shadow text-gray-700 focus:text-white truncate ... {{ $event_enum->customColor() }}"
                                             >
-                                                {{ App\Enums\Events::parse($event)->getLabel() }}
+                                                {{ $event_enum->getLabel() }}
                                             </button>
                                             @if($value->count() > 1)
                                                 <div class="fi-btn-badge-ctn absolute start-full top-0 z-[1] w-max -translate-x-5 -translate-y-1/2 rounded-md bg-white dark:bg-gray-900 rtl:translate-x-1/2">
-                                                    <x-filament::badge :color="App\Enums\Events::parse($event)->getColor()" size="xs">
+                                                    <x-filament::badge :color="$event_enum->getColor()" size="xs">
                                                         {{ $value->count() }}
                                                     </x-filament::badge>
                                                 </div>

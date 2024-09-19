@@ -61,14 +61,14 @@ enum Events: string implements HasLabel, HasColor
     public function customColor(): string|array|null
     {
         return match ($this) {
-            self::WFH => 'hover:bg-blue-100 focus:bg-blue-500 focus:border-blue-800',
-            self::HWFH => 'hover:bg-blue-100 focus:bg-blue-500 focus:border-blue-800',
-            self::ALA => 'hover:bg-orange-100 focus:bg-orange-500 focus:border-orange-800',
-            self::OB => 'hover:bg-gray-100 focus:bg-gray-500 focus:border-gray-800',
-            self::CDO => 'hover:bg-orange-100 focus:bg-orange-500 focus:border-orange-800',
-            self::SUS => 'hover:bg-green-100 focus:bg-green-500 focus:border-green-800',
-            self::HOL => 'hover:bg-green-100 focus:bg-green-500 focus:border-green-800',
-            self::FLAG => 'hover:bg-green-100 focus:bg-green-500 focus:border-green-800',
+            self::WFH => 'hover:bg-blue-100 focus:bg-blue-500',
+            self::HWFH => 'hover:bg-blue-100 focus:bg-blue-500',
+            self::ALA => 'hover:bg-orange-100 focus:bg-orange-500',
+            self::OB => 'hover:bg-gray-100 focus:bg-gray-500',
+            self::CDO => 'hover:bg-orange-100 focus:bg-orange-500',
+            self::SUS => 'hover:bg-green-100 focus:bg-green-500',
+            self::HOL => 'hover:bg-green-100 focus:bg-green-500',
+            self::FLAG => 'hover:bg-green-100 focus:bg-green-500',
         };
     }
 

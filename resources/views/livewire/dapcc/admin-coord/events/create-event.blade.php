@@ -1,12 +1,12 @@
 <div>
-    <x-filament::modal width="5xl" id="create-event">
+    <x-filament::modal width="4xl" id="create-event" icon="heroicon-m-plus-circle">
         <x-slot name="heading">
             Create Event
         </x-slot>
         <div>
             {{ $this->form }}
         </div>
-        <x-slot name="footer">
+        <x-slot name="footer" class="flex">
             <x-filament::button wire:click="create">
                 Submit
             </x-filament::button>

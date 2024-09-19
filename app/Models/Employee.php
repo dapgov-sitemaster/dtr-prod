@@ -154,6 +154,14 @@ class Employee extends Model
         return $query->whereHas('department', fn($query) => $query->where('center', 'DAPCC'));
     }
 
+    public function scopeIsScheduled($query, string $date)
+    {
+        $data = explode(' ', $date);
+        return $query->with('event')->whereDoesntHave('event', function ($builder) use ($data) {
+            $builder->where('start', '>=', $data[0])->when((count($data) > 1), fn($q) => $q->where('start', '<=', $data[2]));
+        });
+    }
+
     public function scopeSearchEmployee($query, $search)
     {
         return $query->where('last_name', 'like', "%{$search}%")->orWhere('first_name', 'like', "%{$search}%")->orWhere('hris_number', 'like', "%{$search}%");
