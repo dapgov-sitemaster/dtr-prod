@@ -25,9 +25,9 @@
                     </div> --}}
                 </div>
             </div>
-            <div class="mb-4">
+            {{-- <div class="mb-4">
                 @livewire('employee.mov-upload')
-            </div>
+            </div> --}}
             @can('isAdminCoordinator')
                 <div class="mb-4">
                     @livewire('admin-coord.daily-time-report')

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Dapcc\AdminCoord\Events;
+namespace App\Livewire\Dapcc\HrAdmin\Events;
 
 use Carbon\Carbon;
 use Filament\Forms;
@@ -14,6 +14,7 @@ use Filament\Forms\Form;
 use App\Enums\Dapcc\Events;
 use Livewire\Attributes\On;
 use App\Enums\OfficialLeaves;
+use Illuminate\Support\Facades\Gate;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -32,7 +33,7 @@ class CreateEvent extends Component implements HasForms
 
     public function render()
     {
-        return view('livewire.dapcc.admin-coord.events.create-event');
+        return view('livewire.dapcc.hr-admin.events.create-event');
     }
 
     #[On('creating-event')]
@@ -84,18 +85,12 @@ class CreateEvent extends Component implements HasForms
                     ->schema([
                         \Filament\Forms\Components\Select::make('tag')
                             ->label('Type of Event')
-                            ->options(function () {
-                                return collect(Events::cases())
-                                    ->filter(fn($case) => $case !== Events::HOL && $case !== Events::SUS && $case !== Events::FLAG)
-                                    ->mapWithKeys(fn($case) => [$case->value => $case->getLabel()])
-                                    ->toArray();
-                            })
+                            ->options(Events::class)
                             ->reactive()
                             ->native(false)
                             ->required()
                             ->live()
                             ->columnSpanFull(),
-
                         Forms\Components\Grid::make()
                             ->schema([
                                 \Filament\Forms\Components\ToggleButtons::make('set_time_all')
@@ -105,28 +100,39 @@ class CreateEvent extends Component implements HasForms
                                     ->default(false)
                                     ->required()
                                     ->live(),
-                                // \Coolsam\FilamentFlatpickr\Forms\Components\Flatpickr::make('date')
-                                //     ->dateFormat('F j, Y')
-                                //     ->required()
-                                //     ->visible(fn(Get $get) => Events::parse($get('tag')) === Events::SHIFT),
-                                // \Coolsam\FilamentFlatpickr\Forms\Components\Flatpickr::make('daterange')
-                                //     ->range()
-                                //     ->theme(\Coolsam\FilamentFlatpickr\Enums\FlatpickrTheme::DEFAULT)
-                                //     ->required()
-                                //     ->visible(fn(Get $get) => Events::parse($get('tag')) === Events::MULTISHIFT),
                                 Forms\Components\TimePicker::make('timestart')
                                     ->label('Time Start')
                                     ->live()
                                     ->displayFormat('g:i A')
                                     ->seconds(false)
-                                    // ->afterStateUpdated(function (Set $set, $state) {
-                                    //     $set('timeend', Carbon::parse($state)->addHours(9)->format('H:i'));
-                                    // })
                                     ->required()
                                     ->visible(fn(Get $get) => $get('set_time_all')),
                             ])
                             ->columns(2)
                             ->visible(fn(Get $get) => Events::parse($get('tag')) == Events::SHIFT),
+                        \Filament\Forms\Components\TextInput::make('description')
+                            ->label('Description')
+                            ->visible(function (Get $get) {
+                                return match (Events::parse($get('tag'))) {
+                                    Events::HOL => true,
+                                    Events::SUS => true,
+                                    default => false,
+                                };
+                            })
+                            ->columnSpanFull()
+                            ->required(),
+                        Forms\Components\Grid::make()
+                            ->visible(fn(Get $get) => Gate::allows('special-events') && Events::parse($get('tag')) == Events::SUS)
+                            ->schema([
+                                Forms\Components\Checkbox::make('whole_day')
+                                    ->label('is Whole Day')
+                                    ->live(),
+                                Forms\Components\TimePicker::make('time')
+                                    ->visible(fn(Get $get) => !$get('whole_day'))
+                                    ->label('Suspension Time')
+                                    ->required()
+                                    ->seconds(false),
+                            ]),
                         \Filament\Forms\Components\Select::make('description_leave')
                             ->label('Type of Official Leave')
                             ->options(OfficialLeaves::class)
@@ -211,7 +217,38 @@ class CreateEvent extends Component implements HasForms
                     ]);
                 }
             }
-            $count = $count + count($data['employees']);
+
+            Notification::make()
+                ->title("Event successfully created")
+                ->body(count($data['employees']) . " personnel has been scheduled a " . $tag->getLabel() . " event.")
+                ->success()
+                ->color('success')
+                ->send();
+        } else if ($tag === Events::HOL || $tag === Events::FLAG || $tag === Events::SUS) {
+            $dates = (count($date) > 1) ? CarbonPeriod::create($date[0], $date[1])->toArray() : [Carbon::parse($date[0])];
+            $description = ($tag == Events::FLAG) ? $tag->getLabel() : $data['description'];
+            $time = '08:00:00';
+            if (array_key_exists('whole_day', $data)) {
+                $time = ($data['whole_day']) ? '08:00:00' : $data['time'];
+            }
+
+            foreach ($dates as $d) {
+                $d = Carbon::parse($d->format('Y-m-d') . ' ' . $time);
+                Event::create([
+                    'start' => $d->format('Y-m-d H:i:s'),
+                    'end' => $d->format('Y-m-d') . ' 17:00:00',
+                    'tag' => $tag,
+                    'description' => $description,
+                    'created_by' => auth()->user()->hris_number,
+                ]);
+            }
+
+            Notification::make()
+                ->title("Event successfully created")
+                ->body("You have created a " . $tag->getLabel() . " event.")
+                ->success()
+                ->color('success')
+                ->send();
         } else {
             foreach ($data['hris_number'] as $hris_number) {
                 $dates = (count($date) > 1) ? CarbonPeriod::create($date[0], $date[1])->toArray() : [Carbon::parse($date[0])];
@@ -229,15 +266,14 @@ class CreateEvent extends Component implements HasForms
                     ]);
                 }
             }
-            $count = $count + count($data['hris_number']);
-        }
 
-        Notification::make()
-            ->title("Event successfully created")
-            ->body($count . " personnel has been scheduled a " . $tag->getLabel() . " event.")
-            ->success()
-            ->color('success')
-            ->send();
+            Notification::make()
+                ->title("Event successfully created")
+                ->body(count($data['hris_number']) . " personnel has been scheduled a " . $tag->getLabel() . " event.")
+                ->success()
+                ->color('success')
+                ->send();
+        }
 
         $this->dispatch('refresh-calendar')->to(Calendar::class);
         $this->dispatch('close-modal', id: 'create-event');

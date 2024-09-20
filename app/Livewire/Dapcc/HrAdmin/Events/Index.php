@@ -7,6 +7,7 @@ use Livewire\Attributes\Title;
 
 class Index extends Component
 {
+    public $eventView;
     // public function mount()
     // {
     //     dd(\App\Models\Dapcc\Event::all()->first()->employee);
@@ -15,5 +16,25 @@ class Index extends Component
     public function render()
     {
         return view('livewire.dapcc.hr-admin.events.index');
+    }
+
+    public function viewEvent($tag, $date)
+    {
+        $this->eventView = (object) [
+            'tag' => $tag,
+            'date' => $date,
+        ];
+        $this->dispatch('open-modal', id: 'view-event');
+    }
+
+    public function createEvent()
+    {
+
+        // $this->eventCreate = (object) [
+        //     'date' => Carbon::parse($date),
+        // ];
+        $this->dispatch(
+            'creating-event'
+        )->to(CreateEvent::class);
     }
 }

@@ -72,13 +72,13 @@
 @push('scripts')
     <script>
         document.addEventListener('livewire:initialized', () => {
-            if (!localStorage.getItem('modalDismissed')) {
+            if (!localStorage.getItem('dapccModalDismissed')) {
                 Livewire.dispatch('open-modal', { id: 'changes-notice' });
             }
         })
 
         function dismissModal() {
-            localStorage.setItem('modalDismissed', 'true');
+            localStorage.setItem('dapccModalDismissed', 'true');
             Livewire.dispatch('close-modal', { id: 'changes-notice' });
         }
     </script>
