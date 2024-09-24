@@ -207,6 +207,7 @@ class CreateEvent extends Component implements HasForms
                         'end' => $d->copy()->addHours(9)->format('Y-m-d H:i:s'),
                         'tag' => $tag,
                         'description' => $tag->getLabel(),
+                        'status' => 'approved',
                         'created_by' => auth()->user()->hris_number,
                     ]);
                 }
@@ -225,6 +226,7 @@ class CreateEvent extends Component implements HasForms
                         'end' => $d->copy()->addHours(9)->format('Y-m-d H:i:s'),
                         'tag' => $tag,
                         'description' => $description,
+                        'status' => 'approved',
                         'created_by' => auth()->user()->hris_number,
                     ]);
                 }

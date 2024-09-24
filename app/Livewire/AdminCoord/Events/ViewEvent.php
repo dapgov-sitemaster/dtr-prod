@@ -35,7 +35,6 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
     public function openModal($data)
     {
         $this->events = (object) $data;
-        $this->dispatch('open-modal', id: 'view-event');
     }
 
     public function table(Table $table): Table

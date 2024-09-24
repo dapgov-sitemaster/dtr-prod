@@ -53,6 +53,17 @@
                     </div>
                 </x-sidebar.item>
             </x-sidebar.group>
+            <x-sidebar.group>
+                <x-sidebar.item tooltip="Leave & Flexible Schedule Application" :url="route('employee.leave-flexible-schedule-application.index')" :active="request()->routeIs('employee.leave-flexible-schedule-application.*')">
+                    <x-filament::icon
+                        icon="heroicon-m-document-plus"
+                        class="w-6 shrink-0"
+                    />
+                    <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
+                        Leave & Flexi Schedule Application
+                    </div>
+                </x-sidebar.item>
+            </x-sidebar.group>
                 @can('has-wfh-schedule')
                 <li>
                     <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>

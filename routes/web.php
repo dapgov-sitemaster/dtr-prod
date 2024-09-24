@@ -41,6 +41,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/profile/identity-photo', App\Livewire\Profile\IdentityPhoto::class)->name('employee.identity-photo');
         Route::get('/profile/electronic-signature', App\Livewire\Profile\ElectronicSignature::class)->name('employee.electronic-signature');
         Route::get('/profile/qr-code', App\Livewire\Profile\QrCode::class)->name('employee.qr-code');
+
+        Route::get('/leave-flexible-schedule-application', App\Livewire\Employee\LeaveFlexiApplication\Index::class)->name('employee.leave-flexible-schedule-application.index');
     });
 
     // Admin Coord modules

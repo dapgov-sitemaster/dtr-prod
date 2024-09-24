@@ -43,16 +43,14 @@
                                         @php
                                             $event_enum = ($type == "pasig") ? App\Enums\Events::parse($event) : App\Enums\Dapcc\Events::parse($event);
                                         @endphp
-                                        <div class="px-2 pb-1 lg:flex w-full text-xs relative inline-flex"
-                                            >
+                                        <div class="px-2 pb-1 lg:flex w-full text-xs relative inline-flex">
                                             <button
-                                            x-data="{}"
-                                            x-tooltip="{
-                                                content: @js($event_enum->getLabel()),
-                                            }"
-                                            wire:click.stop="$parent.viewEvent('{{ $event }}', '{{ $item->day->format('Y-m-d') }}')"
-                                            class="w-full rounded-md text-left py-1 px-2 focus:shadow text-gray-700 focus:text-white truncate ... {{ $event_enum->customColor() }}"
-                                            >
+                                                x-data="{}"
+                                                x-tooltip="{
+                                                    content: @js($event_enum->getLabel()),
+                                                }"
+                                                wire:click.stop="$parent.viewEvent('{{ $event }}', '{{ $item->day->format('Y-m-d') }}')"
+                                                class="w-full rounded-md text-left py-1 px-2 focus:shadow text-gray-700 focus:text-white truncate ... {{ $event_enum->customColor() }}">
                                                 {{ $event_enum->getLabel() }}
                                             </button>
                                             @if($value->count() > 1)
