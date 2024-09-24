@@ -44,7 +44,10 @@ class TableList extends Component implements HasForms, HasTable
     {
         return $table
             ->query(
-                Event::where('hris_number', auth()->user()->hris_number)->whereYear('start', $this->year)->whereMonth('start', $this->month)
+                Event::query()
+                    ->where('hris_number', auth()->user()->hris_number)
+                    ->whereYear('start', $this->year)->whereMonth('start', $this->month)
+                    ->orWhereIn('tag', [Events::HOL, Events::SUS, Events::FLAG])
             )
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('date')

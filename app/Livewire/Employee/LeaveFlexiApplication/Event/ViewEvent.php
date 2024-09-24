@@ -199,10 +199,10 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                             $data['end'] = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . '17:00:00');
                         }
 
-                        if ($data['tag'] == Events::ALA) {
+                        if (Events::parse($data['tag']) == Events::ALA) {
                             $data['description'] = $data['description_leave'];
                         } else {
-                            $data['description'] = $data['tag']->getLabel();
+                            $data['description'] = Events::parse($data['tag'])->getLabel();
                         }
 
 

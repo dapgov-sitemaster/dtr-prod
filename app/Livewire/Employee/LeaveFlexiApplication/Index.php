@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Employee\LeaveFlexiApplication;
 
+use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\Attributes\Url;
 use Livewire\Attributes\Title;
@@ -40,9 +41,7 @@ class Index extends Component
 
     public function createEvent($date)
     {
-        $this->eventCreate = (object) [
-            'date' => $date,
-        ];
+        $this->eventCreate = Carbon::parse($date);
         $this->dispatch('open-modal', id: 'create-event');
     }
 }

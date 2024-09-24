@@ -9,13 +9,22 @@
         <livewire:employee.leave-flexi-application.event.view-event :events="$eventView" :key="str()->random()">
         @endif
     </x-filament::modal>
-    <x-filament::modal width="5xl" id="create-event">
+    <x-filament::modal width="xl" id="create-event">
         @if(!empty($eventCreate))
         <x-slot name="heading">
-            Create Event
+            Request Schedule for {{ $eventCreate->format('F d, Y') }}
         </x-slot>
 
-        <livewire:employee.leave-flexi-application.event.create-event :events="$eventCreate" key="create-event-component">
+        <livewire:employee.leave-flexi-application.event.create-event :date="$eventCreate" :key="str()->random()">
+
+        <x-slot name="footer">
+            <x-filament::button wire:click="$dispatchTo('employee.leave-flexi-application.event.create-event', 'event-create')">
+                Submit
+            </x-filament::button>
+            <x-filament::button x-on:click="$dispatch('close-modal', { id: 'create-event' })" color="gray">
+                Cancel
+            </x-filament::button>
+        </x-slot>
         @endif
     </x-filament::modal>
     <div class="w-full bg-white p-8 rounded-xl">
