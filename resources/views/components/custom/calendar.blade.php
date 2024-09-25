@@ -21,16 +21,19 @@
         <div class="grid grid-cols-7">
             @foreach ($items as $item)
                 @if ($item)
-                    <div class="overflow-y-auto aspect-square border border-gray-400" @if($type == "pasig") wire:click="$parent.createEvent('{{ $item->day->format('Y-m-d') }}')" @endif>
+                    <div class="overflow-y-auto aspect-square border border-gray-400" @if($type == "pasig") wire:click.stop="$parent.createEvent('{{ $item->day->format('Y-m-d') }}')" @endif>
                         <div class="pt-2 text-center font-semibold">
                             <div class="">
-                                <span
-                                @class([
-                                    'text-gray-700',
-                                    'text-red-400' => $item->day->isWeekend()
-                                ])>
-                                    {{ $item->day->day }}
+                                <div class="@if($item->day->isToday()) mx-auto bg-dap-secondary w-[23px] text-center rounded-full @endif">
+                                    <span
+                                        @class([
+                                            'text-gray-700',
+                                            'text-red-400' => $item->day->isWeekend()
+                                        ])>
+                                        {{ $item->day->day }}
 
+                                    </span>
+                                </div>
                                     @if(count($item->events) > 0)
                                     {{-- <x-filament::button size="xs">
                                         New user
@@ -63,7 +66,6 @@
                                         </div>
                                         @endforeach
                                     @endif
-                                </span>
                             </div>
                         </div>
                     </div>

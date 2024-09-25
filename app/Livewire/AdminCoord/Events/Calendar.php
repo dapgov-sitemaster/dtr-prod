@@ -9,25 +9,28 @@ use Livewire\Component;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Reactive;
 
 class Calendar extends Component
 {
     public $eventData = [];
 
     public $events = [];
-    public $month;
-    public $year;
-    public $day;
 
-    #[Url(as: 'month', keep: true, history: true)]
-    public $selectedMonth;
-    #[Url(as: 'year', keep: true, history: true)]
-    public $selectedYear;
+    #[Reactive]
+    public $month, $year;
 
-    public function mount()
+    // #[Url(as: 'month', keep: true, history: true)]
+    // public $selectedMonth;
+    // #[Url(as: 'year', keep: true, history: true)]
+    // public $selectedYear;
+
+    public function mount($year, $month)
     {
-        $this->selectedMonth = now()->month;
-        $this->selectedYear = now()->year;
+        $this->year = $year;
+        $this->month = $month;
+        // $this->selectedMonth = now()->month;
+        // $this->selectedYear = now()->year;
         // $this->month = now()->format("m");
         // $this->year = now()->format("Y");
         // $this->day = now()->format("d");
@@ -43,7 +46,7 @@ class Calendar extends Component
     public function days()
     {
         $days = collect();
-        $firstDay = Carbon::create($this->selectedYear, $this->selectedMonth, 1);
+        $firstDay = Carbon::create($this->year, $this->month, 1);
         $events = Event::query()
             ->whereHas('employee', fn($query) => $query->departmentCovered())
             ->when(auth()->user()->employee->department->office == "ICTD", fn($query) => $query->whereNotIn('hris_number', ['212469', '210798']))
@@ -57,7 +60,7 @@ class Calendar extends Component
         }
 
         for ($i = 1; $i <= $firstDay->daysInMonth; $i++) {
-            $day = Carbon::parse($this->selectedYear . '-' . $this->selectedMonth . '-' . $i);
+            $day = Carbon::parse($this->year . '-' . $this->month . '-' . $i);
             $dayEvent = $events->filter(function ($item) use ($day) {
                 return $item->start->format('Y-m-d') == $day->format('Y-m-d');
             });

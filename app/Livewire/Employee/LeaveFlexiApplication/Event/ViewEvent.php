@@ -120,6 +120,15 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                         ->label('Created by')
                         ->description('Created by', position: 'above')
                         ->sortable(),
+                    \Filament\Tables\Columns\TextColumn::make('status')
+                        ->label('Status')
+                        ->description('Status', position: 'above')
+                        ->badge()
+                        ->color(fn(string $state): string => match ($state) {
+                            'pending' => 'warning',
+                            'approved' => 'success',
+                            'disapproved' => 'danger',
+                        }),
                 ])
                     ->from('lg')
             ])
@@ -224,7 +233,7 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                         $this->dispatch('refresh-calendar')->to(Calendar::class);
                         $this->dispatch('refresh-table')->to(TableList::class);
                     })
-                    ->visible(fn($record) => $record->created_by === auth()->user()->hris_number),
+                    ->visible(fn($record) => $record->created_by === auth()->user()->hris_number && $record->start->format('Y-m-d') < now()->format('Y-m-d')),
                 \Filament\Tables\Actions\DeleteAction::make()
                     ->modalHeading('Remove Event!')
                     ->label('Remove')
@@ -239,7 +248,7 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                         $this->dispatch('refresh-calendar')->to(Calendar::class);
                         $this->dispatch('refresh-table')->to(TableList::class);
                     })
-                    ->visible(fn($record) => $record->created_by === auth()->user()->hris_number),
+                    ->visible(fn($record) => $record->created_by === auth()->user()->hris_number && $record->start->format('Y-m-d') < now()->format('Y-m-d')),
             ]);
     }
 }

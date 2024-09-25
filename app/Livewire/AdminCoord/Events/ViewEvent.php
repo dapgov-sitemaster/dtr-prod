@@ -73,6 +73,15 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                         })
                         ->openUrlInNewTab()
                         ->visible(fn($record) => $record?->tag == Events::ALA || $record?->tag == Events::CDO),
+                    \Filament\Tables\Columns\TextColumn::make('status')
+                        ->label('Status')
+                        ->description('Status', position: 'above')
+                        ->badge()
+                        ->color(fn(string $state): string => match ($state) {
+                            'pending' => 'warning',
+                            'approved' => 'success',
+                            'disapproved' => 'danger',
+                        }),
                     \Filament\Tables\Columns\TextColumn::make('event_created_by.full_name')
                         ->label('Created by')
                         ->description('Created by', position: 'above')

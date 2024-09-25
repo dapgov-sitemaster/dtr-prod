@@ -15,7 +15,7 @@
             Request Schedule for {{ $eventCreate->format('F d, Y') }}
         </x-slot>
 
-        <livewire:employee.leave-flexi-application.event.create-event :date="$eventCreate" :key="str()->random()">
+        <livewire:employee.leave-flexi-application.event.create-event :date="$eventCreate" key="create-event-form">
 
         <x-slot name="footer">
             <x-filament::button wire:click="$dispatchTo('employee.leave-flexi-application.event.create-event', 'event-create')">

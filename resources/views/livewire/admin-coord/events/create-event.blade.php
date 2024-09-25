@@ -1,5 +1,5 @@
 <div>
-    <x-filament::modal width="5xl" id="create-event">
+    <x-filament::modal width="3xl" id="create-event">
         @if(!empty($eventData))
 
             <x-slot name="heading">

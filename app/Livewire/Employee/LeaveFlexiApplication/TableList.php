@@ -52,7 +52,7 @@ class TableList extends Component implements HasForms, HasTable
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('date')
                     ->label('Date')
-                    ->getStateUsing(fn($record) => $record->start->format('F d, Y'))
+                    ->getStateUsing(fn($record) => $record->start->format('M d, Y'))
                     ->searchable(['start'])
                     ->sortable(['start']),
                 \Filament\Tables\Columns\TextColumn::make('tag')
@@ -254,7 +254,7 @@ class TableList extends Component implements HasForms, HasTable
                             ->body('You have successfully updated your request.'),
                     )
                     ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
-                    ->visible(fn($record) => $record->status === "pending" && $record->start >= now()),
+                    ->visible(fn($record) => $record->status === "pending" && $record->start->format('Y-m-d') < now()->format('Y-m-d')),
                 \Filament\Tables\Actions\DeleteAction::make()
                     ->modalHeading('Remove Event!')
                     ->label('Remove')
@@ -266,7 +266,7 @@ class TableList extends Component implements HasForms, HasTable
                             ->color('success'),
                     )
                     ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
-                    ->visible(fn($record) => $record->status === "pending" && $record->start >= now())
+                    ->visible(fn($record) => $record->status === "pending" && $record->start->format('Y-m-d') < now()->format('Y-m-d'))
             ])
             ->defaultSort('start', 'desc');
     }
