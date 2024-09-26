@@ -178,134 +178,157 @@ class TableList extends Component implements HasForms, HasTable
             //         ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
             // ])
             ->actions([
-                \Filament\Tables\Actions\Action::make('set_status')
-                    ->label('Eveluate Request')
-                    ->button()
-                    ->color('secondary')
-                    ->modalWidth('xl')
-                    ->form([
-                        \Filament\Forms\Components\ToggleButtons::make('evaluation_status')
-                            ->label('Do you want to Approve or Disapprove this request?')
-                            ->options([
-                                'approved' => 'Approve',
-                                'disapproved' => 'Disapprove',
-                            ])
-                            ->colors([
-                                'approved' => 'success',
-                                'disapproved' => 'danger',
-                            ])
-                            ->inline()
-                            ->live()
-                            ->required(),
-                        \Filament\Forms\Components\Textarea::make('note')
-                            ->label('Note (optional)')
-                            ->visible(fn(Get $get) => $get('evaluation_status') === 'disapproved')
-                    ])
-                    ->action(function (array $data, $record) {
-                        if ($data['evaluation_status'] == 'disapproved' && $data['note'] != null) {
-                        }
-                    }),
-                \Filament\Tables\Actions\EditAction::make()
-                    ->mutateRecordDataUsing(function ($data, $record) {
-                        $data['date'] = $record->start->format('Y-m-d');
-                        $data['tag'] = $record->tag;
-                        $data['description_leave'] = ($record->tag == Events::ALA) ? $record->description : null;
+                \Filament\Tables\Actions\ActionGroup::make([
+                    \Filament\Tables\Actions\Action::make('set_status')
+                        ->icon('heroicon-m-arrow-path')
+                        ->label('Evaluate Request')
+                        ->modalHeading(fn($record) => 'Evaluate ' . $record->tag->getLabel() . ' request of ' . $record->employee->first_name)
+                        ->color('secondary')
+                        ->modalWidth('xl')
+                        ->form([
+                            \Filament\Forms\Components\ToggleButtons::make('evaluation_status')
+                                ->label('Do you want to Approve or Disapprove this request?')
+                                ->options([
+                                    'approved' => 'Approve',
+                                    'disapproved' => 'Disapprove',
+                                ])
+                                ->colors([
+                                    'approved' => 'success',
+                                    'disapproved' => 'danger',
+                                ])
+                                ->inline()
+                                ->live()
+                                ->required()
+                                ->validationMessages([
+                                    'required' => 'Please, select if you want to Approve or Disapprove this request.',
+                                ]),
+                            \Filament\Forms\Components\Textarea::make('note')
+                                ->label('Note (optional)')
+                                ->visible(fn(Get $get) => $get('evaluation_status') === 'disapproved')
+                        ])
+                        ->requiresConfirmation()
+                        ->action(function (array $data, $record) {
+                            $user = \App\Models\User::where('hris_number', '211515')->first();
+                            $user->notify(new \App\Notifications\EventRequestApplication([
+                                'evaluation_result' => $data['evaluation_status'],
+                                'date' => $record->start,
+                                'event' => $record->tag->getLabel(),
+                                'note' => array_key_exists('note', $data) ? $data['note'] : null
+                            ]));
+                            // if ($data['evaluation_status'] == 'disapproved' && $data['note'] != null) {
+                            // }
+                            // $record->status = $data['evaluation_status'];
+                            // $record->save();
 
-                        return $data;
-                    })
-                    ->form([
-                        \Filament\Forms\Components\DatePicker::make('date')
-                            ->label('Select Date')
-                            ->displayFormat('d F Y')
-                            ->native(false)
-                            ->seconds(false)
-                            ->weekStartsOnSunday()
-                            ->closeOnDateSelection()
-                            ->minDate(now()->addDays(3)->format('Y-m-d 00:00:00'))
-                            ->required()
-                            ->afterStateUpdated(function (Set $set) {
-                                $set('tag', null);
-                            })
-                            ->live(),
-                        \Filament\Forms\Components\Grid::make()
-                            ->schema([
-                                \Filament\Forms\Components\Select::make('tag')
-                                    ->label('Type of Event')
-                                    ->options(function (Get $get) {
-                                        $options = [];
-                                        foreach (Events::cases() as $case) {
-                                            if ($case == Events::WFH || $case == Events::HWFH) {
-                                                if (Carbon::parse($get('date'))->dayOfWeek == Carbon::FRIDAY) {
+                            Notification::make()
+                                ->success()
+                                ->color('success')
+                                ->title('Evaluation has been complete.')
+                                ->body($record->employee->apostFirstName . ' ' . $record->tag->getLabel() . ' request has been ' . str($data['evaluation_status'])->title() . '.')
+                                ->send();
+                        }),
+                    \Filament\Tables\Actions\EditAction::make()
+                        ->mutateRecordDataUsing(function ($data, $record) {
+                            $data['date'] = $record->start->format('Y-m-d');
+                            $data['tag'] = $record->tag;
+                            $data['description_leave'] = ($record->tag == Events::ALA) ? $record->description : null;
+
+                            return $data;
+                        })
+                        ->form([
+                            \Filament\Forms\Components\DatePicker::make('date')
+                                ->label('Select Date')
+                                ->displayFormat('d F Y')
+                                ->native(false)
+                                ->seconds(false)
+                                ->weekStartsOnSunday()
+                                ->closeOnDateSelection()
+                                ->minDate(now()->addDays(3)->format('Y-m-d 00:00:00'))
+                                ->required()
+                                ->afterStateUpdated(function (Set $set) {
+                                    $set('tag', null);
+                                })
+                                ->live(),
+                            \Filament\Forms\Components\Grid::make()
+                                ->schema([
+                                    \Filament\Forms\Components\Select::make('tag')
+                                        ->label('Type of Event')
+                                        ->options(function (Get $get) {
+                                            $options = [];
+                                            foreach (Events::cases() as $case) {
+                                                if ($case == Events::WFH || $case == Events::HWFH) {
+                                                    if (Carbon::parse($get('date'))->dayOfWeek == Carbon::FRIDAY) {
+                                                        $options[$case->value] = $case->getLabel();
+                                                    }
+                                                } else if ($case != Events::HOL && $case != Events::FLAG && $case != Events::SUS) {
                                                     $options[$case->value] = $case->getLabel();
                                                 }
-                                            } else if ($case != Events::HOL && $case != Events::FLAG && $case != Events::SUS) {
-                                                $options[$case->value] = $case->getLabel();
                                             }
-                                        }
-                                        return $options;
-                                    })
-                                    ->reactive()
-                                    ->native(false)
-                                    ->required()
-                                    ->live(),
-                                \Filament\Forms\Components\Select::make('description_leave')
-                                    ->label('Type of Official Leave')
-                                    ->options(OfficialLeaves::class)
-                                    ->native(false)
-                                    ->visible(function (Get $get) {
-                                        return match (Events::parse($get('tag'))) {
-                                            Events::ALA => true,
-                                            default => false,
-                                        };
-                                    })
-                                    ->required(),
-                            ])
-                            ->visible(fn(Get $get) => $get('date') != null)
-                    ])
-                    ->using(function (Model $record, $data): Model {
-                        $data['date'] = Carbon::parse($data['date']);
-                        $official_time = OfficialTime::where('hris_number', $record->hris_number)->where('status', 'approved')->first();
-                        $data['start'] = \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . '08:00:00');
-                        $data['end'] = $data['start']->copy()->addHours(9);
+                                            return $options;
+                                        })
+                                        ->reactive()
+                                        ->native(false)
+                                        ->required()
+                                        ->live(),
+                                    \Filament\Forms\Components\Select::make('description_leave')
+                                        ->label('Type of Official Leave')
+                                        ->options(OfficialLeaves::class)
+                                        ->native(false)
+                                        ->visible(function (Get $get) {
+                                            return match (Events::parse($get('tag'))) {
+                                                Events::ALA => true,
+                                                default => false,
+                                            };
+                                        })
+                                        ->required(),
+                                ])
+                                ->visible(fn(Get $get) => $get('date') != null)
+                        ])
+                        ->using(function (Model $record, $data): Model {
+                            $data['date'] = Carbon::parse($data['date']);
+                            $official_time = OfficialTime::where('hris_number', $record->hris_number)->where('status', 'approved')->first();
+                            $data['start'] = \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . '08:00:00');
+                            $data['end'] = $data['start']->copy()->addHours(9);
 
-                        if ($official_time) {
-                            $data['start'] = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . '08:00:00');
-                            $data['end'] = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . '17:00:00');
-                        }
+                            if ($official_time) {
+                                $data['start'] = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . '08:00:00');
+                                $data['end'] = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . '17:00:00');
+                            }
 
-                        if (Events::parse($data['tag']) == Events::ALA) {
-                            $data['description'] = $data['description_leave'];
-                        } else {
-                            $data['description'] = Events::tryFrom($data['tag'])->getLabel();
-                        }
+                            if (Events::parse($data['tag']) == Events::ALA) {
+                                $data['description'] = $data['description_leave'];
+                            } else {
+                                $data['description'] = Events::tryFrom($data['tag'])->getLabel();
+                            }
 
 
-                        $record->start = $data['start'];
-                        $record->end = $data['end'];
-                        $record->tag = $data['tag'];
-                        $record->description = $data['description'];
-                        $record->save();
-                        return $record;
-                    })
-                    ->successNotification(
-                        Notification::make()
-                            ->success()
-                            ->color('success')
-                            ->title('Event updated')
-                            ->body('You have successfully updated your request.'),
-                    )
-                    ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class)),
-                \Filament\Tables\Actions\DeleteAction::make()
-                    ->modalHeading('Remove Event!')
-                    ->label('Remove')
-                    ->requiresConfirmation()
-                    ->successNotification(
-                        Notification::make()
-                            ->success()
-                            ->title('Event has been removed')
-                            ->color('success'),
-                    )
-                    ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
+                            $record->start = $data['start'];
+                            $record->end = $data['end'];
+                            $record->tag = $data['tag'];
+                            $record->description = $data['description'];
+                            $record->save();
+                            return $record;
+                        })
+                        ->successNotification(
+                            Notification::make()
+                                ->success()
+                                ->color('success')
+                                ->title('Event updated')
+                                ->body('You have successfully updated your request.'),
+                        )
+                        ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class)),
+                    \Filament\Tables\Actions\DeleteAction::make()
+                        ->modalHeading('Remove Event!')
+                        ->label('Remove')
+                        ->requiresConfirmation()
+                        ->successNotification(
+                            Notification::make()
+                                ->success()
+                                ->title('Event has been removed')
+                                ->color('success'),
+                        )
+                        ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
+                ])
             ])
             ->filters([
                 \Filament\Tables\Filters\Filter::make('status')

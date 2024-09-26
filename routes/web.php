@@ -15,6 +15,17 @@ Route::redirect('/', '/sign-in');
 // Route::get('/testing2', Testing2Controller::class);
 // Route::get('/test-dtr', DtrTestController::class);
 
+Route::get('/notification', function () {
+    $user = \App\Models\User::where('hris_number', '211515')->first();
+
+    return (new \App\Notifications\EventRequestApplication([
+        'evaluation_result' => 'disapproved',
+        'date' => now(),
+        'event' => 'Official Leave',
+        'note' => 'test'
+    ]))->toMail($user);
+});
+
 
 Route::get('/sign-in', Login::class)->middleware('guest')->name('login');
 Route::get('/forgot-password', ForgotPassword::class)->middleware('guest')->name('forgot-password');
