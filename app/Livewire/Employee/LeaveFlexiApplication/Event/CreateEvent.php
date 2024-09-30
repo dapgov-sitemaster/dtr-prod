@@ -17,6 +17,7 @@ use Livewire\Attributes\On;
 use App\Models\OfficialTime;
 use App\Enums\OfficialLeaves;
 use App\Mail\Event\Application;
+use App\Enums\AppointmentStatus;
 use Livewire\Attributes\Reactive;
 use Illuminate\Support\Facades\Mail;
 use Filament\Forms\Contracts\HasForms;
@@ -54,6 +55,10 @@ class CreateEvent extends Component implements HasForms
                         foreach (Events::cases() as $case) {
                             if ($case == Events::WFH || $case == Events::HWFH) {
                                 if ($this->date->dayOfWeek == Carbon::FRIDAY) {
+                                    $options[$case->value] = $case->getLabel();
+                                }
+                            } else if ($case == Events::ALA) {
+                                if (auth()->user()->employee->appointment_status == AppointmentStatus::PBP) {
                                     $options[$case->value] = $case->getLabel();
                                 }
                             } else if ($case != Events::HOL && $case != Events::FLAG && $case != Events::SUS) {
@@ -108,12 +113,12 @@ class CreateEvent extends Component implements HasForms
             'created_by' => auth()->user()->hris_number,
         ]);
 
-        $admin_coord = User::whereHas('employee', fn($query) => $query->where('department_id', auth()->user()->employee->department_id))->whereIn('role', [Role::ADMINCOORD, Role::CENTERADMINCOORD, Role::GROUPADMINCOORD])->get();
+        $admin_coord = User::whereHas('employee', fn($query) => $query->where('department_id', auth()->user()->employee->department_id))->where('role', Role::ADMINCOORD)->get();
         Mail::to(auth()->user())->cc($admin_coord->pluck('email')->toArray())->send(new Application($event));
 
         Notification::make()
             ->title("Event Created!")
-            ->body('You have successfully requested a ' . Events::tryFrom($data['tag'])->getLabel() . '. Kindly wait for the Admin Coordinator to approve your request.')
+            ->body('You have successfully requested a ' . Events::tryFrom($data['tag'])->getLabel() . '. Kindly wait for the Attendance Monitor to approve your request.')
             ->success()
             ->color('success')
             ->send();

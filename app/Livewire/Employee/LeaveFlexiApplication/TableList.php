@@ -11,13 +11,16 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Livewire\Component;
 use App\Models\Employee;
+use Carbon\CarbonPeriod;
 use Filament\Tables\Table;
 use App\Enums\ScheduleType;
 use Livewire\Attributes\On;
 use App\Models\OfficialTime;
 use App\Enums\OfficialLeaves;
 use App\Mail\Event\Application;
+use App\Enums\AppointmentStatus;
 use Livewire\Attributes\Reactive;
+use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\Mail;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Contracts\HasTable;
@@ -53,7 +56,6 @@ class TableList extends Component implements HasForms, HasTable
                 Event::query()
                     ->where('hris_number', auth()->user()->hris_number)
                     ->whereYear('start', $this->year)->whereMonth('start', $this->month)
-                    ->orWhereIn('tag', [Events::HOL, Events::SUS, Events::FLAG])
             )
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('date')
@@ -85,26 +87,107 @@ class TableList extends Component implements HasForms, HasTable
                         'disapproved' => 'danger',
                     }),
             ])
+            ->filters([
+                \Filament\Tables\Filters\Filter::make('status')
+                    ->columnSpanFull()
+                    ->form([
+                        \Filament\Forms\Components\CheckboxList::make('status')
+                            ->label('Status')
+                            ->columns(3)
+                            ->afterStateHydrated(function ($component, $state) {
+                                if (! filled($state)) {
+                                    $component->state(['pending']);
+                                }
+                            })
+                            ->options([
+                                'pending' => 'Pending',
+                                'approved' => 'Approved',
+                                'disapproved' => 'Disapproved',
+                            ]),
+                    ])
+                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
+                        return $query->whereIn('status', $data['status']);
+                    }),
+                \Filament\Tables\Filters\Filter::make('view_special_event')
+                    ->columnSpanFull()
+                    ->form([
+                        \Filament\Forms\Components\ToggleButtons::make('is_included')
+                            ->label('Include Holiday, Suspension, Flag Ceremony schedules in the Table?')
+                            ->boolean()
+                            ->inline()
+                            ->grouped()
+                            ->default(false),
+                    ])
+                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
+                        return $query
+                            ->when(
+                                $data['is_included'] == true,
+                                function (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder {
+                                    return $query->orWhereIn('tag', [Events::HOL, Events::SUS, Events::FLAG]);
+                                },
+                            );
+                    }),
+            ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
             ->headerActions([
-                CreateAction::make('create-event')
+                Action::make('create-event')
                     ->icon('heroicon-m-document-plus')
                     ->label('Request Schedule')
                     ->modalHeading('Request Schedule')
                     ->modalIcon('heroicon-o-document-plus')
                     ->form([
-                        \Filament\Forms\Components\DatePicker::make('date')
-                            ->label('Select Date')
-                            ->displayFormat('d F Y')
-                            ->native(false)
-                            ->seconds(false)
-                            ->weekStartsOnSunday()
-                            ->closeOnDateSelection()
-                            ->minDate(now()->addDays(3)->format('Y-m-d 00:00:00'))
-                            ->required()
-                            ->afterStateUpdated(function (Set $set) {
-                                $set('tag', null);
-                            })
-                            ->live(),
+                        \Filament\Forms\Components\Grid::make()
+                            ->schema([
+                                \Filament\Forms\Components\ToggleButtons::make('date_type')
+                                    ->label('Date Type')
+                                    ->inline()
+                                    ->options(['single' => 'Single Date', 'multi' => 'Date Range'])
+                                    ->default('single')
+                                    ->required()
+                                    ->afterStateUpdated(function (Set $set) {
+                                        $set('tag', null);
+                                        $set('date', null);
+                                        $set('daterange', null);
+                                    })
+                                    ->live(),
+                                \Coolsam\FilamentFlatpickr\Forms\Components\Flatpickr::make('date')
+                                    ->label('Date')
+                                    ->dateFormat('Y-m-d')
+                                    ->minDate(now()->addDays(3)->format('Y-m-d 00:00:00'))
+                                    ->theme(\Coolsam\FilamentFlatpickr\Enums\FlatpickrTheme::DEFAULT)
+                                    ->required()
+                                    ->afterStateUpdated(function (Set $set) {
+                                        $set('tag', null);
+                                    })
+                                    ->live()
+                                    ->hidden(fn(Get $get) => $get('date_type') != 'single'),
+                                \Coolsam\FilamentFlatpickr\Forms\Components\Flatpickr::make('daterange')
+                                    ->label('Date Range')
+                                    ->dateFormat('Y-m-d')
+                                    ->minDate(now()->addDays(3)->format('Y-m-d 00:00:00'))
+                                    ->range()
+                                    ->theme(\Coolsam\FilamentFlatpickr\Enums\FlatpickrTheme::DEFAULT)
+                                    ->required()
+                                    ->hintColor('primary')
+                                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'You can not schedule Work from Home / Hybrid Work from Home using this Date Range!')
+                                    ->afterStateUpdated(function (Set $set) {
+                                        $set('tag', null);
+                                    })
+                                    ->live()
+                                    ->hidden(fn(Get $get) => $get('date_type') != 'multi'),
+                            ]),
+                        // \Filament\Forms\Components\DatePicker::make('date')
+                        //     ->label('Select Date')
+                        //     ->displayFormat('d F Y')
+                        //     ->native(false)
+                        //     ->seconds(false)
+                        //     ->weekStartsOnSunday()
+                        //     ->closeOnDateSelection()
+                        //     ->minDate(now()->addDays(3)->format('Y-m-d 00:00:00'))
+                        //     ->required()
+                        //     ->afterStateUpdated(function (Set $set) {
+                        //         $set('tag', null);
+                        //     })
+                        //     ->live(),
                         \Filament\Forms\Components\Grid::make()
                             ->schema([
                                 \Filament\Forms\Components\Select::make('tag')
@@ -114,6 +197,10 @@ class TableList extends Component implements HasForms, HasTable
                                         foreach (Events::cases() as $case) {
                                             if ($case == Events::WFH || $case == Events::HWFH) {
                                                 if (Carbon::parse($get('date'))->dayOfWeek == Carbon::FRIDAY) {
+                                                    $options[$case->value] = $case->getLabel();
+                                                }
+                                            } else if ($case == Events::ALA) {
+                                                if (auth()->user()->employee->appointment_status == AppointmentStatus::PBP) {
                                                     $options[$case->value] = $case->getLabel();
                                                 }
                                             } else if ($case != Events::HOL && $case != Events::FLAG && $case != Events::SUS) {
@@ -138,53 +225,105 @@ class TableList extends Component implements HasForms, HasTable
                                     })
                                     ->required(),
                             ])
-                            ->visible(fn(Get $get) => $get('date') != null)
+                            ->visible(fn(Get $get) => $get('date') || $get('daterange'))
                     ])
-                    ->before(function ($data, CreateAction $action) {
-                        $event = Event::where('hris_number', auth()->user()->hris_number)->whereDate('start', Carbon::parse($data['date'])->format('Y-m-d'))->first();
-                        if ($event) {
+                    ->before(function ($data, Action $action) {
+                        $date = (array_key_exists('date', $data)) ? [$data['date']] : $data['daterange'];
+
+                        $event = Event::query()
+                            ->where('hris_number', auth()->user()->hris_number)
+                            ->when(
+                                count($date) > 1,
+                                function ($query) use ($date) {
+                                    $query->whereDate('start', '>=', Carbon::parse($date[0])->format('Y-m-d'))->whereDate('start', '<=', Carbon::parse($date[1])->format('Y-m-d'));
+                                },
+                                function ($query) use ($date) {
+                                    $query->whereDate('start', Carbon::parse($date[0]));
+                                }
+                            )
+                            ->get();
+
+                        if ($event->isNotEmpty()) {
+                            $body = '';
+                            if (count($date) > 1) {
+                                $imploded_event = $event->clone()->pluck('start')->map(fn($item) => $item->format('Y-m-d'))->implode(',');
+                                $body .= 'You have already applied for schedule/s on ' . $imploded_event;
+                            } else {
+                                $body .= 'You have already applied for ' . $event->first()->tag->getLabel() . ' event on ' . $event->first()->start->format('F d, Y');
+                            }
+
+                            $body .= '. If you want to change your request, you can just update your current request.';
+
                             Notification::make()
                                 ->warning()
                                 ->color('warning')
                                 ->title('Create Event has been cancelled!')
-                                ->body('You have already applied for ' . $event->tag->getLabel() . ' event on ' . $event->start->format('F d, Y') . '. If you want to change your request, you can just update your current request.')
+                                ->body($body)
                                 ->send();
+
                             $action->halt();
                         }
                     })
-                    ->using(function ($data, string $model): Model {
-                        $data['hris_number'] = auth()->user()->hris_number;
-                        $data['date'] = Carbon::parse($data['date']);
-                        $data['created_by'] = auth()->user()->hris_number;
-                        $official_time = OfficialTime::where('hris_number', $data['hris_number'])->where('status', 'approved')->first();
-                        $data['start'] = \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . '08:00:00');
-                        $data['end'] = $data['start']->copy()->addHours(9);
+                    ->action(function ($data) {
+                        $user = auth()->user()->hris_number;
+                        $date = (array_key_exists('date', $data)) ? [$data['date']] : $data['daterange'];
 
-                        if ($official_time) {
-                            $data['start'] = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . '08:00:00');
-                            $data['end'] = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . '17:00:00');
-                        }
-
-                        if (Events::parse($data['tag']) == Events::ALA) {
+                        $dates = (count($date) > 1) ? CarbonPeriod::create($date[0], $date[1])->toArray() : [Carbon::parse($date[0])];
+                        $data['tag'] = Events::parse($data['tag']);
+                        if ($data['tag'] == Events::ALA) {
                             $data['description'] = $data['description_leave'];
                         } else {
-                            $data['description'] = Events::tryFrom($data['tag'])->getLabel();
+                            $data['description'] = $data['tag']->getLabel();
                         }
 
-                        return $model::create($data);
-                    })
-                    ->successNotification(
+                        foreach ($dates as $d) {
+                            $official_time = OfficialTime::where('hris_number', $user->hris_number)->where('status', 'approved')->first();
+                            $data['start'] = \Carbon\Carbon::parse($d->format('Y-m-d') . ' ' . '08:00:00');
+                            $data['end'] = $data['start']->copy()->addHours(9);
+
+                            if ($official_time) {
+                                $data['start'] = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($d->format('Y-m-d') . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($d->format('Y-m-d') . ' ' . '08:00:00');
+                                $data['end'] = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($d->format('Y-m-d') . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($d->format('Y-m-d') . ' ' . '17:00:00');
+                            }
+
+                            $record = Event::create([
+                                'hris_number' => $user->hris_number,
+                                'start' => $data['start'],
+                                'end' => $data['end'],
+                                'tag' => $data['tag'],
+                                'description' => $data['description'],
+                                'created_by' => $user->hris_number,
+                            ]);
+                        }
+
+                        $admin_coord = User::whereHas('employee', fn($query) => $query->where('department_id', $user->employee->department_id))->where('role', Role::ADMINCOORD)->get();
+                        $body = 'You have successfully requested a ' . $data['tag']->getLabel() . ' schedule ';
+
+                        if (count($date) > 1) {
+                            $data = (object) [
+                                'employee' => $user->hris_number,
+                                'tag' => Events::parse($data['tag']),
+                                'description' => $data['description'],
+                                'dates' => [Carbon::parse($date[0]), Carbon::parse($date[1])],
+                            ];
+
+                            Mail::to($user)->cc($admin_coord->pluck('email')->toArray())->send(new Application($data, true));
+
+                            $body .= 'from ' . $data->dates[0]->format('Y-m-d') . ' to ' . $data->dates[1]->format('Y-m-d');
+                        } else {
+                            Mail::to($user)->cc($admin_coord->pluck('email')->toArray())->send(new Application($record));
+
+                            $body .= 'on ' . $dates[0]->format('Y-m-d');
+                        }
+
                         Notification::make()
                             ->success()
                             ->color('success')
                             ->title('Event Created!')
-                            ->body('You have successfully requested a Schedule. Kindly wait for the Admin Coordinator to approve your request.'),
-                    )
-                    ->after(function ($record) {
-                        $admin_coord = User::whereHas('employee', fn($query) => $query->where('department_id', auth()->user()->employee->department_id))->whereIn('role', [Role::ADMINCOORD, Role::CENTERADMINCOORD, Role::GROUPADMINCOORD])->get();
-                        Mail::to(auth()->user())->cc($admin_coord->pluck('email')->toArray())->send(new Application($record));
-                        $this->dispatch('refresh-calendar')->to(Calendar::class);
+                            ->body($body . '. Kindly wait for the Attendance Monitor to approve your request.')
+                            ->send();
                     })
+                    ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
             ])
             ->actions([
                 \Filament\Tables\Actions\EditAction::make()
@@ -192,7 +331,6 @@ class TableList extends Component implements HasForms, HasTable
                         $data['date'] = $record->start->format('Y-m-d');
                         $data['tag'] = $record->tag;
                         $data['description_leave'] = ($record->tag == Events::ALA) ? $record->description : null;
-
                         return $data;
                     })
                     ->form([
@@ -249,18 +387,18 @@ class TableList extends Component implements HasForms, HasTable
                         $official_time = OfficialTime::where('hris_number', $record->hris_number)->where('status', 'approved')->first();
                         $data['start'] = \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . '08:00:00');
                         $data['end'] = $data['start']->copy()->addHours(9);
+                        $data['tag'] = Events::parse($data['tag']);
 
                         if ($official_time) {
                             $data['start'] = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . '08:00:00');
                             $data['end'] = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($data['date']->format('Y-m-d') . ' ' . '17:00:00');
                         }
 
-                        if (Events::parse($data['tag']) == Events::ALA) {
+                        if ($data['tag'] == Events::ALA) {
                             $data['description'] = $data['description_leave'];
                         } else {
-                            $data['description'] = Events::tryFrom($data['tag'])->getLabel();
+                            $data['description'] = $data['tag']->getLabel();
                         }
-
 
                         $record->start = $data['start'];
                         $record->end = $data['end'];

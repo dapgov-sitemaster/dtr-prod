@@ -16,7 +16,7 @@ class Application extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct(public $data)
+    public function __construct(public $data, public $is_bulk = false)
     {
         //
     }
@@ -26,8 +26,14 @@ class Application extends Mailable
      */
     public function envelope(): Envelope
     {
+        if ($this->is_bulk) {
+            $subject = str($this->data->employee->last_name)->title() . ' | ' . $this->data->dates[0]->format('m/d/Y') . ' - ' . $this->data->dates[1]->format('m/d/Y') . ' '  . $this->data->tag->getLabel() . ' Schedule Request';
+        } else {
+            $subject = str($this->data->employee->last_name)->title() . ' | ' . $this->data->start->format('m/d/Y') . ' ' . $this->data->tag->getLabel() . ' Schedule Request';  // 211515 SERRAON - 09/30/2024 Official Leave Request
+        }
+
         return new Envelope(
-            subject: $this->data->hris_number . ' ' . str($this->data->employee->first_name)->title() . ' - ' . $this->data->start->format('m/d/Y') . ' ' . $this->data->tag->getLabel() . ' Request', // 211515 SERRAON - 09/30/2024 Official Leave Request
+            subject: $subject,
         );
     }
 
@@ -38,7 +44,7 @@ class Application extends Mailable
     {
         return new Content(
             markdown: 'mail.event.application',
-            with: ['data' => $this->data],
+            with: ['data' => $this->data, 'is_bulk' => $this->is_bulk],
         );
     }
 

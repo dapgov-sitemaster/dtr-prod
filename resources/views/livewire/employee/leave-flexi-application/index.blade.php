@@ -20,7 +20,7 @@
                 </x-filament::button> --}}
             </div>
         </div>
-        <div class="hidden md:block mt-6" x-data="{ activeTab: 'calendar' }">
+        <div class="hidden md:block mt-6" x-data="{ activeTab: 'list' }">
             <x-filament::tabs label="Content tabs" class="w-64">
                 <x-filament::tabs.item icon="heroicon-m-list-bullet" class="mx-auto"
                     alpine-active="activeTab === 'list'"

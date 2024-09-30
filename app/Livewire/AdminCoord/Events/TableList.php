@@ -94,7 +94,8 @@ class TableList extends Component implements HasForms, HasTable
                         'pending' => 'warning',
                         'approved' => 'success',
                         'disapproved' => 'danger',
-                    }),
+                    })
+                    ->sortable(),
             ])
             // ->headerActions([
             //     \Filament\Tables\Actions\CreateAction::make('create-event')

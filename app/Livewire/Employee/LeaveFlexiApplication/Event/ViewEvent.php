@@ -146,56 +146,53 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                         return $data;
                     })
                     ->form([
+                        \Filament\Forms\Components\DatePicker::make('date')
+                            ->label('Select Date')
+                            ->displayFormat('d F Y')
+                            ->native(false)
+                            ->seconds(false)
+                            ->weekStartsOnSunday()
+                            ->closeOnDateSelection()
+                            ->minDate(now()->addDays(3)->format('Y-m-d 00:00:00'))
+                            ->required()
+                            ->afterStateUpdated(function (Set $set) {
+                                $set('tag', null);
+                            })
+                            ->live(),
                         \Filament\Forms\Components\Grid::make()
                             ->schema([
-                                \Filament\Forms\Components\DatePicker::make('date')
-                                    ->label('Select Date')
-                                    ->displayFormat('d F Y')
-                                    ->native(false)
-                                    ->seconds(false)
-                                    ->weekStartsOnSunday()
-                                    ->closeOnDateSelection()
-                                    ->minDate(now()->addDays(3)->format('Y-m-d 00:00:00'))
-                                    ->required()
-                                    ->afterStateUpdated(function (Set $set) {
-                                        $set('tag', null);
-                                    })
-                                    ->live(),
-                                \Filament\Forms\Components\Grid::make()
-                                    ->schema([
-                                        \Filament\Forms\Components\Select::make('tag')
-                                            ->label('Type of Event')
-                                            ->options(function (Get $get) {
-                                                $options = [];
-                                                foreach (Events::cases() as $case) {
-                                                    if ($case == Events::WFH || $case == Events::HWFH) {
-                                                        if (Carbon::parse($get('date'))->dayOfWeek == Carbon::FRIDAY) {
-                                                            $options[$case->value] = $case->getLabel();
-                                                        }
-                                                    } else if ($case != Events::HOL && $case != Events::FLAG && $case != Events::SUS) {
-                                                        $options[$case->value] = $case->getLabel();
-                                                    }
+                                \Filament\Forms\Components\Select::make('tag')
+                                    ->label('Type of Event')
+                                    ->options(function (Get $get) {
+                                        $options = [];
+                                        foreach (Events::cases() as $case) {
+                                            if ($case == Events::WFH || $case == Events::HWFH) {
+                                                if (Carbon::parse($get('date'))->dayOfWeek == Carbon::FRIDAY) {
+                                                    $options[$case->value] = $case->getLabel();
                                                 }
-                                                return $options;
-                                            })
-                                            ->reactive()
-                                            ->native(false)
-                                            ->required()
-                                            ->live(),
-                                        \Filament\Forms\Components\Select::make('description_leave')
-                                            ->label('Type of Official Leave')
-                                            ->options(OfficialLeaves::class)
-                                            ->native(false)
-                                            ->visible(function (Get $get) {
-                                                return match (Events::parse($get('tag'))) {
-                                                    Events::ALA => true,
-                                                    default => false,
-                                                };
-                                            })
-                                            ->required(),
-                                    ])
-                                    ->visible(fn(Get $get) => $get('date') != null)
+                                            } else if ($case != Events::HOL && $case != Events::FLAG && $case != Events::SUS) {
+                                                $options[$case->value] = $case->getLabel();
+                                            }
+                                        }
+                                        return $options;
+                                    })
+                                    ->reactive()
+                                    ->native(false)
+                                    ->required()
+                                    ->live(),
+                                \Filament\Forms\Components\Select::make('description_leave')
+                                    ->label('Type of Official Leave')
+                                    ->options(OfficialLeaves::class)
+                                    ->native(false)
+                                    ->visible(function (Get $get) {
+                                        return match (Events::parse($get('tag'))) {
+                                            Events::ALA => true,
+                                            default => false,
+                                        };
+                                    })
+                                    ->required(),
                             ])
+                            ->visible(fn(Get $get) => $get('date') != null)
                     ])
                     ->using(function (Model $record, $data): Model {
                         $data['date'] = Carbon::parse($data['date']);

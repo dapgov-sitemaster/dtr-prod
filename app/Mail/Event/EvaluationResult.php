@@ -33,7 +33,7 @@ class EvaluationResult extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: $this->data->hris_number . ' ' . str($this->data->employee->first_name)->title() . ' - ' . $this->data->start->format('m/d/Y') . ' ' . $this->data->tag->getLabel() . ' Request',
+            subject: str($this->data->employee->last_name)->title() . ' - ' . $this->data->start->format('m/d/Y') . ' ' . $this->data->tag->getLabel() . ' Schedule Request',
         );
     }
 

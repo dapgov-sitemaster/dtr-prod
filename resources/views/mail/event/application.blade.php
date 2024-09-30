@@ -3,7 +3,11 @@
 
 Your request has been submitted. Please see the information below.
 
+@if($is_bulk)
+Date from **{{ $data->dates[0]->format('F d, Y') .' to '. $data->dates[1]->format('F d, Y') }}**
+@else
 Date: **{{ $data->start->format('F d, Y') }}**
+@endif
 
 Event Requested: **{{ $data->tag->getLabel() }}**
 
