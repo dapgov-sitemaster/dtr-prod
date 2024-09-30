@@ -3,21 +3,27 @@
 namespace App\Livewire\Employee\LeaveFlexiApplication;
 
 use Carbon\Carbon;
+use App\Enums\Role;
+use App\Models\User;
 use App\Enums\Events;
 use App\Models\Event;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Livewire\Component;
+use App\Models\Employee;
 use Filament\Tables\Table;
 use App\Enums\ScheduleType;
 use Livewire\Attributes\On;
 use App\Models\OfficialTime;
 use App\Enums\OfficialLeaves;
+use App\Mail\Event\Application;
 use Livewire\Attributes\Reactive;
+use Illuminate\Support\Facades\Mail;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Notifications\Notification;
+use Filament\Tables\Actions\CreateAction;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
 use App\Livewire\Employee\LeaveFlexiApplication\Event\Calendar;
@@ -68,7 +74,8 @@ class TableList extends Component implements HasForms, HasTable
                         } else {
                             return $state;
                         }
-                    }),
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
                 \Filament\Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -79,7 +86,7 @@ class TableList extends Component implements HasForms, HasTable
                     }),
             ])
             ->headerActions([
-                \Filament\Tables\Actions\CreateAction::make('create-event')
+                CreateAction::make('create-event')
                     ->icon('heroicon-m-document-plus')
                     ->label('Request Schedule')
                     ->modalHeading('Request Schedule')
@@ -133,6 +140,18 @@ class TableList extends Component implements HasForms, HasTable
                             ])
                             ->visible(fn(Get $get) => $get('date') != null)
                     ])
+                    ->before(function ($data, CreateAction $action) {
+                        $event = Event::where('hris_number', auth()->user()->hris_number)->whereDate('start', Carbon::parse($data['date'])->format('Y-m-d'))->first();
+                        if ($event) {
+                            Notification::make()
+                                ->warning()
+                                ->color('warning')
+                                ->title('Create Event has been cancelled!')
+                                ->body('You have already applied for ' . $event->tag->getLabel() . ' event on ' . $event->start->format('F d, Y') . '. If you want to change your request, you can just update your current request.')
+                                ->send();
+                            $action->halt();
+                        }
+                    })
                     ->using(function ($data, string $model): Model {
                         $data['hris_number'] = auth()->user()->hris_number;
                         $data['date'] = Carbon::parse($data['date']);
@@ -161,7 +180,11 @@ class TableList extends Component implements HasForms, HasTable
                             ->title('Event Created!')
                             ->body('You have successfully requested a Schedule. Kindly wait for the Admin Coordinator to approve your request.'),
                     )
-                    ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
+                    ->after(function ($record) {
+                        $admin_coord = User::whereHas('employee', fn($query) => $query->where('department_id', auth()->user()->employee->department_id))->whereIn('role', [Role::ADMINCOORD, Role::CENTERADMINCOORD, Role::GROUPADMINCOORD])->get();
+                        Mail::to(auth()->user())->cc($admin_coord->pluck('email')->toArray())->send(new Application($record));
+                        $this->dispatch('refresh-calendar')->to(Calendar::class);
+                    })
             ])
             ->actions([
                 \Filament\Tables\Actions\EditAction::make()
@@ -254,7 +277,7 @@ class TableList extends Component implements HasForms, HasTable
                             ->body('You have successfully updated your request.'),
                     )
                     ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
-                    ->visible(fn($record) => $record->status === "pending" && $record->start->format('Y-m-d') < now()->format('Y-m-d')),
+                    ->visible(fn($record) => $record->status === "pending"),
                 \Filament\Tables\Actions\DeleteAction::make()
                     ->modalHeading('Remove Event!')
                     ->label('Remove')
@@ -266,7 +289,7 @@ class TableList extends Component implements HasForms, HasTable
                             ->color('success'),
                     )
                     ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
-                    ->visible(fn($record) => $record->status === "pending" && $record->start->format('Y-m-d') < now()->format('Y-m-d'))
+                    ->visible(fn($record) => $record->status === "pending")
             ])
             ->defaultSort('start', 'desc');
     }

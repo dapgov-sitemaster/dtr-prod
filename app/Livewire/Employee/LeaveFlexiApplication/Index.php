@@ -49,7 +49,7 @@ class Index extends Component
                 ->warning()
                 ->color('warning')
                 ->title('Create Event error!')
-                ->body('You can only request a schedule two (2) days after the current date')
+                ->body('You can only request a schedule two (2) days after ' . now()->format('F d, Y'))
                 ->send();
         }
 

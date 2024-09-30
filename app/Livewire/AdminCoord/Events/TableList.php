@@ -8,19 +8,22 @@ use App\Models\Event;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Livewire\Component;
+use App\Models\Employee;
 use Filament\Tables\Table;
 use App\Enums\ScheduleType;
 use Livewire\Attributes\On;
 use App\Models\OfficialTime;
 use App\Enums\OfficialLeaves;
 use Livewire\Attributes\Reactive;
+use App\Mail\Event\EvaluationResult;
+use Illuminate\Support\Facades\Mail;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Support\Enums\ActionSize;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Notifications\Notification;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
-use App\Livewire\Employee\LeaveFlexiApplication\Event\Calendar;
 
 class TableList extends Component implements HasForms, HasTable
 {
@@ -82,7 +85,8 @@ class TableList extends Component implements HasForms, HasTable
                         } else {
                             return $state;
                         }
-                    }),
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
                 \Filament\Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -177,6 +181,57 @@ class TableList extends Component implements HasForms, HasTable
             //         )
             //         ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
             // ])
+            ->bulkActions([
+                \Filament\Tables\Actions\BulkAction::make('set_status')
+                    ->icon('heroicon-m-arrow-path')
+                    ->label('Evaluate Requests')
+                    ->modalHeading('Evaluate all requests')
+                    ->color('secondary')
+                    ->modalWidth('xl')
+                    ->form([
+                        \Filament\Forms\Components\ToggleButtons::make('evaluation_status')
+                            ->label('Do you want to Approve or Disapprove this request?')
+                            ->options([
+                                'approved' => 'Approve',
+                                'disapproved' => 'Disapprove',
+                            ])
+                            ->colors([
+                                'approved' => 'success',
+                                'disapproved' => 'danger',
+                            ])
+                            ->inline()
+                            ->live()
+                            ->required()
+                            ->validationMessages([
+                                'required' => 'Please, select if you want to Approve or Disapprove this request.',
+                            ]),
+                        \Filament\Forms\Components\Textarea::make('note')
+                            ->label('Note (optional)')
+                            ->visible(fn(Get $get) => $get('evaluation_status') === 'disapproved')
+                    ])
+                    ->requiresConfirmation()
+                    ->action(function (array $data, $records) {
+                        $note = (array_key_exists('note', $data) ? $data['note'] : null);
+
+                        foreach ($records as $record) {
+                            $record->status = $data['evaluation_status'];
+                            $record->save();
+
+                            Mail::to($record->employee->user)->cc(auth()->user())->send(new EvaluationResult($record, $note));
+                        }
+
+                        Notification::make()
+                            ->success()
+                            ->color('success')
+                            ->title('Evaluation has been complete.')
+                            ->body($records->count() . ' requests has been ' . str($data['evaluation_status'])->title() . '.')
+                            ->send();
+                    })
+                    ->deselectRecordsAfterCompletion()
+            ])
+            ->checkIfRecordIsSelectableUsing(function (Model $record): bool {
+                return $record->status == "pending";
+            })
             ->actions([
                 \Filament\Tables\Actions\ActionGroup::make([
                     \Filament\Tables\Actions\Action::make('set_status')
@@ -208,17 +263,11 @@ class TableList extends Component implements HasForms, HasTable
                         ])
                         ->requiresConfirmation()
                         ->action(function (array $data, $record) {
-                            $user = \App\Models\User::where('hris_number', '211515')->first();
-                            $user->notify(new \App\Notifications\EventRequestApplication([
-                                'evaluation_result' => $data['evaluation_status'],
-                                'date' => $record->start,
-                                'event' => $record->tag->getLabel(),
-                                'note' => array_key_exists('note', $data) ? $data['note'] : null
-                            ]));
-                            // if ($data['evaluation_status'] == 'disapproved' && $data['note'] != null) {
-                            // }
-                            // $record->status = $data['evaluation_status'];
-                            // $record->save();
+                            $note = (array_key_exists('note', $data) ? $data['note'] : null);
+                            $record->status = $data['evaluation_status'];
+                            $record->save();
+
+                            Mail::to($record->employee->user)->cc(auth()->user())->send(new EvaluationResult($record, $note));
 
                             Notification::make()
                                 ->success()
@@ -226,7 +275,8 @@ class TableList extends Component implements HasForms, HasTable
                                 ->title('Evaluation has been complete.')
                                 ->body($record->employee->apostFirstName . ' ' . $record->tag->getLabel() . ' request has been ' . str($data['evaluation_status'])->title() . '.')
                                 ->send();
-                        }),
+                        })
+                        ->visible(fn($record) => $record->status === 'pending'),
                     \Filament\Tables\Actions\EditAction::make()
                         ->mutateRecordDataUsing(function ($data, $record) {
                             $data['date'] = $record->start->format('Y-m-d');
@@ -243,7 +293,6 @@ class TableList extends Component implements HasForms, HasTable
                                 ->seconds(false)
                                 ->weekStartsOnSunday()
                                 ->closeOnDateSelection()
-                                ->minDate(now()->addDays(3)->format('Y-m-d 00:00:00'))
                                 ->required()
                                 ->afterStateUpdated(function (Set $set) {
                                     $set('tag', null);
@@ -274,13 +323,17 @@ class TableList extends Component implements HasForms, HasTable
                                         ->label('Type of Official Leave')
                                         ->options(OfficialLeaves::class)
                                         ->native(false)
-                                        ->visible(function (Get $get) {
-                                            return match (Events::parse($get('tag'))) {
-                                                Events::ALA => true,
-                                                default => false,
-                                            };
-                                        })
+                                        ->visible(fn(Get $get) => ($get('tag') === Events::ALA) ? true : false)
                                         ->required(),
+                                    \Filament\Forms\Components\Select::make('hris_number')
+                                        ->label('Employee Name')
+                                        // ->options(\App\Models\Employee::whereIn('department_id', $this->departments)->where('employment_status', true)->get()->pluck('full_name', 'hris_number'))
+                                        ->getSearchResultsUsing(fn(string $search): array => Employee::searchEmployee($search)->departmentCovered()->limit(10)->get()->pluck('full_name', 'hris_number')->toArray())
+                                        ->getOptionLabelUsing(fn($value): ?string => Employee::where('hris_number', $value)->first()?->full_name)
+                                        ->native(false)
+                                        ->searchable(['first_name', 'last_name', 'hris_number'])
+                                        ->required()
+                                        ->columnSpanFull(),
                                 ])
                                 ->visible(fn(Get $get) => $get('date') != null)
                         ])
@@ -298,7 +351,7 @@ class TableList extends Component implements HasForms, HasTable
                             if (Events::parse($data['tag']) == Events::ALA) {
                                 $data['description'] = $data['description_leave'];
                             } else {
-                                $data['description'] = Events::tryFrom($data['tag'])->getLabel();
+                                $data['description'] = $data['tag']->getLabel();
                             }
 
 
@@ -314,7 +367,7 @@ class TableList extends Component implements HasForms, HasTable
                                 ->success()
                                 ->color('success')
                                 ->title('Event updated')
-                                ->body('You have successfully updated your request.'),
+                                ->body('You have successfully updated the event.'),
                         )
                         ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class)),
                     \Filament\Tables\Actions\DeleteAction::make()
@@ -329,6 +382,11 @@ class TableList extends Component implements HasForms, HasTable
                         )
                         ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
                 ])
+                    ->label('Actions')
+                    ->size(ActionSize::Small)
+                    ->color('primary')
+                    ->button()
+                    ->dropdownPlacement('top-end')
             ])
             ->filters([
                 \Filament\Tables\Filters\Filter::make('status')
@@ -370,7 +428,7 @@ class TableList extends Component implements HasForms, HasTable
                                 },
                             );
                     }),
-            ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContentCollapsible)
+            ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
             ->defaultSort('start', 'desc');
     }
 }

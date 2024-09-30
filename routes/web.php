@@ -1,14 +1,15 @@
 <?php
 
-use App\Http\Controllers\DtrTestController;
-use App\Http\Controllers\Pdf\QrCodeController;
-use App\Http\Controllers\TestingController;
-use App\Http\Controllers\Testing2Controller;
+use App\Livewire\Auth\Login;
+use App\Livewire\Auth\ResetPassword;
+use Illuminate\Support\Facades\Mail;
 use App\Livewire\Auth\ChangePassword;
 use App\Livewire\Auth\ForgotPassword;
-use App\Livewire\Auth\ResetPassword;
-use App\Livewire\Auth\Login;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DtrTestController;
+use App\Http\Controllers\TestingController;
+use App\Http\Controllers\Testing2Controller;
+use App\Http\Controllers\Pdf\QrCodeController;
 
 Route::redirect('/', '/sign-in');
 // Route::get('/testing', TestingController::class);
@@ -17,13 +18,18 @@ Route::redirect('/', '/sign-in');
 
 Route::get('/notification', function () {
     $user = \App\Models\User::where('hris_number', '211515')->first();
+    $event = \App\Models\Event::find(1);
 
-    return (new \App\Notifications\EventRequestApplication([
-        'evaluation_result' => 'disapproved',
-        'date' => now(),
-        'event' => 'Official Leave',
-        'note' => 'test'
-    ]))->toMail($user);
+    return new \App\Mail\Event\EvaluationResult($event, 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla eu neque in ante ullamcorper eleifend ac eu orci. Nulla augue nisi, suscipit sit amet eros in, condimentum ornare felis. Cras id convallis justo. Quisque vitae lectus purus. Donec vestibulum enim in maximus malesuada. Aenean nec ligula feugiat, eleifend urna sed, bibendum felis.');
+
+    // return Mail::to($user)->send(new \App\Mail\Event\Application($event));
+
+    // return (new \App\Notifications\EventRequestApplication([
+    //     'evaluation_result' => 'disapproved',
+    //     'date' => now(),
+    //     'event' => 'Official Leave',
+    //     'note' => 'test'
+    // ]))->toMail($user);
 });
 
 

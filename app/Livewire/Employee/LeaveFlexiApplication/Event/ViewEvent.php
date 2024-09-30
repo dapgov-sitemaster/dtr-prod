@@ -233,22 +233,22 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                         $this->dispatch('refresh-calendar')->to(Calendar::class);
                         $this->dispatch('refresh-table')->to(TableList::class);
                     })
-                    ->visible(fn($record) => $record->created_by === auth()->user()->hris_number && $record->start->format('Y-m-d') < now()->format('Y-m-d')),
-                \Filament\Tables\Actions\DeleteAction::make()
-                    ->modalHeading('Remove Event!')
-                    ->label('Remove')
-                    ->requiresConfirmation()
-                    ->successNotification(
-                        Notification::make()
-                            ->success()
-                            ->title('Event has been removed')
-                            ->color('success')
-                    )
-                    ->after(function () {
-                        $this->dispatch('refresh-calendar')->to(Calendar::class);
-                        $this->dispatch('refresh-table')->to(TableList::class);
-                    })
-                    ->visible(fn($record) => $record->created_by === auth()->user()->hris_number && $record->start->format('Y-m-d') < now()->format('Y-m-d')),
+                    ->visible(fn($record) => $record->created_by === auth()->user()->hris_number && $record->status === 'pending'),
+                // \Filament\Tables\Actions\DeleteAction::make()
+                //     ->modalHeading('Remove Event!')
+                //     ->label('Remove')
+                //     ->requiresConfirmation()
+                //     ->successNotification(
+                //         Notification::make()
+                //             ->success()
+                //             ->title('Event has been removed')
+                //             ->color('success')
+                //     )
+                //     ->after(function () {
+                //         $this->dispatch('refresh-calendar')->to(Calendar::class);
+                //         $this->dispatch('refresh-table')->to(TableList::class);
+                //     })
+                //     ->visible(fn($record) => $record->created_by === auth()->user()->hris_number && $record->status === 'pending'),
             ]);
     }
 }

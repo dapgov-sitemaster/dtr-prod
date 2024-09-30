@@ -1,11 +1,13 @@
 <div>
-    <div>
-        {{ $this->eventInfolist }}
-    </div>
+    @if($event)
+        <div>
+            {{ $this->eventInfolist }}
+        </div>
 
-    @if($events->tag != App\Enums\Events::HOL->value && $events->tag != App\Enums\Events::FLAG->value && $events->tag != App\Enums\Events::SUS->value)
-    <div class="my-4">
-        {{ $this->table }}
-    </div>
+        @if($event->tag != App\Enums\Events::HOL && $events->tag != App\Enums\Events::FLAG && $events->tag != App\Enums\Events::SUS)
+        <div class="my-4">
+            {{ $this->table }}
+        </div>
+        @endif
     @endif
 </div>

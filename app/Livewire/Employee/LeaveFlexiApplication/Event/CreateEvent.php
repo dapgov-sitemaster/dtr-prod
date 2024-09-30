@@ -3,7 +3,9 @@
 namespace App\Livewire\Employee\LeaveFlexiApplication\Event;
 
 use Carbon\Carbon;
+use App\Enums\Role;
 use Filament\Forms;
+use App\Models\User;
 use App\Enums\Events;
 use App\Models\Event;
 use Filament\Forms\Get;
@@ -14,7 +16,9 @@ use App\Enums\ScheduleType;
 use Livewire\Attributes\On;
 use App\Models\OfficialTime;
 use App\Enums\OfficialLeaves;
+use App\Mail\Event\Application;
 use Livewire\Attributes\Reactive;
+use Illuminate\Support\Facades\Mail;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -95,7 +99,7 @@ class CreateEvent extends Component implements HasForms
             $description = Events::tryFrom($data['tag'])->getLabel();
         }
 
-        Event::create([
+        $event = Event::create([
             'hris_number' => auth()->user()->hris_number,
             'start' => $time_start->format('Y-m-d H:i:s'),
             'end' => $time_end->format('Y-m-d H:i:s'),
@@ -103,6 +107,9 @@ class CreateEvent extends Component implements HasForms
             'description' => $description,
             'created_by' => auth()->user()->hris_number,
         ]);
+
+        $admin_coord = User::whereHas('employee', fn($query) => $query->where('department_id', auth()->user()->employee->department_id))->whereIn('role', [Role::ADMINCOORD, Role::CENTERADMINCOORD, Role::GROUPADMINCOORD])->get();
+        Mail::to(auth()->user())->cc($admin_coord->pluck('email')->toArray())->send(new Application($event));
 
         Notification::make()
             ->title("Event Created!")
