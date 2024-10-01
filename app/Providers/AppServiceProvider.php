@@ -44,7 +44,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('has-wfh-schedule', function (\App\Models\User $user) {
-            $event = $user->employee->event()->whereDate('start', now()->format('Y-m-d'))->first();
+            $event = $user->employee->event()->whereDate('start', now()->format('Y-m-d'))->where('status', 'approved')->first();
             if ($event?->tag == \App\Enums\Events::WFH) {
                 return true;
             }

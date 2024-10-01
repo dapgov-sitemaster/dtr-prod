@@ -52,7 +52,6 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
 
     public function table(Table $table): Table
     {
-        info($this->event);
         return $table
             ->query(
                 Event::query()

@@ -50,6 +50,7 @@ class Index extends Component
                 ->color('warning')
                 ->title('Create Event error!')
                 ->body('You can only request a schedule two (2) days after ' . now()->format('F d, Y'))
+                ->duration(8000)
                 ->send();
         }
 
@@ -61,6 +62,7 @@ class Index extends Component
                 ->color('warning')
                 ->title('Create Event has been cancelled!')
                 ->body('You have already applied for ' . $event->tag->getLabel() . ' event on ' . $this->eventCreate->format('F d, Y') . '. If you want to change your request, you can just update your current request.')
+                ->duration(8000)
                 ->send();
         }
 

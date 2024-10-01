@@ -246,7 +246,7 @@ class TableList extends Component implements HasForms, HasTable
                         if ($event->isNotEmpty()) {
                             $body = '';
                             if (count($date) > 1) {
-                                $imploded_event = $event->clone()->pluck('start')->map(fn($item) => $item->format('Y-m-d'))->implode(',');
+                                $imploded_event = $event->pluck('start')->map(fn($item) => $item->format('Y-m-d'))->implode(',');
                                 $body .= 'You have already applied for schedule/s on ' . $imploded_event;
                             } else {
                                 $body .= 'You have already applied for ' . $event->first()->tag->getLabel() . ' event on ' . $event->first()->start->format('F d, Y');
@@ -258,6 +258,7 @@ class TableList extends Component implements HasForms, HasTable
                                 ->warning()
                                 ->color('warning')
                                 ->title('Create Event has been cancelled!')
+                                ->duration(8000)
                                 ->body($body)
                                 ->send();
 
@@ -265,7 +266,7 @@ class TableList extends Component implements HasForms, HasTable
                         }
                     })
                     ->action(function ($data) {
-                        $user = auth()->user()->hris_number;
+                        $user = auth()->user();
                         $date = (array_key_exists('date', $data)) ? [$data['date']] : $data['daterange'];
 
                         $dates = (count($date) > 1) ? CarbonPeriod::create($date[0], $date[1])->toArray() : [Carbon::parse($date[0])];
@@ -301,7 +302,7 @@ class TableList extends Component implements HasForms, HasTable
 
                         if (count($date) > 1) {
                             $data = (object) [
-                                'employee' => $user->hris_number,
+                                'employee' => $user->employee,
                                 'tag' => Events::parse($data['tag']),
                                 'description' => $data['description'],
                                 'dates' => [Carbon::parse($date[0]), Carbon::parse($date[1])],
@@ -321,6 +322,7 @@ class TableList extends Component implements HasForms, HasTable
                             ->color('success')
                             ->title('Event Created!')
                             ->body($body . '. Kindly wait for the Attendance Monitor to approve your request.')
+                            ->duration(8000)
                             ->send();
                     })
                     ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
