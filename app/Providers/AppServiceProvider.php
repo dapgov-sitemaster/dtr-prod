@@ -60,6 +60,10 @@ class AppServiceProvider extends ServiceProvider
             return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::HRADMIN;
         });
 
+        Gate::define('isHrAdminRsp', function (\App\Models\User $user) {
+            return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::HRADMINRSP;
+        });
+
         Stringable::macro('initials', function () {
             $words = preg_split("/\s+/", $this);
             $initials = "";

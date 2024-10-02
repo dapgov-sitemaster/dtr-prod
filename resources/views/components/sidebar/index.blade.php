@@ -243,7 +243,7 @@
                                 class="w-6 shrink-0"
                             />
                             <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
-                                Official Time - Change Requests
+                                Official Time Changes
                             </div>
                         </x-sidebar.item>
                         <x-sidebar.item tooltip="Time Entries" :url="route('hr-admin.time-entries.index')" :active="request()->routeIs('hr-admin.time-entries.*')">

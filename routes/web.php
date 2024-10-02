@@ -16,21 +16,23 @@ Route::redirect('/', '/sign-in');
 // Route::get('/testing2', Testing2Controller::class);
 // Route::get('/test-dtr', DtrTestController::class);
 
-Route::get('/notification', function () {
-    $user = \App\Models\User::where('hris_number', '211515')->first();
-    $event = \App\Models\Event::find(1);
+// Route::get('/notification', function () {
+//     $user = \App\Models\Employee::with('official_time')->where('hris_number', '211515')->first();
+//     $official_time = \App\Models\OfficialTime::find(1);
 
-    return new \App\Mail\Event\EvaluationResult($event, 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla eu neque in ante ullamcorper eleifend ac eu orci. Nulla augue nisi, suscipit sit amet eros in, condimentum ornare felis. Cras id convallis justo. Quisque vitae lectus purus. Donec vestibulum enim in maximus malesuada. Aenean nec ligula feugiat, eleifend urna sed, bibendum felis.');
+//     // return new \App\Mail\Event\EvaluationResult($event, 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla eu neque in ante ullamcorper eleifend ac eu orci. Nulla augue nisi, suscipit sit amet eros in, condimentum ornare felis. Cras id convallis justo. Quisque vitae lectus purus. Donec vestibulum enim in maximus malesuada. Aenean nec ligula feugiat, eleifend urna sed, bibendum felis.');
 
-    // return Mail::to($user)->send(new \App\Mail\Event\Application($event));
+//     // return Mail::to($user)->send(new \App\Mail\Event\Application($event));
 
-    // return (new \App\Notifications\EventRequestApplication([
-    //     'evaluation_result' => 'disapproved',
-    //     'date' => now(),
-    //     'event' => 'Official Leave',
-    //     'note' => 'test'
-    // ]))->toMail($user);
-});
+//     // return (new \App\Notifications\EventRequestApplication([
+//     //     'evaluation_result' => 'disapproved',
+//     //     'date' => now(),
+//     //     'event' => 'Official Leave',
+//     //     'note' => 'test'
+//     // ]))->toMail($user);
+
+//     return new \App\Mail\OfficialTimeChanges(false, $user);
+// });
 
 
 Route::get('/sign-in', Login::class)->middleware('guest')->name('login');
@@ -90,6 +92,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/official-time/change-requests', App\Livewire\HrAdmin\OfficialTimeChangeRequest\Index::class)->name('hr-admin.official-time-change-req.index');
         Route::get('/events', App\Livewire\HrAdmin\Events\Index::class)->name('hr-admin.events.index');
         Route::get('/time-entries', App\Livewire\HrAdmin\TimeEntries::class)->name('hr-admin.time-entries.index');
+        Route::get('/{mov}/view-mov', App\Http\Controllers\Pdf\ShowMovController::class)->name('hr-admin.pdf.view-mov');
         // Route::get('/dtr-report', App\Livewire\Employee\DtrReport::class)->name('employee.dtr-report');
     });
 

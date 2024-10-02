@@ -4,10 +4,11 @@ namespace App\Models;
 
 use App\Enums\ScheduleType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class OfficialTime extends Model
 {
@@ -42,8 +43,8 @@ class OfficialTime extends Model
         return $this->hasOne(Employee::class, 'hris_number', 'created_by');
     }
 
-    public function movs(): MorphMany
+    public function mov(): MorphOne
     {
-        return $this->morphMany(Mov::class, 'movable');
+        return $this->morphOne(Mov::class, 'movable');
     }
 }
