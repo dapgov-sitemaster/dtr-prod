@@ -66,7 +66,7 @@ Route::middleware('auth')->group(function () {
 
     // Admin Coord modules
 
-    Route::prefix('admin')->middleware(['checkrole:admincoord,centeradmincoord,groupadmincoord', 'checkcenter:PASIG'])->group(function () {
+    Route::prefix('admin')->middleware(['checkrole:null,admincoord,centeradmincoord,groupadmincoord', 'checkcenter:PASIG'])->group(function () {
         Route::get('/official-time', App\Livewire\AdminCoord\OfficialTime::class)->name('admin.official-time');
 
         // Route::get('/event-calendar', App\Livewire\AdminCoord\Events\Index::class)->name('admin.event-calendar');
@@ -84,8 +84,8 @@ Route::middleware('auth')->group(function () {
 
     // HR Admin modules
 
-    Route::prefix('hr-admin')->middleware(['checkrole:hradmin', 'checkcenter:PASIG'])->group(function () {
-        Route::get('/master-list', App\Livewire\HrAdmin\EmployeeMasterlist::class)->name('hr-admin.master-list');
+    Route::prefix('hr-admin')->middleware(['checkcenter:PASIG'])->group(function () {
+        Route::get('/master-list', App\Livewire\HrAdmin\EmployeeMasterlist::class)->middleware('checkrole:hradmin')->name('hr-admin.master-list');
         Route::get('/dtr-report', App\Livewire\HrAdmin\GenerateDtrReport::class)->name('hr-admin.generate-dtr-report.index');
         Route::get('/dtr-report/employee/{hris_number}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'individual'])->name('hradmin.dtr.emp-dtr-report');
         Route::get('/dtr-report/bulk/{department}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'bulk'])->name('hradmin.dtr.bulk-dtr-report');
@@ -98,7 +98,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('dapcc')->middleware('checkcenter:DAPCC')->group(function () {
         // DAPCC HR Admin modules
-        Route::prefix('hr-admin')->middleware('checkrole:hradmin')->group(function () {
+        Route::prefix('hr-admin')->middleware('checkrole:null,hradmin')->group(function () {
             Route::get('/master-list', App\Livewire\Dapcc\HrAdmin\EmployeeMasterlist::class)->name('dapcc.hr-admin.master-list');
             Route::get('/events', App\Livewire\Dapcc\HrAdmin\Events\Index::class)->name('dapcc.hr-admin.events');
             Route::get('/dtr-report', App\Livewire\Dapcc\HrAdmin\GenerateDtrReports::class)->name('dapcc.hr-admin.generate-dtr-report');
@@ -108,7 +108,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // DAPCC Admin Coordinator
-        Route::prefix('admin')->middleware('checkrole:admincoord,centeradmincoord,groupadmincoord')->group(function () {
+        Route::prefix('admin')->middleware('checkrole:null,admincoord,centeradmincoord,groupadmincoord')->group(function () {
             Route::get('/event-calendar', App\Livewire\Dapcc\AdminCoord\Events\Index::class)->name('dapcc.admin.event-calendar');
             Route::get('/daily-time-records', App\Livewire\Dapcc\AdminCoord\DailyTimeRecords::class)->name('dapcc.admin.dtr.index');
             // Route::get('/daily-time-records/{hris_number}/time-entries', App\Livewire\AdminCoord\EmployeeTimeEntries::class)->name('admin.dtr.emp-time-entries');
