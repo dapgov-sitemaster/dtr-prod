@@ -21,10 +21,7 @@ class EvaluationResult extends Mailable implements ShouldQueue
      */
     public function __construct(public $data, public $note = null)
     {
-        // $admin_coord = Employee::whereHas('user', fn($query) => $query->whereIn('role', [Role::ADMINCOORD, Role::CENTERADMINCOORD, Role::GROUPADMINCOORD]))->where('department_id', $this->data->employee->department_id)->get();
-
-        // $admin_coord = User::whereHas('employee', fn($query) => $query->where('department_id', $this->data->employee->department_id))->whereIn('role', [Role::ADMINCOORD, Role::CENTERADMINCOORD, Role::GROUPADMINCOORD])->get();
-        // $this->cc = $admin_coord->pluck('email')->toArray();
+        //
     }
 
     /**

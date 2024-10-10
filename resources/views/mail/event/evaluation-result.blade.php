@@ -15,7 +15,7 @@ Type of Official Leave: **{{ \App\Enums\OfficialLeaves::parse($data->description
 You can Time in using this <a href="{{ route('employee.work-from-home') }}">link</a> for your flexible working arrangement.
 @endif
 
-@if($note)
+@if($note != null)
 Attendance Monitor's note: **{{ $note }}**
 @endif
 

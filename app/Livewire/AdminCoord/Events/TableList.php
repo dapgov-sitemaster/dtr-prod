@@ -269,7 +269,7 @@ class TableList extends Component implements HasForms, HasTable
                         ])
                         ->requiresConfirmation()
                         ->action(function (array $data, $record) {
-                            $note = (array_key_exists('note', $data) ? $data['note'] : null);
+                            $note = array_key_exists('note', $data) ? $data['note'] : null;
                             $record->status = $data['evaluation_status'];
                             $record->save();
 
