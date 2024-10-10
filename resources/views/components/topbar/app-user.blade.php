@@ -21,7 +21,7 @@
                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
 
                 <!-- Authentication -->
-                @if(in_array(auth()->user()->email, ['garciaml@dap.edu.ph', 'sinajona@dap.edu.ph', 'pabrigar@dap.edu.ph', 'delfind@dap.edu.ph', 'soriag@dap.edu.ph', 'delacruzp@dap.edu.ph', 'serraonj@dap.edu.ph', 'superadmin@dap.edu.ph'], true))
+                @if(in_array(auth()->user()->email, ['garciaml@dap.edu.ph', 'sinajona@dap.edu.ph', 'pabrigar@dap.edu.ph', 'delfind@dap.edu.ph', 'soriag@dap.edu.ph', 'delacruzp@dap.edu.ph', 'serraonj@dap.edu.ph', 'superadmin@dap.edu.ph', 'solanad@dap.edu.ph'], true))
                     <x-dropdown-link href="{{ env('AZURE_STORAGE_API_ENDPOINT') .'edtr-mvpool-v0.3.3.apk'. env('AZURE_STORAGE_SAS_TOKEN')}}" target="_blank">
                         {{ __('Download MVPOOL apk') }}
                     </x-dropdown-link>

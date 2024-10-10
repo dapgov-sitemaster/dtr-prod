@@ -10,8 +10,9 @@ use App\Models\Employee;
 use App\Actions\ProcessReport;
 use Livewire\Attributes\Title;
 use App\Actions\GenerateReport;
-use App\Actions\ProcessDapccReport;
 use Livewire\Attributes\Computed;
+use App\Actions\ProcessDapccReport;
+use Filament\Notifications\Notification;
 
 class DtrReport extends Component
 {
@@ -47,7 +48,7 @@ class DtrReport extends Component
         $range = $this->date_range($appointment_status, $cutoff, $yearmonth);
 
         $date_from = Carbon::parse($range['date_from']);
-        $date_to = Carbon::parse($range['date_to'])->addDay();
+        $date_to = Carbon::parse($range['date_to']);
 
         if ($date_to < now()) {
             if ($this->employee->department->center == "DAPCC") {
@@ -59,9 +60,9 @@ class DtrReport extends Component
                     ->get();
             } else {
                 $events = Event::query()
-                    ->select('id', 'tag', 'start', 'hris_number')
+                    ->select('id', 'tag', 'start', 'hris_number', 'status')
                     ->where('hris_number', $this->employee->hris_number)
-                    ->orWhere('hris_number', NULL)
+                    ->orWhereIn('tag', [\App\Enums\Events::HOL, \App\Enums\Events::SUS, \App\Enums\Events::FLAG])
                     ->whereBetween('start', [$date_from, $date_to])
                     ->get();
             }
@@ -70,22 +71,20 @@ class DtrReport extends Component
             //     ->where('hris_number', $this->employee->hris_number)
             //     ->whereBetween('time_start', [$date_from, $date_to])
             //     ->get();
-            $generate = new GenerateReport;
-            $dtr_report = $generate->handle($this->employee, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'));
 
-            if ($dtr_report->isNotEmpty()) {
-                $this->showDtr = true;
-                if ($this->employee->department->center == "DAPCC") {
-                    $process = new ProcessDapccReport;
-                    $processed = $process->handle($date_from->format('Y-m-d'), $date_to->format('Y-m-d'), $this->employee, $events);
-                } else {
-                    $process = new ProcessReport;
-                    $processed = $process->handle($this->employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->format('Y-m-d'), $events);
-                }
-                // dd($processed);
-                // info($this->showDtr);
-                return $processed;
+            $this->showDtr = true;
+            if ($this->employee->department->center == "DAPCC") {
+                $process = new ProcessDapccReport;
+                $processed = $process->handle($date_from->format('Y-m-d'), $date_to->format('Y-m-d'), $this->employee, $events);
+            } else {
+                $generate = new GenerateReport;
+                $process = new ProcessReport;
+                $dtr_report = $generate->handle($this->employee, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'));
+                $processed = $process->handle($this->employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->format('Y-m-d'), $events);
             }
+            // dd($processed);
+            // info($this->showDtr);
+            return $processed;
         }
 
 
@@ -110,5 +109,23 @@ class DtrReport extends Component
         }
 
         return ['date_from' => $date_from, 'date_to' => $date_to];
+    }
+
+    public function printDtrReport()
+    {
+        if ($this->showDtr) {
+            $hris_number = auth()->user()->hris_number;
+            $yearmonth = $this->yearmonth;
+            $cutoff = $this->cutoff;
+
+            $this->dispatch('redirectToDtrReport', hris_number: $hris_number, yearmonth: $yearmonth, cutoff: $cutoff);
+        } else {
+            Notification::make()
+                ->title("Unable to print DTR Report!")
+                ->body("Selected Year, Month, and Cutoff are not yet ready! Please select other year, month and cutoff!")
+                ->warning()
+                ->color('warning')
+                ->send();
+        }
     }
 }

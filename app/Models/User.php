@@ -14,10 +14,11 @@ use Spatie\Activitylog\LogOptions;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasName;
 use Filament\Panel;
+use App\Permissions\HasPermissionTrait;
 
 class User extends Authenticatable implements FilamentUser, HasName
 {
-    use HasFactory, Notifiable, SoftDeletes, HasApiTokens, LogsActivity;
+    use HasPermissionTrait, HasFactory, Notifiable, SoftDeletes, HasApiTokens, LogsActivity;
 
     /**
      * The attributes that are mass assignable.

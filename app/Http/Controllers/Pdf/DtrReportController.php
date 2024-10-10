@@ -64,9 +64,9 @@ class DtrReportController extends Controller
             $date_to = Carbon::parse($range['date_to']);
 
             $events = Event::query()
-                ->select('id', 'tag', 'start', 'end', 'hris_number')
+                ->select('id', 'tag', 'start', 'end', 'hris_number', 'status')
                 ->where('hris_number', $employee->hris_number)
-                ->orWhere('hris_number', NULL)
+                ->orWhereIn('tag', [\App\Enums\Events::HOL, \App\Enums\Events::SUS, \App\Enums\Events::FLAG])
                 ->whereBetween('start', [$date_from->copy()->subDay(), $date_to->copy()->addDay()])
                 ->get();
 
@@ -125,7 +125,7 @@ class DtrReportController extends Controller
             $azure = new Azure;
             $events = Event::query()
                 ->select('id', 'tag', 'start', 'end', 'hris_number')
-                ->orWhere('hris_number', NULL)
+                ->orWhereIn('tag', [\App\Enums\Events::HOL, \App\Enums\Events::SUS, \App\Enums\Events::FLAG])
                 ->whereBetween('start', [$date_from->copy()->subDay(), $date_to->copy()->addDay()])
                 ->get();
 

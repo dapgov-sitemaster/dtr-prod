@@ -114,7 +114,8 @@
                         <th class="border">AM OUT</th>
                         <th class="border">PM IN</th>
                         <th class="border">PM OUT</th>
-                        <th class="border">TARDY</th>
+                        <th class="border">AM TARDY</th>
+                        <th class="border">PM TARDY</th>
                         <th class="border">UNDERTIME</th>
                         <th class="border">FLEXI</th>
                         <th class="border">REMARKS</th>
@@ -195,7 +196,7 @@
                                 @else
                                     {{ $report['time_in'] }}
                                 @endif
-                                
+
                                 {{-- {{ (date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00'))) ? date('g:i A', strtotime($report['time_end'])) : '' }} --}}
                             </td>
                             {{-- TARDY --}}
@@ -205,6 +206,9 @@
                                 @else
                                     {{ $report['tardy'] }}
                                 @endif
+                            </td>
+                            <td class="border text-center">
+                                {{ $report['pm_tardy'] }}
                             </td>
                             {{-- UNDERTIME --}}
                             <td class="border text-center">
@@ -222,12 +226,15 @@
                     @endforeach
                     {{-- footer --}}
                     <tr>
-                        <td colspan="9" class="border"></td>
+                        <td colspan="10" class="border"></td>
                     </tr>
                     <tr>
                         <th class="border text-right pr-2" colspan="5">TOTAL DEDUCTED TIME</th>
                         <td class="border text-center">
                             {{ $employee['total']['tardy'][1] }}
+                        </td>
+                        <td class="border text-center">
+                            {{ $employee['total']['pm_tardy'][1] }}
                         </td>
                         <td class="border text-center">
                             {{ $employee['total']['undertime'][1] }}
@@ -239,6 +246,9 @@
                         <th class="border text-right pr-2" colspan="5">TOTAL FREQUENCY</th>
                         <td class="border text-center">
                             {{ $employee['total']['tardy'][0] }}
+                        </td>
+                        <td class="border text-center">
+                            {{ $employee['total']['pm_tardy'][0] }}
                         </td>
                         <td class="border text-center">
                             {{ $employee['total']['undertime'][0] }}

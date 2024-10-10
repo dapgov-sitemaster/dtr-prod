@@ -84,7 +84,7 @@ class CreateEvent extends Component implements HasForms
                             ->multiple()
                             // ->options(\App\Models\Employee::whereIn('department_id', $this->departments)->where('employment_status', true)->get()->pluck('full_name', 'hris_number'))
                             ->getSearchResultsUsing(fn(string $search): array => Employee::searchEmployee($search)->departmentCovered()->limit(10)->get()->pluck('full_name', 'hris_number')->toArray())
-                            ->getOptionLabelUsing(fn($value): ?string => Employee::where('hris_number', $value)->first()?->full_name)
+                            ->getOptionLabelUsing(fn($value): ?string => Employee::where('hris_number', $value)->first()->full_name)
                             ->native(false)
                             ->searchable(['first_name', 'last_name', 'hris_number'])
                             ->required()
@@ -105,15 +105,6 @@ class CreateEvent extends Component implements HasForms
 
         $date = $this->eventData->date;
 
-        $official_time = OfficialTime::where('hris_number', $data['hris_number'])->where('status', 'approved')->first();
-        $time_start = \Carbon\Carbon::parse($date->format('Y-m-d') . ' ' . '08:00:00');
-        // $time_end = \Carbon\Carbon::parse($data['ends_at'] . ' ' . '17:00:00');
-        $time_end = $time_start->copy()->addHours(9);
-
-        if ($official_time) {
-            $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($date->format('Y-m-d') . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($date->format('Y-m-d') . ' ' . '08:00:00');
-            $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($date->format('Y-m-d') . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($date->format('Y-m-d') . ' ' . '17:00:00');
-        }
 
         if (Events::parse($data['tag']) == Events::ALA) {
             $description = $data['description_leave'];
@@ -122,6 +113,15 @@ class CreateEvent extends Component implements HasForms
         }
 
         foreach ($data['hris_number'] as $employee) {
+            $official_time = OfficialTime::where('hris_number', $employee)->where('status', 'approved')->first();
+            $time_start = \Carbon\Carbon::parse($date->format('Y-m-d') . ' ' . '08:00:00');
+            $time_end = $time_start->copy()->addHours(9);
+
+            if ($official_time) {
+                $time_start = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($date->format('Y-m-d') . ' ' . $official_time->time_in->format('H:i:s')) : \Carbon\Carbon::parse($date->format('Y-m-d') . ' ' . '08:00:00');
+                $time_end = ($official_time->schedule_type == ScheduleType::FIXED) ? \Carbon\Carbon::parse($date->format('Y-m-d') . ' ' . $official_time->time_in->copy()->addHours(9)->format('H:i:s')) : \Carbon\Carbon::parse($date->format('Y-m-d') . ' ' . '17:00:00');
+            }
+
             Event::create([
                 'hris_number' => $employee,
                 'start' => $time_start->format('Y-m-d H:i:s'),

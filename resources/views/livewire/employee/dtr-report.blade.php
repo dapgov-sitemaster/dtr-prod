@@ -15,7 +15,7 @@
                         />
                     </x-filament::input.wrapper>
                 </div>
-                <div>
+                <div class="mx-4">
                     <label class="mr-2 my-auto font-semibold text-sm">Cut-off: </label>
                     <x-filament::input.wrapper :valid="! $errors->has('cutoff')">
                         <x-filament::input.select wire:model.live="cutoff">
@@ -24,6 +24,11 @@
                             <option value="2">2nd Cut-off</option>
                         </x-filament::input.select>
                     </x-filament::input.wrapper>
+                </div>
+                <div class="mt-auto">
+                    <x-filament::button wire:click="printDtrReport" icon="heroicon-m-printer" outlined class="inline-block align-text-bottom">
+                        Print
+                    </x-filament::button>
                 </div>
             </div>
         </div>
@@ -78,7 +83,8 @@
                                 <th class="py-4">AM OUT</th>
                                 <th class="py-4">PM IN</th>
                                 <th class="py-4">PM OUT</th>
-                                <th class="py-4">TARDY</th>
+                                <th class="py-4">AM TARDY</th>
+                                <th class="py-4">PM TARDY</th>
                                 <th class="py-4">UNDERTIME</th>
                                 {{-- <th class="py-4">HALF-DAY</th> --}}
                                 <th class="py-4">FLEXI</th>
@@ -102,7 +108,7 @@
                                         @if($report['time_end'])
                                             @if(date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00')))
                                                 @if (date('H:i:s', strtotime($report['time_in'])) < date('H:i:s', strtotime('12:00:00')))
-                                                    12:00 PM
+                                                    {{ $report['break_start'] }}
                                                 @endif
                                             @else
                                                 {{ $report['time_end'] }}
@@ -115,13 +121,20 @@
                                                 {{ $report['time_in'] }}
                                             @else
                                                 @if (date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('13:00:00')))
-                                                    1:00 PM
+                                                    {{ $report['break_end'] }}
                                                 @endif
                                             @endif
                                         @endif
                                     </td>
                                     <td class="py-2">
-                                        {{ (date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00'))) ? date('g:i A', strtotime($report['time_end'])) : '' }}
+                                        {{-- {{ (date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00'))) ? date('g:i A', strtotime($report['time_end'])) : '' }} --}}
+                                        @if($report['time_end'])
+                                            @if(date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00')))
+                                                {{ $report['time_end'] }}
+                                            @endif
+                                        @else
+                                            {{ $report['time_in'] }}
+                                        @endif
                                     </td>
                                     <td class="py-2">
                                         @if($report['no_out'])
@@ -129,6 +142,9 @@
                                         @else
                                             {{ $report['tardy'] }}
                                         @endif
+                                    </td>
+                                    <td class="py-2">
+                                        {{ $report['pm_tardy'] }}
                                     </td>
                                     <td class="py-2">
                                         {{ $report['undertime'] }}
@@ -143,14 +159,14 @@
                                 @endforeach
                                 <tr class="border-t-2 border-b-2 border-gray-600">
                                     <td class="py-2 text-right font-semibold" colspan="5">Total Deducted Time</td>
-                                    <td class="py-2">
-                                        {{ $this->dtrReport['total']['tardy'][1] }}
-                                    </td>
+                                    <td class="py-2">{{ $this->dtrReport['total']['tardy'][1] }}</td>
+                                    <td class="py-2">{{ $this->dtrReport['total']['pm_tardy'][1] }}</td>
                                     <td class="py-2">{{ $this->dtrReport['total']['undertime'][1] }}</td>
                                 </tr>
                                 <tr class="border-t-2 border-b-2 border-gray-600">
                                     <td class="py-2 text-right font-semibold" colspan="5">Total Frequency</td>
                                     <td class="py-2">{{ $this->dtrReport['total']['tardy'][0] }}</td>
+                                    <td class="py-2">{{ $this->dtrReport['total']['pm_tardy'][0] }}</td>
                                     <td class="py-2">{{ $this->dtrReport['total']['undertime'][0] }}</td>
                                     <td class="py-2">{{ $this->dtrReport['total']['total_flexi'] }}</td>
                                 </tr>
@@ -175,3 +191,12 @@
         </div>
     </div>
 </div>
+@script
+    <script>
+        $wire.on('redirectToDtrReport', (data) => {
+            let url;
+            url = `${data.hris_number}/dtr-report?yearmonth=${data.yearmonth}&cutoff=${data.cutoff}`;
+            window.open(url, '_blank');
+        });
+    </script>
+@endscript

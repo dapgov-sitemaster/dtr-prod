@@ -5,9 +5,11 @@ namespace App\Providers;
 use App\Models\Event;
 use Illuminate\Support\Str;
 use App\Observers\EventObserver;
+use App\View\Components\Custom\Calendar;
 use Filament\Support\Colors\Color;
 use Illuminate\Support\Stringable;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Filament\Support\Facades\FilamentColor;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -34,7 +36,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('view-dapcc', function (\App\Models\User $user) {
-            return $user->employee->department->center == 'DAPCC' || $user->hris_number == "030303";
+            return $user->employee->department->center == 'DAPCC';
         });
 
         Gate::define('view-pasig', function (\App\Models\User $user) {
@@ -42,7 +44,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('has-wfh-schedule', function (\App\Models\User $user) {
-            $event = $user->employee->event()->whereDate('start', now()->format('Y-m-d'))->first();
+            $event = $user->employee->event()->whereDate('start', now()->format('Y-m-d'))->where('status', 'approved')->first();
             if ($event?->tag == \App\Enums\Events::WFH) {
                 return true;
             }
@@ -58,12 +60,16 @@ class AppServiceProvider extends ServiceProvider
             return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::HRADMIN;
         });
 
+        Gate::define('isHrAdminRsp', function (\App\Models\User $user) {
+            return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::HRADMINRSP;
+        });
+
         Stringable::macro('initials', function () {
             $words = preg_split("/\s+/", $this);
             $initials = "";
 
             foreach ($words as $w) {
-                $initials .= $w[0];
+                $initials .= (strlen($w) > 0) ? $w[0] : '';
             }
 
             return new static($initials);
@@ -105,5 +111,7 @@ class AppServiceProvider extends ServiceProvider
             'success' => Color::Green,
             'warning' => Color::Amber,
         ]);
+
+        Blade::component('calendar', Calendar::class);
     }
 }

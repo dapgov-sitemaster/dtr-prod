@@ -6,6 +6,19 @@
         </div>
         <div class="mt-6">
             @livewire(\App\Livewire\HrAdmin\Events\CalendarWidget::class, [], key(str()->random()))
+            {{-- @livewire(\App\Livewire\HrAdmin\Events\Calendar::class, [], key("event-calendar")) --}}
         </div>
     </div>
+
+    {{-- <livewire:hr-admin.events.create-event key="hr-create-event">
+    <x-filament::modal width="5xl" id="view-event">
+        @if(!empty($eventView))
+        <x-slot name="heading">
+            View Event
+        </x-slot>
+
+        <livewire:hr-admin.events.view-event :events="$eventView" key="hr-view-event">
+        @endif
+    </x-filament::modal> --}}
+
 </div>

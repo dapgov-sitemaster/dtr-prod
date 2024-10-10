@@ -7,7 +7,7 @@
             </div>
             <div>
                 <div class="lg:my-0 my-2">
-                    @if($employee->official_time)
+                    @if($employee->official_time?->schedule_type == \App\Enums\ScheduleType::FIXED->value)
                         <span>Your Official Time: <strong>{{ $employee->official_time->time_in->format('g:i A'). ' - ' .$employee->official_time->time_in->copy()->addHours(9)->format('g:i A') }}</strong></span>
                     @else
                         <span>Your Official Time: <strong>Full Flexitime</strong></span>
@@ -172,13 +172,10 @@
                             $disabled_start = "false";
                         }
                     @endphp
-                    <x-button x-on:click="$wire.$refresh()" wire:click="time_capture" color="primary" class="py-1 px-5 mx-1"
-                    disabled="{{ $disabled_start }}">
+                    <x-button x-on:click="$wire.$refresh()" wire:click="time_capture" color="primary" class="py-1 px-5 mx-1" disabled="{{ $disabled_start }}">
                         Start
                     </x-button>
-                    <x-button x-on:click="$wire.$refresh()" wire:click="time_capture" color="primary" class="py-1 px-5 mx-1"
-
-                        disabled="{{ $disabled_stop }}">
+                    <x-button x-on:click="$wire.$refresh()" wire:click="time_capture" color="primary" class="py-1 px-5 mx-1" disabled="{{ $disabled_stop }}">
                         Stop
                     </x-button>
                 </div>

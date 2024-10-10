@@ -53,6 +53,19 @@
                     </div>
                 </x-sidebar.item>
             </x-sidebar.group>
+            @if(Auth::user()->can('view-pasig'))
+            <x-sidebar.group>
+                <x-sidebar.item tooltip="Leave & Flexible Schedule Application" :url="route('employee.leave-flexible-schedule-application.index')" :active="request()->routeIs('employee.leave-flexible-schedule-application.*')">
+                    <x-filament::icon
+                        icon="heroicon-m-document-plus"
+                        class="w-6 shrink-0"
+                    />
+                    <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
+                        Leave & Flexi Schedule Application
+                    </div>
+                </x-sidebar.item>
+            </x-sidebar.group>
+            @endif
                 @can('has-wfh-schedule')
                 <li>
                     <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
@@ -197,6 +210,7 @@
                         <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
                     </li>
                     <x-sidebar.group label="HR Administrator Panel">
+                        @if(auth()->user()->can('hr-admin-rsp-view') || auth()->user()->can('hr-admin-view-any'))
                         <x-sidebar.item tooltip="Employee Masterlist" :url="route('hr-admin.master-list')" :active="request()->routeIs('hr-admin.master-list')">
                             <x-filament::icon
                                 icon="heroicon-m-user-group"
@@ -206,6 +220,8 @@
                                 Employee Masterlist
                             </div>
                         </x-sidebar.item>
+                        @endif
+                        @if(auth()->user()->can('hr-admin-view-any'))
                         <x-sidebar.item tooltip="Generate DTR Report" :url="route('hr-admin.generate-dtr-report.index')" :active="request()->routeIs('hr-admin.generate-dtr-report.*')">
                             <x-filament::icon
                                 icon="heroicon-m-clipboard-document-list"
@@ -230,7 +246,7 @@
                                 class="w-6 shrink-0"
                             />
                             <div class="flex flex-1" x-data="{}" x-show="$store.sidebar.isOpen">
-                                Official Time - Change Requests
+                                Official Time Changes
                             </div>
                         </x-sidebar.item>
                         <x-sidebar.item tooltip="Time Entries" :url="route('hr-admin.time-entries.index')" :active="request()->routeIs('hr-admin.time-entries.*')">
@@ -242,6 +258,7 @@
                                 Time Entries
                             </div>
                         </x-sidebar.item>
+                        @endif
                     </x-sidebar.group>
                     @endcan
                 @endif
