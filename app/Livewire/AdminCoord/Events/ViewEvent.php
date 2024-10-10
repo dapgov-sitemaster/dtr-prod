@@ -3,6 +3,7 @@
 namespace App\Livewire\AdminCoord\Events;
 
 use Carbon\Carbon;
+use App\Enums\Role;
 use App\Enums\Events;
 use App\Models\Event;
 use Filament\Forms\Get;
@@ -65,7 +66,14 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                     \Filament\Tables\Columns\TextColumn::make('employee.full_name')
                         ->label('Full Name')
                         ->description('Full Name', position: 'above')
-                        ->sortable(),
+                        ->searchable(['last_name', 'first_name'])
+                        ->sortable(['last_name']),
+                    \Filament\Tables\Columns\TextColumn::make('employee.department.description')
+                        ->label('Department')
+                        ->description('Department', position: 'above')
+                        ->searchable(['group', 'center', 'office'])
+                        ->sortable(['group', 'center', 'office'])
+                        ->visible(fn() => auth()->user()->hasRole(Role::CENTERADMINCOORD) || auth()->user()->hasRole(Role::GROUPADMINCOORD)),
                     \Filament\Tables\Columns\TextColumn::make('description')
                         ->formatStateUsing(fn($record) => ($record->tag == Events::ALA) ? OfficialLeaves::parse($record->description)->getLabel() : $record->description)
                         ->label('Description')

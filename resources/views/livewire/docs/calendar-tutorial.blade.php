@@ -1,13 +1,13 @@
 <div>
     <x-filament::modal id="calendar-tut" icon-color="info" width="5xl" :close-by-clicking-away="false" class="max-h-screen" sticky-header>
         <x-slot name="heading">
-            <span class="text-2xl text-dap-primary font-semibold underline decoration-dap-secondary">Welcome to new Schedule Calendar!</span>
+            <span class="text-2xl text-dap-primary font-semibold underline decoration-dap-secondary">Welcome to Schedule Calendar!</span>
         </x-slot>
         <div class="mx-4 overflow-auto">
             <div class="">
                 The main improvement of this update are the User Interface for the calendar. Please see below on how to use properly the Calendar.
             </div>
-            <div class="font-semibold mt-6">I. Creating an Event</div>
+            <div class="font-bold mt-6">I. Creating an Event</div>
             <div class="ml-8">
                 <ul class="list-decimal">
                     {{-- <li>First you have to click the <strong>New Event</strong> button to the top right to create an event.</li> --}}
@@ -46,9 +46,9 @@
                 </ul>
 
             </div>
-            <div class="font-semibold mt-4">II. Viewing an Event</div>
+            <div class="font-bold mt-4">II. Viewing an Event</div>
             <div class="indent-6">To view an Event, simply click the Event on the calendar and it will pop-up a window that previewing the details of the Event. <span class="line-through">Some of the events like Official Leave and Official Business have an option to upload an MOV, you can simply click the button to Upload the MOV (It will relfect also to the DTR Report of the Employee).</span></div>
-            <div class="font-semibold mt-4">III. Updating an Event</div>
+            <div class="font-bold mt-4">III. Updating an Event</div>
             <div class="indent-6 italic">Note: You can not edit the events beyond the current Date</div>
             <div class="ml-6">
                 <ul class="list-disc">
@@ -59,13 +59,26 @@
                 </ul>
             </div>
             {{-- <div class="indent-8 font-semibold italic">Tip: You can also edit the Event by dragging the event and drop it on another Date.</div> --}}
-            <div class="font-semibold mt-4">IV. Deleting an Event</div>
+            <div class="font-bold mt-4">IV. Deleting an Event</div>
             {{-- <div class="indent-6 italic">Note: You can not delete the events beyond the current Date</div> --}}
             <div class="indent-6">To delete an Event, click the event that you want to delete and the preview window will pop-up. On the bottom, you can see the <strong>Delete</strong> button. Simply click the delete button and the confirmation window will pop-up to confirm you action. Just click the <strong>Confirm</strong> button to confirm the deletion of the Event.</div>
-            <div class="mt-6"></div>
+            
+            <div class="font-bold mt-4">IV. Evaluating an Employee's Event Application</div>
+            <div class="indent-6">To evaluate the employee's request of event, you can do that in both List and Calendar mode.</div>
+            <div class="list-disc">
+                <li>
+                    <span class="font-semibold">Table mode</span>
+                    <div class="indent-6">Simply click the <strong>: Action</strong> button to the selected employee to evaluate. Next click the Evaluate request to proceed. A pop-up window will show and you will have a choice if you want to approve the request or to disapprove the request. Approving the request will tag the event as approve and it will be shown to the DTR Report remarks. When disapproving a request, you can indicate a reason or note for disapproval. The evaluation will be also be emailed to you and the requestor.</div>
+                </li>
+                <li>
+                    <span class="font-semibold">Calendar mode</span>
+                    <div class="indent-6">Just simply go the event date and all of the employee that has schedule in that date will be listed. Pending request will be only to evaluate. Simply click the <strong>: Action</strong> button to the selected employee to evaluate. Next click the Evaluate request to proceed. A pop-up window will show and you will have a choice if you want to approve the request or to disapprove the request. Approving the request will tag the event as approve and it will be shown to the DTR Report remarks. When disapproving a request, you can indicate a reason or note for disapproval. The evaluation will be also be emailed to you and the requestor.</div>
+                </li>
+            </div>
+            <div class="indent-6">Please do note that the edit and delete function will be available in all evaluated requests and pending requests.</div>
         </div>
         <x-slot name="footer">
-            <div class="font-semibold indent-6">Developer's Note: Please if you have encountered any bugs and error in this feature, kindly fill up this link (<a href="http://bit.ly/edtr-test" target="_blank" class="underline text-blue-700">http://bit.ly/edtr-test</a>). Also if you have any questions and suggestions, you can submit it in the link.</div>
+            <div class="font-semibold indent-6">Developer's Note: Please if you have encountered any bugs and error in this feature, kindly fill up this link (<a href="https://forms.gle/4jdH3KnLu1HKnx6L8" target="_blank" class="underline text-blue-700">https://forms.gle/4jdH3KnLu1HKnx6L8</a>). Also if you have any questions and suggestions, you can submit it in the link.</div>
             <div class="font-semibold indent-6 italic">It will help us to improve this feature and the whole system. Thank you.</div>
         </x-slot>
     </x-filament::modal>

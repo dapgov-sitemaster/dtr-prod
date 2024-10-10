@@ -117,13 +117,16 @@ class GenerateReport
                                 if ($entry->time_end && $entry->time_end->between($offi_break_start, $offi_break_end)) {
                                     $break_start = $entry->time_end;
                                 }
-                            } else if ($break_start != null) {
+                            } else if ($break_start != null && $break_end == null) {
+                                if ($entry->time_end && $entry->time_end->between($offi_break_start, $offi_break_end)) {
+                                    $break_end = $entry->time_start;
+                                }
                                 $break_end = $entry->time_start;
                                 // info($entry->time_start . ' | ' . $time_end);
                                 if ($entry->time_start == $time_end) {
                                     $break_end = null;
                                 } else {
-                                    $break_end = $entry->time_start;
+                                    $break_end = $entry->time_end;
                                 }
                             }
                         }

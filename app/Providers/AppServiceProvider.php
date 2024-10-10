@@ -69,7 +69,7 @@ class AppServiceProvider extends ServiceProvider
             $initials = "";
 
             foreach ($words as $w) {
-                $initials .= $w[0];
+                $initials .= (strlen($w) > 0) ? $w[0] : '';
             }
 
             return new static($initials);

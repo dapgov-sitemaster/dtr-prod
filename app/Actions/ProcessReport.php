@@ -36,7 +36,7 @@ class ProcessReport
             $flag = clone $events->where('tag', Events::FLAG)->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
             $holiday = clone $events->where('tag', Events::HOL)->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
             $suspended = clone $events->where('tag', Events::SUS)->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
-            $schedule = clone $events->where('hris_number', $employee->hris_number)->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
+            $schedule = clone $events->where('hris_number', $employee->hris_number)->where('status', 'approved')->whereBetween('start', [$date->format('Y-m-d') . ' 00:00:00', $date->format('Y-m-d') . ' 23:59:59'])->values();
 
             $schedule_remarks = $schedule->map(fn($item) => ['value' => ($item->mov) ? '<a href="' . route('admin.dtr.pdf.view-mov', ['mov' => $item->mov?->id]) . '" target="_blank">' . strtoupper($item->tag->value) . '</a>' : strtoupper($item->tag->value)])->toArray();
             $flag_remarks = $flag->map(fn($item) => ['value' => strtoupper($item->tag->value)])->toArray();
@@ -209,6 +209,17 @@ class ProcessReport
                                         $undertimes[] = $end_minsdiff;
                                     }
                                 }
+                            } else if ($official_end_time) {
+                                $end = Carbon::parse($date->format('Y-m-d') . ' ' . $official_end_time)->seconds(0);
+                                if ($time_end == null) {
+                                    $tardy = intdiv(480, 60) . ':' . (480 % 60);
+                                    $tardies[$date->format('Y-m-d')] = [480, [ScheduleType::FULLFLEXI->value, $official_start_time], $time_in, true];
+                                    $not_completed_hrs[] = $date->format('Y-m-d');
+                                } else if ($time_end->format('Y-m-d H:i') < $end->format('Y-m-d H:i')) {
+                                    $end_minsdiff = $time_end->diffInMinutes($end);
+                                    $undertime = intdiv($end_minsdiff, 60) . ':' . ($end_minsdiff % 60);
+                                    $undertimes[] = $end_minsdiff;
+                                }
                             }
                         } else if ($official_end_time) {
                             $end = Carbon::parse($date->format('Y-m-d') . ' ' . $official_end_time)->seconds(0);
@@ -260,6 +271,11 @@ class ProcessReport
                                         $undertime = $undertime_format;
                                         $undertimes[] = $end_minsdiff;
                                     }
+                                } else if ($date->format('Y-m-d') . ' 16:00:00' > $time_end->format('Y-m-d H:i:s')) {
+                                    $offi_end = Carbon::parse($date->format('Y-m-d') . ' 16:00:00');
+                                    $end_minsdiff = $time_end->diffInMinutes($offi_end);
+                                    $undertime = intdiv($end_minsdiff, 60) . ':' . ($end_minsdiff % 60);
+                                    $undertimes[] = $end_minsdiff;
                                 }
                             }
                         }

@@ -4,6 +4,7 @@ namespace App\Livewire\AdminCoord\Events;
 
 use Carbon\Carbon;
 use App\Enums\Events;
+use App\Enums\Role;
 use App\Models\Event;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
@@ -63,10 +64,14 @@ class TableList extends Component implements HasForms, HasTable
                 \Filament\Tables\Columns\TextColumn::make('employee.full_name')
                     ->label('Full Name')
                     ->searchable(['last_name', 'first_name'])
-                    ->sortable(['last_name', 'first_name'])
+                    ->sortable(['last_name'])
                     ->copyable()
                     ->copyMessage('Full Name copied')
                     ->copyMessageDuration(1500),
+                \Filament\Tables\Columns\TextColumn::make('employee.department.description')
+                    ->label('Department')
+                    ->sortable(['group', 'center', 'office'])
+                    ->visible(fn() => auth()->user()->hasRole(Role::CENTERADMINCOORD) || auth()->user()->hasRole(Role::GROUPADMINCOORD)),
                 \Filament\Tables\Columns\TextColumn::make('date')
                     ->label('Date')
                     ->getStateUsing(fn($record) => $record->start->format('M d, Y'))

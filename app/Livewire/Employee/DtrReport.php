@@ -60,9 +60,9 @@ class DtrReport extends Component
                     ->get();
             } else {
                 $events = Event::query()
-                    ->select('id', 'tag', 'start', 'hris_number')
+                    ->select('id', 'tag', 'start', 'hris_number', 'status')
                     ->where('hris_number', $this->employee->hris_number)
-                    ->orWhere('hris_number', NULL)
+                    ->orWhereIn('tag', [\App\Enums\Events::HOL, \App\Enums\Events::SUS, \App\Enums\Events::FLAG])
                     ->whereBetween('start', [$date_from, $date_to])
                     ->get();
             }
