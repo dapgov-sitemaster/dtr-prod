@@ -91,13 +91,8 @@ class GenerateReport
                         $time_end = $day_entry->first()->time_end?->startOfMinute();
 
                         if ($time_end) {
-                            if ($time_start->format('H:i') < '07:00:00') {
-                                $break_start = Carbon::parse($time_start->format('Y-m-d') . ' 11:00:00');
-                                $break_end = Carbon::parse($time_start->format('Y-m-d') . ' 12:00:00');
-                            } else {
-                                $break_start = $time_start->copy()->addHours(4);
-                                $break_end = $break_start->copy()->addHour();
-                            }
+                            $break_start = Carbon::parse($time_start->format('Y-m-d') . ' 12:00:00');
+                            $break_end = $break_start->copy()->addHour();
                         }
                     } else if ($day_entry->count() > 1) {
                         // dd($day_entry);
@@ -134,7 +129,9 @@ class GenerateReport
                         }
 
                         if ($break_start == null && $break_end == null) {
-                            $break_start = $time_start->copy()->addHours(4);
+                            // $break_start = $time_start->copy()->addHours(4);
+                            // $break_end = $break_start->copy()->addHour();
+                            $break_start = Carbon::parse($time_start->format('Y-m-d') . ' 12:00:00');
                             $break_end = $break_start->copy()->addHour();
                         }
                     }

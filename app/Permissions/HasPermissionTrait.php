@@ -35,9 +35,9 @@ trait HasPermissionTrait
         return $this->belongsToMany(Permission::class, 'users_permissions')->withPivot('permissions.name');
     }
 
-    protected function hasPermission($permission)
+    public function hasPermissionTo($permission)
     {
-        return (bool) $this->permissions->where('slug', $permission->slug)->count();
+        return (bool) $this->permissions()->where('slug', $permission->slug)->count();
     }
 
     protected function getAllPermissions(array $permissions)

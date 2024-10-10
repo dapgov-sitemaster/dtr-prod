@@ -19,7 +19,7 @@ class PermissionsServiceProvider extends ServiceProvider
     /**
      * Bootstrap services.
      */
-    public function boot(): void
+    public function boot()
     {
         try {
             Permission::get()->map(function ($permission) {
@@ -29,6 +29,7 @@ class PermissionsServiceProvider extends ServiceProvider
             });
         } catch (\Exception $e) {
             report($e);
+            return false;
         }
     }
 }

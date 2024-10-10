@@ -18,7 +18,7 @@ use App\Permissions\HasPermissionTrait;
 
 class User extends Authenticatable implements FilamentUser, HasName
 {
-    use HasFactory, Notifiable, SoftDeletes, HasApiTokens, LogsActivity, HasPermissionTrait;
+    use HasPermissionTrait, HasFactory, Notifiable, SoftDeletes, HasApiTokens, LogsActivity;
 
     /**
      * The attributes that are mass assignable.

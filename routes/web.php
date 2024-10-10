@@ -56,6 +56,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('employee')->group(function () {
         Route::get('/time-entries', App\Livewire\Employee\TimeEntries::class)->name('employee.time-entries');
         Route::get('/dtr-report', App\Livewire\Employee\DtrReport::class)->name('employee.dtr-report');
+        Route::get('/{hris_number}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'individual'])->name('employee.dtr-report.pdf');
         Route::get('/work-from-home', App\Livewire\Employee\WorkFromHome::class)->middleware('haswfhsched')->name('employee.work-from-home');
         Route::get('/profile/identity-photo', App\Livewire\Profile\IdentityPhoto::class)->name('employee.identity-photo');
         Route::get('/profile/electronic-signature', App\Livewire\Profile\ElectronicSignature::class)->name('employee.electronic-signature');
@@ -66,7 +67,7 @@ Route::middleware('auth')->group(function () {
 
     // Admin Coord modules
 
-    Route::prefix('admin')->middleware(['checkrole:null,admincoord,centeradmincoord,groupadmincoord', 'checkcenter:PASIG'])->group(function () {
+    Route::prefix('admin')->middleware(['role:admincoord|centeradmincoord|groupadmincoord', 'checkcenter:PASIG'])->group(function () {
         Route::get('/official-time', App\Livewire\AdminCoord\OfficialTime::class)->name('admin.official-time');
 
         // Route::get('/event-calendar', App\Livewire\AdminCoord\Events\Index::class)->name('admin.event-calendar');
@@ -84,21 +85,23 @@ Route::middleware('auth')->group(function () {
 
     // HR Admin modules
 
-    Route::prefix('hr-admin')->middleware(['checkcenter:PASIG'])->group(function () {
-        Route::get('/master-list', App\Livewire\HrAdmin\EmployeeMasterlist::class)->middleware('checkrole:hradmin')->name('hr-admin.master-list');
-        Route::get('/dtr-report', App\Livewire\HrAdmin\GenerateDtrReport::class)->name('hr-admin.generate-dtr-report.index');
-        Route::get('/dtr-report/employee/{hris_number}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'individual'])->name('hradmin.dtr.emp-dtr-report');
-        Route::get('/dtr-report/bulk/{department}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'bulk'])->name('hradmin.dtr.bulk-dtr-report');
-        Route::get('/official-time/change-requests', App\Livewire\HrAdmin\OfficialTimeChangeRequest\Index::class)->name('hr-admin.official-time-change-req.index');
-        Route::get('/events', App\Livewire\HrAdmin\Events\Index::class)->name('hr-admin.events.index');
-        Route::get('/time-entries', App\Livewire\HrAdmin\TimeEntries::class)->name('hr-admin.time-entries.index');
-        Route::get('/{mov}/view-mov', App\Http\Controllers\Pdf\ShowMovController::class)->name('hr-admin.pdf.view-mov');
+    Route::prefix('hr-admin')->middleware(['checkcenter:PASIG', 'role:hradmin'])->group(function () {
+        Route::get('/master-list', App\Livewire\HrAdmin\EmployeeMasterlist::class)->middleware('permission:hr-admin-rsp-view|hr-admin-view-any')->name('hr-admin.master-list');
+        Route::middleware('permission:hr-admin-view-any')->group(function () {
+            Route::get('/dtr-report', App\Livewire\HrAdmin\GenerateDtrReport::class)->name('hr-admin.generate-dtr-report.index');
+            Route::get('/dtr-report/employee/{hris_number}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'individual'])->name('hradmin.dtr.emp-dtr-report');
+            Route::get('/dtr-report/bulk/{department}/dtr-report', [App\Http\Controllers\Pdf\DtrReportController::class, 'bulk'])->name('hradmin.dtr.bulk-dtr-report');
+            Route::get('/official-time/change-requests', App\Livewire\HrAdmin\OfficialTimeChangeRequest\Index::class)->name('hr-admin.official-time-change-req.index');
+            Route::get('/events', App\Livewire\HrAdmin\Events\Index::class)->name('hr-admin.events.index');
+            Route::get('/time-entries', App\Livewire\HrAdmin\TimeEntries::class)->name('hr-admin.time-entries.index');
+            Route::get('/{mov}/view-mov', App\Http\Controllers\Pdf\ShowMovController::class)->name('hr-admin.pdf.view-mov');
+        });
         // Route::get('/dtr-report', App\Livewire\Employee\DtrReport::class)->name('employee.dtr-report');
     });
 
     Route::prefix('dapcc')->middleware('checkcenter:DAPCC')->group(function () {
         // DAPCC HR Admin modules
-        Route::prefix('hr-admin')->middleware('checkrole:null,hradmin')->group(function () {
+        Route::prefix('hr-admin')->middleware('role:hradmin')->group(function () {
             Route::get('/master-list', App\Livewire\Dapcc\HrAdmin\EmployeeMasterlist::class)->name('dapcc.hr-admin.master-list');
             Route::get('/events', App\Livewire\Dapcc\HrAdmin\Events\Index::class)->name('dapcc.hr-admin.events');
             Route::get('/dtr-report', App\Livewire\Dapcc\HrAdmin\GenerateDtrReports::class)->name('dapcc.hr-admin.generate-dtr-report');
@@ -108,7 +111,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // DAPCC Admin Coordinator
-        Route::prefix('admin')->middleware('checkrole:null,admincoord,centeradmincoord,groupadmincoord')->group(function () {
+        Route::prefix('admin')->middleware('role:admincoord|centeradmincoord|groupadmincoord')->group(function () {
             Route::get('/event-calendar', App\Livewire\Dapcc\AdminCoord\Events\Index::class)->name('dapcc.admin.event-calendar');
             Route::get('/daily-time-records', App\Livewire\Dapcc\AdminCoord\DailyTimeRecords::class)->name('dapcc.admin.dtr.index');
             // Route::get('/daily-time-records/{hris_number}/time-entries', App\Livewire\AdminCoord\EmployeeTimeEntries::class)->name('admin.dtr.emp-time-entries');

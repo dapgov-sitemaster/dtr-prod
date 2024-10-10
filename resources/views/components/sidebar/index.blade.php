@@ -210,6 +210,7 @@
                         <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>
                     </li>
                     <x-sidebar.group label="HR Administrator Panel">
+                        @if(auth()->user()->can('hr-admin-rsp-view') || auth()->user()->can('hr-admin-view-any'))
                         <x-sidebar.item tooltip="Employee Masterlist" :url="route('hr-admin.master-list')" :active="request()->routeIs('hr-admin.master-list')">
                             <x-filament::icon
                                 icon="heroicon-m-user-group"
@@ -219,6 +220,8 @@
                                 Employee Masterlist
                             </div>
                         </x-sidebar.item>
+                        @endif
+                        @if(auth()->user()->can('hr-admin-view-any'))
                         <x-sidebar.item tooltip="Generate DTR Report" :url="route('hr-admin.generate-dtr-report.index')" :active="request()->routeIs('hr-admin.generate-dtr-report.*')">
                             <x-filament::icon
                                 icon="heroicon-m-clipboard-document-list"
@@ -255,6 +258,7 @@
                                 Time Entries
                             </div>
                         </x-sidebar.item>
+                        @endif
                     </x-sidebar.group>
                     @endcan
                 @endif

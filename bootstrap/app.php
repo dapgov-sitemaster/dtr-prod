@@ -13,7 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'checkrole' => \App\Http\Middleware\CheckRole::class,
+            'role' => \App\Http\Middleware\CheckRole::class,
+            'permission' => \App\Http\Middleware\CheckPermission::class,
             'checkcenter' => \App\Http\Middleware\CheckCenter::class,
             'haswfhsched' => \App\Http\Middleware\HasWfhSchedule::class,
             'checkpassword' => \App\Http\Middleware\CheckDefaultPassword::class,
