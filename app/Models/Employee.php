@@ -165,8 +165,12 @@ class Employee extends Model
     public function scopeIsScheduled($query, string $date)
     {
         $data = explode(' ', $date);
-        return $query->with('event')->whereDoesntHave('event', function ($builder) use ($data) {
-            $builder->where('start', '>=', $data[0])->when((count($data) > 1), fn($q) => $q->where('start', '<=', $data[2]));
+        return $query->whereDoesntHave('event', function ($builder) use ($data) {
+            $builder->when(
+                (count($data) > 1),
+                fn($q) => $q->whereDate('start', '>=', $data[0])->whereDate('start', '<=', $data[1]),
+                fn($q) => $q->whereDate('start', $data[0])
+            );
         });
     }
 
