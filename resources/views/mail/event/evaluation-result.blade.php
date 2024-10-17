@@ -1,7 +1,7 @@
 <x-mail::message>
 # Good Day {{ $data->employee->first_name }},
 
-Your request has been **{{ $data->status }}**. See the information below:
+Your request has been **{{ $data->status }}** by {{ $evaluator }}. See the information below:
 
 Date: **{{ $data->start->format('F d, Y') }}**
 
@@ -12,7 +12,7 @@ Type of Official Leave: **{{ \App\Enums\OfficialLeaves::parse($data->description
 @endif
 
 @if($data->tag == \App\Enums\Events::WFH && $data->status == 'approved')
-You can Time in using this <a href="{{ route('employee.work-from-home') }}">link</a> for your flexible working arrangement.
+You can Time in using this <a href="{{ route('employee.work-from-home') }}">link</a> for your flexible working arrangement on your requested date.
 @endif
 
 @if($note != null)

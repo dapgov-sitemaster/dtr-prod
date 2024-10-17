@@ -85,7 +85,7 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
         return $table
             ->query(
                 Event::query()
-                    ->with(['event_created_by', 'mov'])
+                    ->with('event_created_by', 'mov')
                     ->whereHas('employee', fn($query) => $query->departmentCovered())
                     ->whereDate('start', $this->events?->date)
                     ->where('tag', $this->events?->tag)
@@ -116,7 +116,8 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                         })
                         ->openUrlInNewTab()
                         ->visible(fn($record) => $record?->tag == Events::ALA || $record?->tag == Events::CDO),
-                    \Filament\Tables\Columns\TextColumn::make('event_created_by.full_name')
+                    \Filament\Tables\Columns\TextColumn::make('event_created_by')
+                        ->formatStateUsing(fn($state) => $state->full_name)
                         ->label('Created by')
                         ->description('Created by', position: 'above')
                         ->sortable(),
@@ -231,21 +232,21 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                         $this->dispatch('refresh-table')->to(TableList::class);
                     })
                     ->visible(fn($record) => $record->created_by === auth()->user()->hris_number && $record->status === 'pending'),
-                // \Filament\Tables\Actions\DeleteAction::make()
-                //     ->modalHeading('Remove Event!')
-                //     ->label('Remove')
-                //     ->requiresConfirmation()
-                //     ->successNotification(
-                //         Notification::make()
-                //             ->success()
-                //             ->title('Event has been removed')
-                //             ->color('success')
-                //     )
-                //     ->after(function () {
-                //         $this->dispatch('refresh-calendar')->to(Calendar::class);
-                //         $this->dispatch('refresh-table')->to(TableList::class);
-                //     })
-                //     ->visible(fn($record) => $record->created_by === auth()->user()->hris_number && $record->status === 'pending'),
+                \Filament\Tables\Actions\DeleteAction::make()
+                    ->modalHeading('Remove Event!')
+                    ->label('Remove')
+                    ->requiresConfirmation()
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->title('Event has been removed')
+                            ->color('success')
+                    )
+                    ->after(function () {
+                        $this->dispatch('refresh-calendar')->to(Calendar::class);
+                        $this->dispatch('refresh-table')->to(TableList::class);
+                    })
+                    ->visible(fn($record) => $record->created_by === auth()->user()->hris_number && $record->status === 'pending'),
             ]);
     }
 }

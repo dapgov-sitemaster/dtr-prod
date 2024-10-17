@@ -131,9 +131,10 @@ class Employee extends Model
     {
         $user_dept = auth()->user()->employee->department;
         $departments = match (auth()->user()->role) {
-            Role::ADMINCOORD => [$user_dept->id],
+            Role::ADMINCOORD, Role::EMPLOYEE => [$user_dept->id],
             Role::CENTERADMINCOORD => Department::select('id')->where('center', $user_dept->center)->get()->pluck('id')->toArray(),
             Role::GROUPADMINCOORD => Department::select('id')->where('group', $user_dept->group)->get()->pluck('id')->toArray(),
+            Role::SUPERADMIN => Department::select('id')->whereNot('center', 'DAPCC')->get()->pluck('id')->toArray(),
             default => [],
         };
 
@@ -151,6 +152,13 @@ class Employee extends Model
         if (auth()->user()->hasRole(Role::SUPERADMIN) && !Gate::allows('view-dapcc')) {
             return $query;
         }
+
+        // $user_dept = auth()->user()->employee->department;
+
+        // if ($user_dept->center == "DAPCC" && $user_dept->office == "ORD") {
+        //     return $query->whereHas('department', fn($query) => $query->where('center', 'DAPCC'))->orWhereIn('hris_number', ['212469', '210798']);
+        // }
+
         return $query->whereHas('department', fn($query) => $query->where('center', 'DAPCC'));
     }
 

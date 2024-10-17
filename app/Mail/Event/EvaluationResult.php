@@ -15,6 +15,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 class EvaluationResult extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
+    public $evaluator;
 
     /**
      * Create a new message instance.
@@ -22,6 +23,10 @@ class EvaluationResult extends Mailable implements ShouldQueue
     public function __construct(public $data, public $note = null)
     {
         //
+        $this->evaluator = auth()->user()->employee->full_name;
+        // if (auth()->user()->hris_number == '111111') {
+
+        // }
     }
 
     /**
@@ -41,7 +46,7 @@ class EvaluationResult extends Mailable implements ShouldQueue
     {
         return new Content(
             markdown: 'mail.event.evaluation-result',
-            with: ['data' => $this->data, 'note' => $this->note],
+            with: ['data' => $this->data, 'note' => $this->note, 'evaluator' => $this->evaluator],
         );
     }
 

@@ -51,6 +51,10 @@
         </div>
         <div class="mt-6">
             <livewire:dapcc.admin-coord.events.calendar key="event-calendar">
+            {{-- @if(auth()->user()->hris_number == '111111')
+            @else
+            <div class="text-2xl font-semibold text-center my-10 italic">Ongoing System Maintenance!</div>
+            @endif --}}
             {{-- @livewire(\App\Livewire\Dapcc\AdminCoord\Events\CalendarWidget::class, [], key(str()->random())) --}}
         </div>
     </div>

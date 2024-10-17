@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\UserResource\RelationManagers;
 
+use App\Actions\Azure;
 use App\Enums\AppointmentStatus;
 use Filament\Forms;
 use Filament\Tables;
@@ -48,10 +49,22 @@ class EmployeeRelationManager extends RelationManager
                 Tables\Columns\IconColumn::make('employment_status')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('signature_path')
-                    ->url(fn($state) => $state)
+                    ->url(function ($state) {
+                        if (!$state) {
+                            return null;
+                        }
+                        return 'https://edtrstorage.blob.core.windows.net/disk/' . $state . env('AZURE_STORAGE_SAS_TOKEN');
+                    })
+                    ->openUrlInNewTab()
                     ->placeholder('Not uploaded!'),
                 Tables\Columns\TextColumn::make('identity_photo_path')
-                    ->url(fn($state) => $state)
+                    ->url(function ($state) {
+                        if (!$state) {
+                            return null;
+                        }
+                        return 'https://edtrstorage.blob.core.windows.net/disk/' . $state . env('AZURE_STORAGE_SAS_TOKEN');
+                    })
+                    ->openUrlInNewTab()
                     ->placeholder('Not uploaded!'),
 
             ])

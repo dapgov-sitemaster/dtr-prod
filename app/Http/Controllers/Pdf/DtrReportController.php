@@ -97,6 +97,7 @@ class DtrReportController extends Controller
 
     public function bulk(Department $department, Request $request, GenerateReport $generate, ProcessReport $process)
     {
+        ini_set('memory_limit', '256M');
         $title = null;
         $appointment_status = $request->get('appointment_status');
 
@@ -111,6 +112,7 @@ class DtrReportController extends Controller
         $employees = Employee::query()
             ->with(['official_time', 'department'])
             ->where('department_id', $department->id)
+            ->when(auth()->user()->employee->department->office == 'ICTD', fn($query) => $query->whereNotIn('hris_number', ['212469', '210798']))
             ->where('appointment_status', AppointmentStatus::tryFrom($appointment_status))
             ->get();
 
@@ -124,14 +126,14 @@ class DtrReportController extends Controller
 
             $azure = new Azure;
             $events = Event::query()
-                ->select('id', 'tag', 'start', 'end', 'hris_number')
+                ->select('id', 'tag', 'start', 'end', 'hris_number', 'status')
                 ->orWhereIn('tag', [\App\Enums\Events::HOL, \App\Enums\Events::SUS, \App\Enums\Events::FLAG])
                 ->whereBetween('start', [$date_from->copy()->subDay(), $date_to->copy()->addDay()])
                 ->get();
 
             foreach ($employees as $employee) {
                 $employee_event = Event::query()
-                    ->select('id', 'tag', 'start', 'hris_number')
+                    ->select('id', 'tag', 'start', 'hris_number', 'status')
                     ->where('hris_number', $employee->hris_number)
                     ->whereBetween('start', [$date_from->copy()->subDay(), $date_to->copy()->addDay()])
                     ->get();
@@ -143,6 +145,7 @@ class DtrReportController extends Controller
                 $employee['total'] = $processed['total'];
                 $employee['blob'] = ($employee->signature_path) ? $azure->get($employee->signature_path) : null;
             }
+
 
             $file_title = $title . '_DTR_report_(' . $request->get('yearmonth') . ' ' . (new NumberFormatter('en_US', NumberFormatter::ORDINAL))->format($request->get('cutoff')) . '-cutoff).pdf';
             $pdf = App::make('dompdf.wrapper');
@@ -206,6 +209,7 @@ class DtrReportController extends Controller
 
     public function dapcc_bulk(Department $department, Request $request, ProcessDapccReport $process)
     {
+        ini_set('memory_limit', '256M');
         $title = null;
         $appointment_status = $request->get('appointment_status');
 

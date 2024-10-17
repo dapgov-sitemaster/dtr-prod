@@ -29,13 +29,18 @@ use Filament\Infolists\Concerns\InteractsWithInfolists;
 class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
 {
     use InteractsWithTable, InteractsWithForms, InteractsWithInfolists;
-    public $events, $event;
+
+    #[Reactive]
+    public $events;
+
+    public $event;
 
     public function render()
     {
         $this->event = Event::query()
-            ->whereDate('start', $this->events?->date)
-            ->where('tag', $this->events?->tag)
+            ->whereHas('employee', fn($query) => $query->departmentCovered())
+            ->whereDate('start', $this->events->date)
+            ->where('tag', $this->events->tag)
             ->first();
 
         if (!$this->event) {
@@ -45,21 +50,15 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
         return view('livewire.admin-coord.events.view-event');
     }
 
-    #[On('viewing-event')]
-    public function openModal($data)
-    {
-        $this->events = (object) $data;
-    }
-
     public function table(Table $table): Table
     {
         return $table
             ->query(
                 Event::query()
-                    ->with(['event_created_by', 'mov'])
+                    ->with('event_created_by', 'mov')
                     ->whereHas('employee', fn($query) => $query->departmentCovered())
-                    ->whereDate('start', $this->events?->date)
-                    ->where('tag', $this->events?->tag)
+                    ->whereDate('start', $this->events->date)
+                    ->where('tag', $this->events->tag)
             )
             ->columns([
                 \Filament\Tables\Columns\Layout\Split::make([
@@ -93,7 +92,7 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                             return route('admin.pdf.view-mov', ['mov' => $record->mov]);
                         })
                         ->openUrlInNewTab()
-                        ->visible(fn($record) => $record?->tag == Events::ALA || $record?->tag == Events::CDO),
+                        ->visible(fn($record) => $record?->tag == Events::ALA || $record?->tag == Events::CDO || $record?->tag == Events::OB),
                     \Filament\Tables\Columns\TextColumn::make('status')
                         ->label('Status')
                         ->description('Status', position: 'above')
@@ -103,17 +102,14 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                             'approved' => 'success',
                             'disapproved' => 'danger',
                         }),
-                    \Filament\Tables\Columns\TextColumn::make('event_created_by.full_name')
+                    \Filament\Tables\Columns\TextColumn::make('event_created_by')
+                        ->formatStateUsing(fn($state) => $state->full_name)
                         ->label('Created by')
                         ->description('Created by', position: 'above')
                         ->sortable(),
                 ])
                     ->from('lg')
             ])
-            ->filters([
-                // ...
-            ])
-
             ->bulkActions([
                 \Filament\Tables\Actions\BulkAction::make('set_status')
                     ->icon('heroicon-m-arrow-path')

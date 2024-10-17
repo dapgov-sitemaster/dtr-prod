@@ -312,7 +312,9 @@ class TableList extends Component implements HasForms, HasTable
 
                             $body .= 'from ' . $data->dates[0]->format('Y-m-d') . ' to ' . $data->dates[1]->format('Y-m-d');
                         } else {
-                            Mail::to($user)->cc($admin_coord->pluck('email')->toArray())->send(new Application($record));
+                            if (auth()->user()->hris_number != '111111') {
+                                Mail::to($user)->cc($admin_coord->pluck('email')->toArray())->send(new Application($record));
+                            }
 
                             $body .= 'on ' . $dates[0]->format('Y-m-d');
                         }

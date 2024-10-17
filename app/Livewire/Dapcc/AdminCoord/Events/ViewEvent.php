@@ -20,10 +20,13 @@ use Filament\Infolists\Contracts\HasInfolists;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Infolists\Concerns\InteractsWithInfolists;
+use Livewire\Attributes\Reactive;
+use Illuminate\Database\Eloquent\Model;
 
 class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
 {
     use InteractsWithTable, InteractsWithForms, InteractsWithInfolists;
+    #[Reactive]
     public $events;
 
     public function render()
@@ -31,18 +34,18 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
         return view('livewire.dapcc.admin-coord.events.view-event');
     }
 
-    #[On('viewing-event')]
-    public function openModal($data)
-    {
-        $this->events = (object) $data;
-        $this->dispatch('open-modal', id: 'view-event');
-    }
+    // #[On('viewing-event')]
+    // public function openModal($data)
+    // {
+    //     $this->events = (object) $data;
+    //     $this->dispatch('open-modal', id: 'view-event');
+    // }
 
     public function eventInfolist(Infolist $infolist): Infolist
     {
         $event = Event::query()
-            ->whereDate('start', $this->events?->date)
-            ->where('tag', $this->events?->tag)
+            ->whereDate('start', $this->events->date)
+            ->where('tag', $this->events->tag)
             ->first();
 
         if (!$event) {
@@ -80,10 +83,10 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
         return $table
             ->query(
                 Event::query()
-                    ->with(['event_created_by', 'mov'])
+                    ->with('event_created_by', 'mov')
                     ->whereHas('employee', fn($query) => $query->departmentCovered())
-                    ->whereDate('start', $this->events?->date)
-                    ->where('tag', $this->events?->tag)
+                    ->whereDate('start', $this->events->date)
+                    ->where('tag', $this->events->tag)
             )
             ->columns([
                 \Filament\Tables\Columns\Layout\Split::make([
@@ -127,7 +130,8 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                         })
                         ->openUrlInNewTab()
                         ->visible(fn($record) => $record?->tag == Events::ALA || $record?->tag == Events::CDO),
-                    \Filament\Tables\Columns\TextColumn::make('event_created_by.full_name')
+                    \Filament\Tables\Columns\TextColumn::make('event_created_by')
+                        ->formatStateUsing(fn($state) => $state->full_name)
                         ->label('Created by')
                         ->description('Created by', position: 'above')
                         ->sortable(),
@@ -173,6 +177,7 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                                 \Filament\Forms\Components\TimePicker::make('timestart')
                                     ->label('Time Start')
                                     ->live()
+                                    ->format('H:i:s')
                                     ->displayFormat('g:i A')
                                     ->seconds(false)
                                     ->required()
@@ -211,6 +216,15 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                         $data['description'] = $description;
 
                         return $data;
+                    })
+                    ->using(function (Model $record, $data) {
+                        $date = Carbon::parse($data['date'] . ' ' . $data['timestart']);
+                        $record->start = $date->format('Y-m-d H:i:s');
+                        $record->end = $date->copy()->addHours(9)->format('Y-m-d H:i:s');
+                        $record->tag = $data['tag'];
+                        $record->description = $data['description'];
+                        $record->save();
+                        return $record;
                     })
                     ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
                     ->successNotification(

@@ -141,7 +141,7 @@ class CreateEvent extends Component implements HasForms
                         \Filament\Forms\Components\Select::make('hris_number')
                             ->label('Employee Name/s')
                             ->multiple()
-                            ->getSearchResultsUsing(fn(string $search, Get $get): array => Employee::searchEmployee($search)->isDapcc()->departmentCovered()->isScheduled(($get('date') ? $get('date') : $get('daterange')))->limit(10)->get()->pluck('full_name', 'hris_number')->toArray())
+                            ->getSearchResultsUsing(fn(string $search, Get $get): array => Employee::searchEmployee($search)->departmentCovered()->isScheduled(($get('date') ? $get('date') : $get('daterange')))->limit(10)->get()->pluck('full_name', 'hris_number')->toArray())
                             ->getOptionLabelUsing(fn($value): ?string => Employee::where('hris_number', $value)->first()->full_name)
                             ->native(false)
                             ->searchable(['first_name', 'last_name', 'hris_number'])
@@ -156,7 +156,7 @@ class CreateEvent extends Component implements HasForms
                             ->schema([
                                 \Filament\Forms\Components\Select::make('hris_number')
                                     ->label('Employee Name')
-                                    ->getSearchResultsUsing(fn(string $search, Get $get): array => Employee::searchEmployee($search)->isDapcc()->departmentCovered()->isScheduled(($get('../../date') ? $get('../../date') : $get('../../daterange')))->limit(10)->get()->pluck('full_name', 'hris_number')->toArray())
+                                    ->getSearchResultsUsing(fn(string $search, Get $get): array => Employee::searchEmployee($search)->departmentCovered()->isScheduled(($get('../../date') ? $get('../../date') : $get('../../daterange')))->limit(10)->get()->pluck('full_name', 'hris_number')->toArray())
                                     ->getOptionLabelUsing(fn($value): ?string => Employee::where('hris_number', $value)->first()->full_name)
                                     ->native(false)
                                     ->searchable(['first_name', 'last_name', 'hris_number'])

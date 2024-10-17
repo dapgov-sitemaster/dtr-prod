@@ -125,8 +125,6 @@ class GenerateReport
                                 // info($entry->time_start . ' | ' . $time_end);
                                 if ($entry->time_start == $time_end) {
                                     $break_end = null;
-                                } else {
-                                    $break_end = $entry->time_end;
                                 }
                             }
                         }

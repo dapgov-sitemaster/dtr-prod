@@ -109,7 +109,7 @@
         <x-slot name="heading">
             View Event
         </x-slot>
-
+        {{-- @livewire(\App\Livewire\AdminCoord\Events\ViewEvent::class, ['events' => $eventView], key(str()->random())) --}}
         <livewire:admin-coord.events.view-event :events="$eventView" :key="str()->random()">
         @endif
     </x-filament::modal>

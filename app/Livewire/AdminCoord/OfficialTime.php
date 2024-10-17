@@ -143,23 +143,23 @@ class OfficialTime extends Component implements HasForms, HasTable
                         $file = Storage::disk('public')->get($data['attachment']);
                         $file_explode = explode('/', $data['attachment']);
                         $filename = $file_explode[1];
-                        // $azure->put("movs", $file, $filename);
+                        $azure->put("movs", $file, $filename);
 
                         foreach ($records as $record) {
                             $official_time = $record->official_time()->create([
                                 'hris_number' => $record->hris_number,
                                 'time_in' => ($data['schedule_type'] == ScheduleType::FIXED->value ? $data['official_time'] : null),
                                 'schedule_type' => $data['schedule_type'],
-                                // 'effectivity_date' => $data['effectivity_date'],
+                                'effectivity_date' => $data['effectivity_date'],
                                 'status' => 'approved',
                                 'created_by' => auth()->user()->hris_number,
                             ]);
 
-                            $official_time->movs()->create(['filename' => 'movs/' . $filename]);
-                            Mail::to($record->user)->cc([auth()->user()->email, 'hr-test@dap.edu.ph'])->send(new OfficialTimeChanges(data: $official_time, file: $file, filename: $filename));
+                            $official_time->mov()->create(['filename' => 'movs/' . $filename]);
+                            Mail::to($record->user)->cc([auth()->user()->email, 'hr-test@dap.edu.ph'])->send(new OfficialTimeChanges(data: $official_time->load('employee'), file: $file, filename: $filename));
                         }
 
-                        Storage::disk('public')->delete($data['attachment']);
+                        // Storage::disk('public')->delete($data['attachment']);
 
                         Notification::make()
                             ->title("Saved Successfully!")
@@ -261,14 +261,14 @@ class OfficialTime extends Component implements HasForms, HasTable
                             'hris_number' => $record->hris_number,
                             'time_in' => ($data['schedule_type'] == ScheduleType::FIXED->value ? $data['official_time'] : null),
                             'schedule_type' => $data['schedule_type'],
-                            // 'effectivity_date' => $data['effectivity_date'],
+                            'effectivity_date' => $data['effectivity_date'],
                             'status' => 'approved',
                             'created_by' => auth()->user()->hris_number,
                         ]);
 
-                        $official_time->movs()->create(['filename' => 'movs/' . $filename]);
+                        $official_time->mov()->create(['filename' => 'movs/' . $filename]);
 
-                        Mail::to($record->user)->cc([auth()->user()->email, 'hr-test@dap.edu.ph'])->send(new OfficialTimeChanges(is_bulk: false, data: $official_time, file: $file, filename: $filename));
+                        Mail::to($record->user)->cc([auth()->user()->email, 'hr-test@dap.edu.ph'])->send(new OfficialTimeChanges(data: $official_time, file: $file, filename: $filename));
 
                         Storage::disk('public')->delete($data['attachment']);
 

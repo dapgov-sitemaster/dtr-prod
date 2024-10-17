@@ -53,7 +53,7 @@
                     </div>
                 </x-sidebar.item>
             </x-sidebar.group>
-            @if(Auth::user()->can('view-pasig'))
+            @if(Auth::user()->can('view-pasig') || Auth::user()->hris_number != '212469' || Auth::user()->hris_number != '210798')
             <x-sidebar.group>
                 <x-sidebar.item tooltip="Leave & Flexible Schedule Application" :url="route('employee.leave-flexible-schedule-application.index')" :active="request()->routeIs('employee.leave-flexible-schedule-application.*')">
                     <x-filament::icon

@@ -30,6 +30,7 @@ class OfficialTime extends Model
 
     protected $casts = [
         'time_in' => 'datetime',
+        'effectivity_date' => 'datetime',
         'schedule_type' => ScheduleType::class,
     ];
 

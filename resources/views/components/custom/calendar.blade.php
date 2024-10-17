@@ -44,7 +44,7 @@
                                     </x-filament::button> --}}
                                         @foreach($item->events as $event => $value)
                                         @php
-                                            $event_enum = ($type == "pasig") ? App\Enums\Events::parse($event) : App\Enums\Dapcc\Events::parse($event);
+                                            $event_enum = ($type == "pasig") ? \App\Enums\Events::parse($event) : \App\Enums\Dapcc\Events::parse($event);
                                         @endphp
                                         <div class="px-2 pb-1 lg:flex w-full text-xs relative inline-flex">
                                             <button
@@ -53,7 +53,28 @@
                                                     content: @js($event_enum->getLabel()),
                                                 }"
                                                 wire:click.stop="$parent.viewEvent('{{ $event }}', '{{ $item->day->format('Y-m-d') }}')"
-                                                class="w-full rounded-md text-left py-1 px-2 focus:shadow text-gray-700 focus:text-white truncate ... {{ $event_enum->customColor() }}">
+                                                class="w-full rounded-md text-left py-1 px-2 focus:shadow text-gray-700 focus:text-white truncate ...
+                                                @if($type == 'pasig')
+                                                    @if($event_enum == \App\Enums\Events::WFH || $event_enum == \App\Enums\Events::HWFH)
+                                                    hover:bg-blue-100 focus:bg-blue-500
+                                                    @elseif($event_enum == \App\Enums\Events::ALA || $event_enum == \App\Enums\Events::CDO)
+                                                    hover:bg-orange-100 focus:bg-orange-500
+                                                    @elseif($event_enum == \App\Enums\Events::SUS || $event_enum == \App\Enums\Events::HOL || $event_enum == \App\Enums\Events::FLAG)
+                                                    hover:bg-green-100 focus:bg-green-500
+                                                    @elseif($event_enum == \App\Enums\Events::OB)
+                                                    hover:bg-gray-100 focus:bg-gray-500
+                                                    @endif
+                                                @elseif($type == 'dapcc')
+                                                    @if($event_enum == \App\Enums\Dapcc\Events::SHIFT)
+                                                    hover:bg-blue-100 focus:bg-blue-500
+                                                    @elseif($event_enum == \App\Enums\Dapcc\Events::ALA || $event_enum == \App\Enums\Dapcc\Events::CDO || $event_enum == \App\Enums\Dapcc\Events::DAYOFF)
+                                                    hover:bg-orange-100 focus:bg-orange-500
+                                                    @elseif($event_enum == \App\Enums\Dapcc\Events::SUS || $event_enum == \App\Enums\Dapcc\Events::HOL || $event_enum == \App\Enums\Dapcc\Events::FLAG)
+                                                    hover:bg-green-100 focus:bg-green-500
+                                                    @elseif($event_enum == \App\Enums\Dapcc\Events::OB)
+                                                    hover:bg-gray-100 focus:bg-gray-500
+                                                    @endif
+                                                @endif">
                                                 {{ $event_enum->getLabel() }}
                                             </button>
                                             @if($value->count() > 1)

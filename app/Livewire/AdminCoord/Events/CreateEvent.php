@@ -141,5 +141,6 @@ class CreateEvent extends Component implements HasForms
             ->send();
         $this->dispatch('refresh-calendar')->to(Calendar::class);
         $this->dispatch('close-modal', id: 'create-event');
+        $this->form->fill();
     }
 }
