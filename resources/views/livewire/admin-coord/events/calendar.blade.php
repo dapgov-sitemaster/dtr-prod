@@ -1,6 +1,6 @@
 <div>
 
-    {{-- <div class="w-full mb-4">
+    <div class="w-full mb-4">
         <div class="block md:flex md:justify-between text-center mx-auto">
             <div class="w-full mx-auto text-2xl font-semibold">
                 {{ Carbon\Carbon::create($selectedYear, $selectedMonth)->format('F Y') }}
@@ -28,7 +28,7 @@
                 </x-filament::input.wrapper>
             </div>
         </div>
-    </div> --}}
+    </div>
     <x-calendar type="pasig" :items="$this->days" />
     {{-- <div class="border-2 rounded-xl p-6">
         <div class="lg:grid lg:grid-cols-7 lg:gap-1 text-center mb-2 hidden ">

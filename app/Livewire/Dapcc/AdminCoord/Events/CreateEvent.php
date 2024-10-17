@@ -142,7 +142,7 @@ class CreateEvent extends Component implements HasForms
                             ->label('Employee Name/s')
                             ->multiple()
                             ->getSearchResultsUsing(fn(string $search, Get $get): array => Employee::searchEmployee($search)->departmentCovered()->isScheduled(($get('date') ? $get('date') : $get('daterange')))->limit(10)->get()->pluck('full_name', 'hris_number')->toArray())
-                            ->getOptionLabelUsing(fn($value): ?string => Employee::where('hris_number', $value)->first()->full_name)
+                            ->getOptionLabelsUsing(fn($values): array => Employee::whereIn('hris_number', $values)->get()->pluck('full_name', 'hris_number')->toArray())
                             ->native(false)
                             ->searchable(['first_name', 'last_name', 'hris_number'])
                             ->required()

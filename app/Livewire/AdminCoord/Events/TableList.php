@@ -30,14 +30,14 @@ use Carbon\CarbonPeriod;
 class TableList extends Component implements HasForms, HasTable
 {
     use InteractsWithTable, InteractsWithForms;
-    #[Reactive]
-    public $year, $month;
+    // #[Reactive]
+    // public $year, $month;
 
-    public function mount($year, $month)
-    {
-        $this->year = $year;
-        $this->month = $month;
-    }
+    // public function mount($year, $month)
+    // {
+    //     $this->year = $year;
+    //     $this->month = $month;
+    // }
 
     #[On('refresh-table')]
     public function render()
@@ -52,7 +52,7 @@ class TableList extends Component implements HasForms, HasTable
                 Event::query()
                     ->whereHas('employee', fn($query) => $query->departmentCovered())
                     ->when(auth()->user()->employee->department->office == "ICTD", fn($query) => $query->whereNotIn('hris_number', ['212469', '210798']))
-                    ->whereYear('start', $this->year)->whereMonth('start', $this->month)
+                // ->whereYear('start', $this->year)->whereMonth('start', $this->month)
             )
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('hris_number')
@@ -127,7 +127,6 @@ class TableList extends Component implements HasForms, HasTable
                                 \Coolsam\FilamentFlatpickr\Forms\Components\Flatpickr::make('date')
                                     ->label('Date')
                                     ->dateFormat('Y-m-d')
-                                    ->minDate(now()->addDays(3)->format('Y-m-d 00:00:00'))
                                     ->theme(\Coolsam\FilamentFlatpickr\Enums\FlatpickrTheme::DEFAULT)
                                     ->required()
                                     ->afterStateUpdated(function (Set $set) {
@@ -138,7 +137,6 @@ class TableList extends Component implements HasForms, HasTable
                                 \Coolsam\FilamentFlatpickr\Forms\Components\Flatpickr::make('daterange')
                                     ->label('Date Range')
                                     ->dateFormat('Y-m-d')
-                                    ->minDate(now()->addDays(3)->format('Y-m-d 00:00:00'))
                                     ->range()
                                     ->theme(\Coolsam\FilamentFlatpickr\Enums\FlatpickrTheme::DEFAULT)
                                     ->required()
@@ -186,8 +184,8 @@ class TableList extends Component implements HasForms, HasTable
                                     ->label('Employee Name/s')
                                     ->multiple()
                                     // ->options(\App\Models\Employee::whereIn('department_id', $this->departments)->where('employment_status', true)->get()->pluck('full_name', 'hris_number'))
-                                    ->getSearchResultsUsing(fn(string $search): array => Employee::searchEmployee($search)->departmentCovered()->limit(10)->get()->pluck('full_name', 'hris_number')->toArray())
-                                    ->getOptionLabelUsing(fn($value): ?string => Employee::where('hris_number', $value)->first()->full_name)
+                                    ->getSearchResultsUsing(fn(string $search, Get $get): array => Employee::searchEmployee($search)->departmentCovered()->isScheduled(($get('date') ? $get('date') : $get('daterange')))->limit(10)->get()->pluck('full_name', 'hris_number')->toArray())
+                                    ->getOptionLabelsUsing(fn($values): array => Employee::whereIn('hris_number', $values)->get()->pluck('full_name', 'hris_number')->toArray())
                                     ->native(false)
                                     ->searchable(['first_name', 'last_name', 'hris_number'])
                                     ->required()
@@ -209,8 +207,8 @@ class TableList extends Component implements HasForms, HasTable
                         }
 
                         foreach ($data['hris_number'] as $hris_number) {
-                            $date = (array_key_exists('date', $data)) ? [$data['date']] : $data['daterange'];
-                            $dates = (count($date) > 1) ? CarbonPeriod::create($date[0], $date[1])->toArray() : [Carbon::parse($date)];
+                            $date = (array_key_exists('date', $data)) ? $data['date'] : $data['daterange'];
+                            $dates = (is_array($date)) ? CarbonPeriod::create($date[0], $date[1])->toArray() : [Carbon::parse($date)];
 
                             foreach ($dates as $date) {
                                 $official_time = OfficialTime::where('hris_number', $hris_number)->where('status', 'approved')->first();
@@ -262,7 +260,7 @@ class TableList extends Component implements HasForms, HasTable
                         // return $model::create($data);
                     })
                     ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
-                    ->visible(fn() => auth()->user()->hris_number == '211515')
+                    ->visible(fn() => auth()->user()->hris_number == '111111')
             ])
             ->bulkActions([
                 \Filament\Tables\Actions\BulkAction::make('set_status')
@@ -480,7 +478,7 @@ class TableList extends Component implements HasForms, HasTable
                             ->columns(3)
                             ->afterStateHydrated(function ($component, $state) {
                                 if (! filled($state)) {
-                                    $component->state(['pending']);
+                                    $component->state(['pending', 'approved']);
                                 }
                             })
                             ->options([
