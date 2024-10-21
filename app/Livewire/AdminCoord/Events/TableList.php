@@ -260,7 +260,6 @@ class TableList extends Component implements HasForms, HasTable
                         // return $model::create($data);
                     })
                     ->after(fn() => $this->dispatch('refresh-calendar')->to(Calendar::class))
-                    ->visible(fn() => auth()->user()->hris_number == '111111')
             ])
             ->bulkActions([
                 \Filament\Tables\Actions\BulkAction::make('set_status')

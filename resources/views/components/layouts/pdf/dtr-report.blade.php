@@ -132,7 +132,8 @@
                                 @endif
                             </td>
                             {{-- TIME IN AND OUT --}}
-                            <td class="border text-center">
+                            {{-- <td class="border text-center text-gray" style="@if(!$report['time_in'] && (Carbon\Carbon::parse($date)->dayOfWeek == Carbon\Carbon::SATURDAY || Carbon\Carbon::parse($date)->dayOfWeek == Carbon\Carbon::SUNDAY)) background-color: rgb(156 163 175); @endif"> --}}
+                            <td class="border text-center text-gray">
                                 @if($report['time_in'])
                                     {{ (date('H:i:s', strtotime($report['time_in'])) < date('H:i:s', strtotime('12:00:00'))) ? $report['time_in'] : '' }}
                                 @endif
