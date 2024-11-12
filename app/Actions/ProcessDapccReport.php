@@ -50,9 +50,25 @@ class ProcessDapccReport
                 $time_end = null;
                 $schedule_type = null;
                 $shift = null;
+                $official_start_time = null;
+                $official_end_time = null;
 
                 if ($flag->isNotEmpty() || $date->dayOfWeek == Carbon::MONDAY) {
                     $isflag = true;
+                }
+
+                if ($schedule->isNotEmpty()) {
+                    if ($schedule->first()->tag == Events::SHIFT) {
+                        $shift_start = Carbon::parse($schedule->first()->start);
+                        $shift_end = Carbon::parse($schedule->first()->end);
+                        $official_start_time = $shift_start;
+                        $official_end_time = $shift_end;
+                        if ($shift_start->format('Y-m-d') == $shift_end->format('Y-m-d')) {
+                            $shift = $shift_start->format('g:i A') . ' - ' . $shift_end->format('g:i A');
+                        } else {
+                            $shift = $shift_start->format('Y-m-d g:i A') . ' - ' . $shift_end->format('Y-m-d g:i A');
+                        }
+                    }
                 }
 
                 if ($day_entry->isNotEmpty()) {
@@ -60,21 +76,6 @@ class ProcessDapccReport
                     $time_end = $day_entry->first()->time_end;
                     $schedule_type = $day_entry->first()->schedule_type;
 
-                    $official_start_time = null;
-                    $official_end_time = null;
-                    if ($schedule->isNotEmpty()) {
-                        if ($schedule->first()->tag == Events::SHIFT) {
-                            $shift_start = Carbon::parse($schedule->first()->start);
-                            $shift_end = Carbon::parse($schedule->first()->end);
-                            $official_start_time = $shift_start;
-                            $official_end_time = $shift_end;
-                            if ($shift_start->format('Y-m-d') == $shift_end->format('Y-m-d')) {
-                                $shift = $shift_start->format('g:i A') . ' - ' . $shift_end->format('g:i A');
-                            } else {
-                                $shift = $shift_start->format('Y-m-d g:i A') . ' - ' . $shift_end->format('Y-m-d g:i A');
-                            }
-                        }
-                    }
 
 
                     // if ($isflag) {

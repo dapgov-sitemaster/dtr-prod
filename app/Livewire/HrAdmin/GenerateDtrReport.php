@@ -61,7 +61,7 @@ class GenerateDtrReport extends Component implements HasForms
                             ->afterStateUpdated(function (HasForms $livewire, \Filament\Forms\Components\Select $component) {
                                 $livewire->validateOnly($component->getStatePath());
                             })
-                            ->getSearchResultsUsing(fn(string $search): array => Employee::searchEmployee($search)->limit(50)->get()->pluck('full_name', 'hris_number')->toArray())
+                            ->getSearchResultsUsing(fn(string $search): array => Employee::searchEmployee($search)->withoutGlobalScopes()->limit(50)->get()->pluck('full_name', 'hris_number')->toArray())
                             ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->full_name)
                             ->searchable()
                             ->required()

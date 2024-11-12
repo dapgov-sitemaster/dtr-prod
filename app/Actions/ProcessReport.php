@@ -189,7 +189,7 @@ class ProcessReport
                         if ($official_start_time) {
                             $start = Carbon::parse($date->format('Y-m-d') . ' ' . $official_start_time)->seconds(0);
                             if ($time_in->format('Y-m-d H:i') > $start->format('Y-m-d H:i')) {
-                                $start_minsdiff = ceil($start->diffInMinutes($time_in));
+                                $start_minsdiff = floor($start->diffInMinutes($time_in));
                                 $tardy_formatted = intdiv($start_minsdiff, 60) . ':' . ($start_minsdiff % 60);
                                 if ($tardy_formatted != '0:0') {
                                     $tardy = $tardy_formatted;
@@ -203,7 +203,7 @@ class ProcessReport
                                     $not_completed_hrs[] = $date->format('Y-m-d');
                                 }
                                 // else if ($time_end->format('Y-m-d H:i') < $end->format('Y-m-d H:i')) {
-                                //     $end_minsdiff = ceil($time_end->diffInMinutes($end));
+                                //     $end_minsdiff = floor($time_end->diffInMinutes($end));
                                 //     $undertime_format = intdiv($end_minsdiff, 60) . ':' . ($end_minsdiff % 60);
                                 //     if ($undertime_format != '0:0') {
                                 //         $undertime = $undertime_format;
@@ -231,7 +231,7 @@ class ProcessReport
                                 $not_completed_hrs[] = $date->format('Y-m-d');
                             }
                             // else if ($time_end->format('Y-m-d H:i') < $end->format('Y-m-d H:i')) {
-                            //     $end_minsdiff = ceil($time_end->diffInMinutes($end));
+                            //     $end_minsdiff = floor($time_end->diffInMinutes($end));
                             //     $undertime_format = intdiv($end_minsdiff, 60) . ':' . ($end_minsdiff % 60);
                             //     if ($undertime_format != '0:0') {
                             //         $undertime = $undertime_format;
@@ -245,7 +245,7 @@ class ProcessReport
                                 $tardies[$date->format('Y-m-d')] = [480, [ScheduleType::FULLFLEXI->value, $official_start_time], $time_in, true];
                                 $not_completed_hrs[] = $date->format('Y-m-d');
                             } else if ($time_in->format('Y-m-d H:i') > $start->format('Y-m-d H:i')) {
-                                $start_minsdiff = ceil($start->diffInMinutes($time_in));
+                                $start_minsdiff = floor($start->diffInMinutes($time_in));
                                 $tardy_formatted = intdiv($start_minsdiff, 60) . ':' . ($start_minsdiff % 60);
                                 if ($tardy_formatted != '0:0') {
                                     $tardy = $tardy_formatted;
@@ -256,7 +256,7 @@ class ProcessReport
 
                                 $end = Carbon::parse($date->format('Y-m-d') . ' 18:30:00')->seconds(0);
                                 if ($time_end->format('Y-m-d H:i') < $end->format('Y-m-d H:i')) {
-                                    $end_minsdiff = ceil($time_end->diffInMinutes($end));
+                                    $end_minsdiff = floor($time_end->diffInMinutes($end));
                                     $undertime_format = intdiv($end_minsdiff, 60) . ':' . ($end_minsdiff % 60);
                                     if ($undertime_format != '0:0') {
                                         $undertime = $undertime_format;
@@ -268,7 +268,7 @@ class ProcessReport
                                 // temporary minus 60 for lunch break, will update once HR update me in lunch break time range available
                                 $minute_diff = $time_in->diffInMinutes($time_end) - 60;
                                 if ($minute_diff <= 480) {
-                                    $end_minsdiff = ceil($time_end->diffInMinutes($end));
+                                    $end_minsdiff = floor($time_end->diffInMinutes($end));
                                     $undertime_format = intdiv($end_minsdiff, 60) . ':' . ($end_minsdiff % 60);
                                     if ($undertime_format != '0:0') {
                                         $undertime = $undertime_format;

@@ -17,7 +17,7 @@
             View Event
         </x-slot>
 
-        <livewire:hr-admin.events.view-event :events="$eventView" key="hr-view-event">
+        <livewire:hr-admin.events.view-event :events="$eventView" :key="str()->random()">
         @endif
     </x-filament::modal>
 

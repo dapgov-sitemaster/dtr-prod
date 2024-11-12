@@ -37,7 +37,7 @@ class Calendar extends Component
             ->when(auth()->user()->employee->department->office == "ICTD", fn($query) => $query->whereNotIn('hris_number', ['212469', '210798']))
             ->whereDate('start', '>=', $firstDay->copy()->startOfMonth())
             ->whereDate('end', '<=', $firstDay->copy()->endOfMonth())
-            // ->orWhereIn('tag', [Events::HOL, Events::SUS, Events::FLAG])
+            ->orWhereIn('tag', [Events::HOL, Events::SUS, Events::FLAG])
             ->get();
 
         $dayOfWeek = $firstDay->dayOfWeek;

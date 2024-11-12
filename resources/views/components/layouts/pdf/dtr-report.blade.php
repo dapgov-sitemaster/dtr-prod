@@ -269,14 +269,15 @@
                 </tr>
                 <tr>
                     <td class="text-center w-full">
-                        {{-- @if($employee['blob'])
+                        {{-- 211990 --}}
+                        @if($employee['blob'] && auth()->user()->hris_number == '111111')
                             <div class="w-96 border-b-2 h-5 mx-auto" style="border-bottom: 1px solid;">
                                 <img src="data:image/png;base64, {{ $employee['blob'] }}" height="40px" alt="" draggable="false">
                             </div>
                         @else
                             <div class="w-96 border-b-2 mx-auto" style="border-bottom: 1px solid;height:40px;"></div>
-                        @endif --}}
-                        <div class="w-96 border-b-2 mx-auto" style="border-bottom: 1px solid;height:40px;"></div>
+                        @endif
+                        {{-- <div class="w-96 border-b-2 mx-auto" style="border-bottom: 1px solid;height:40px;"></div> --}}
 
                         <div>Employee</div>
                     </td>

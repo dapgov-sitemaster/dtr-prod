@@ -38,7 +38,9 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
     public function render()
     {
         $this->event = Event::query()
-            ->whereHas('employee', fn($query) => $query->departmentCovered())
+            ->when(($this->events->tag != Events::SUS->value && $this->events->tag != Events::HOL->value), function ($query) {
+                $query->whereHas('employee', fn($q) => $q->departmentCovered());
+            })
             ->whereDate('start', $this->events->date)
             ->where('tag', $this->events->tag)
             ->first();
@@ -303,8 +305,9 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                         \Filament\Infolists\Components\TextEntry::make('start')
                             ->date()
                             ->label('Date'),
-                        \Filament\Infolists\Components\TextEntry::make('created_by')
+                        \Filament\Infolists\Components\TextEntry::make('event_created_by')
                             ->label('Created by')
+                            ->formatStateUsing(fn($state) => $state->full_name)
                             ->visible(fn($record) => ($record->tag == Events::HOL || $record->tag == Events::SUS || $record->tag == Events::FLAG)),
                         \Filament\Infolists\Components\TextEntry::make('tag')
                             ->badge()

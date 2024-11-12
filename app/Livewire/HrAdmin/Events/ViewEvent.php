@@ -27,27 +27,39 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
     #[Reactive]
     public $events;
 
+    public $event;
+
     public function render()
     {
+        $this->event = Event::query()
+            ->where('created_by', auth()->user()->hris_number)
+            ->whereDate('start', $this->events->date)
+            ->where('tag', $this->events->tag)
+            ->first();
+
+        if (!$this->event) {
+            $this->dispatch('close-modal', id: 'view-event');
+        }
+
         return view('livewire.hr-admin.events.view-event');
     }
 
-    #[On('viewing-event')]
-    public function openModal($data)
-    {
-        $this->events = (object) $data;
-        $this->dispatch('open-modal', id: 'view-event');
-    }
+    // #[On('viewing-event')]
+    // public function openModal($data)
+    // {
+    //     $this->events = (object) $data;
+    //     $this->dispatch('open-modal', id: 'view-event');
+    // }
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
                 Event::query()
-                    ->with(['event_created_by', 'mov'])
+                    ->with('event_created_by', 'mov')
                     ->where('created_by', auth()->user()->hris_number)
-                    ->whereDate('start', $this->events?->date)
-                    ->where('tag', $this->events?->tag)
+                    ->whereDate('start', $this->events->date)
+                    ->where('tag', $this->events->tag)
             )
             ->columns([
                 \Filament\Tables\Columns\Layout\Split::make([
@@ -75,7 +87,8 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                         })
                         ->openUrlInNewTab()
                         ->visible(fn($record) => $record?->tag == Events::ALA),
-                    \Filament\Tables\Columns\TextColumn::make('event_created_by.full_name')
+                    \Filament\Tables\Columns\TextColumn::make('event_created_by')
+                        ->formatStateUsing(fn($state) => $state->full_name)
                         ->label('Created by')
                         ->description('Created by', position: 'above')
                         ->sortable(),
@@ -178,32 +191,24 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
 
     public function eventInfolist(Infolist $infolist): Infolist
     {
-        $event = Event::query()
-            ->whereDate('start', $this->events?->date)
-            ->where('tag', $this->events?->tag)
-            ->first();
-
         return $infolist
-            ->state([
-                'created_by' => $event->event_created_by->full_name,
-                'description' => $event->description,
-                'tag' => $event->tag,
-                'date' => $event->start->format('F d, Y')
-            ])
+            ->record($this->event)
             ->schema([
                 \Filament\Infolists\Components\Fieldset::make('Event Information')
                     ->schema([
-                        \Filament\Infolists\Components\TextEntry::make('date')
+                        \Filament\Infolists\Components\TextEntry::make('start')
+                            ->date()
                             ->label('Date'),
-                        \Filament\Infolists\Components\TextEntry::make('created_by')
+                        \Filament\Infolists\Components\TextEntry::make('event_created_by')
                             ->label('Created by')
-                            ->visible(fn() => ($event->tag == Events::HOL || $event->tag == Events::SUS || $event->tag == Events::FLAG)),
+                            ->formatStateUsing(fn($state) => $state->full_name)
+                            ->visible(fn() => ($this->event->tag == Events::HOL || $this->event->tag == Events::SUS || $this->event->tag == Events::FLAG)),
                         \Filament\Infolists\Components\TextEntry::make('tag')
                             ->badge()
                             ->label('Event'),
                         \Filament\Infolists\Components\TextEntry::make('description')
                             ->label('Description')
-                            ->visible(fn() => ($event->tag == Events::HOL || $event->tag == Events::SUS || $event->tag == Events::FLAG)),
+                            ->visible(fn() => ($this->event->tag == Events::HOL || $this->event->tag == Events::SUS || $this->event->tag == Events::FLAG)),
                     ])
             ]);
     }
