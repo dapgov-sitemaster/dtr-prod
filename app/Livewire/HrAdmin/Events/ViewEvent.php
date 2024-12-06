@@ -32,7 +32,6 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
     public function render()
     {
         $this->event = Event::query()
-            ->where('created_by', auth()->user()->hris_number)
             ->whereDate('start', $this->events->date)
             ->where('tag', $this->events->tag)
             ->first();
@@ -57,7 +56,6 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
             ->query(
                 Event::query()
                     ->with('event_created_by', 'mov')
-                    ->where('created_by', auth()->user()->hris_number)
                     ->whereDate('start', $this->events->date)
                     ->where('tag', $this->events->tag)
             )
@@ -107,6 +105,7 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                                 'hris_number' => $record->hris_number,
                                 'tag' => $record->tag,
                                 'description_leave' => OfficialLeaves::parse($record->description) ?? $record->description,
+                                'description' => $record->description
                             ]);
                         }
                     )
@@ -115,19 +114,7 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                             ->schema([
                                 \Filament\Forms\Components\Select::make('tag')
                                     ->label('Type of Event')
-                                    ->options(function ($record) {
-                                        $options = [];
-                                        foreach (Events::cases() as $case) {
-                                            if ($case == Events::WFH || $case == Events::HWFH) {
-                                                if ($record->start->dayOfWeek == Carbon::FRIDAY) {
-                                                    $options[$case->value] = $case->getLabel();
-                                                }
-                                            } else if ($case != Events::HOL && $case != Events::FLAG && $case != Events::SUS) {
-                                                $options[$case->value] = $case->getLabel();
-                                            }
-                                        }
-                                        return $options;
-                                    })
+                                    ->options(Events::class)
                                     ->reactive()
                                     ->native(false)
                                     ->required()
@@ -142,6 +129,10 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                                             default => false,
                                         };
                                     })
+                                    ->required(),
+                                \Filament\Forms\Components\TextInput::make('description')
+                                    ->label('Description')
+                                    ->visible(fn(Get $get) => Events::parse($get('tag')) == Events::SUS || Events::parse($get('tag')) == Events::HOL)
                                     ->required(),
                                 \Filament\Forms\Components\Select::make('hris_number')
                                     ->label('Employee Name')
@@ -159,12 +150,14 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                             ])
                     ])
                     ->mutateFormDataUsing(function (array $data): array {
-                        if (Events::parse($data['tag']) == Events::ALA) {
-                            $description = $data['description_leave'];
-                        } else {
-                            $description = Events::tryFrom($data['tag'])->getLabel();
+                        if (Events::parse($data['tag']) !== Events::SUS || Events::parse($data['tag']) !== Events::HOL) {
+                            if (Events::parse($data['tag']) == Events::ALA) {
+                                $description = $data['description_leave'];
+                            } else {
+                                $description = Events::tryFrom($data['tag'])->getLabel();
+                            }
+                            $data['description'] = $description;
                         }
-                        $data['description'] = $description;
 
                         return $data;
                     })

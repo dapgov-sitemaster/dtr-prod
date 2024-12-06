@@ -20,7 +20,7 @@ class QrCodeController extends Controller
 
     public function bulk()
     {
-        $employees = Employee::whereIn('hris_number', ['213309', '213288', '213098', '213314', '212796', '213306'])->get();
+        $employees = Employee::whereIn('hris_number', ['213348', '213215', '206999', '208192', '200160', '211843', '211351', '039755', '213197', '213173', '212494', '213211', '213199', '213289', '213308', '213247', '213360'])->get();
 
         $pdf = App::make('dompdf.wrapper');
         $pdf->loadView('components.layouts.pdf.qr-code', ['employees' => $employees])->setPaper('a4', 'landscape');

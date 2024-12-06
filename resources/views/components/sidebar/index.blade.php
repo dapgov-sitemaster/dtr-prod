@@ -82,7 +82,7 @@
                     </x-sidebar.item>
                 </x-sidebar.group>
                 @endcan
-                @if(Auth::user()->can('view-dapcc'))
+                @if(Auth::user()->can('view-dapcc') && auth()->user()->employee->department->center == 'DAPCC')
                     @can('isAdminCoordinator')
                     <li>
                         <div @class(['border-t -mr-6 rtl:-mr-auto rtl:-ml-6'])></div>

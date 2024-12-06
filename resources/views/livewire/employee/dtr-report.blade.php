@@ -38,7 +38,7 @@
         <div class="mt-6 hidden md:block">
             @if ($showDtr)
                 <div id="main" class="border-2 border-gray-700 rounded-t-xl px-1">
-                    @can('view-dapcc')
+                    @if(Auth::user()->can('view-dapcc') && Auth::user()->employee->department->center == 'DAPCC')
                         <table class="w-full text-center">
                             <thead class="border-b-2 border-gray-600">
                                 <th class="py-4">DATE</th>

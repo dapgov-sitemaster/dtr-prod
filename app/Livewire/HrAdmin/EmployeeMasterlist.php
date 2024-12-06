@@ -234,30 +234,32 @@ class EmployeeMasterlist extends Component implements HasForms, HasTable
                         ->color('primary')
                         ->modalWidth('lg')
                         ->label('Update Status')
-                        ->modalHeading(fn($record) => 'Set Employment Status of ' . $record->apost_first_name . " information")
+                        ->modalHeading(fn($record) => 'Set Employment Status of ' . $record->first_name)
                         ->requiresConfirmation()
                         ->form([
-                            \Filament\Forms\Components\ToggleButtons::make('role')
+                            \Filament\Forms\Components\ToggleButtons::make('employment-status')
+                                ->hiddenLabel()
                                 ->inline()
                                 ->default(fn($record) => $record->employment_status)
                                 ->options([1 => 'Active', 0 => 'Inactive'])
                                 ->colors([0 => 'danger', 1 => 'success'])
                                 ->icons([1 => 'heroicon-o-check-circle', 0 => 'heroicon-o-x-circle'])
+                                ->grouped()
                                 ->required(),
                         ])
                         ->action(function ($record, $data) {
-                            if ($record->employment_status == $data['role']) {
+                            if ($record->employment_status == $data['employment-status']) {
                                 Notification::make()
                                     ->title("No changes has made!")
                                     ->warning()
                                     ->color('warning')
                                     ->send();
                             } else {
-                                $record->employment_status = $data['role'];
+                                $record->employment_status = $data['employment-status'];
                                 $record->save();
                                 $stats = [1 => 'Active', 0 => 'Inactive'];
                                 Notification::make()
-                                    ->title($record->full_name . " has been set as " . $stats[$data['role']] . "!")
+                                    ->title($record->full_name . " has been set as " . $stats[$data['employment-status']] . "!")
                                     ->success()
                                     ->color('success')
                                     ->send();

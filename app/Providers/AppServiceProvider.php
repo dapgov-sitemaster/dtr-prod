@@ -36,7 +36,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('view-dapcc', function (\App\Models\User $user) {
-            return $user->employee->department->center == 'DAPCC';
+            return $user->employee->department->center == 'DAPCC' || $user->employee->department->office == 'ICTD';
         });
 
         Gate::define('view-pasig', function (\App\Models\User $user) {

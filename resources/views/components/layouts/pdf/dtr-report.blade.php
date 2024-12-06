@@ -161,10 +161,10 @@
                                             {{ $report['break_end'] }}
                                         @endif
                                     @endif
-                                {{-- @else
+                                @else
                                     @if (date('H:i:s', strtotime($report['time_in'])) > date('H:i:s', strtotime('12:00:00')))
                                         {{ $report['time_in'] }}
-                                    @endif --}}
+                                    @endif
                                 @endif
                             </td>
                             {{-- <td class="border text-center">
@@ -194,8 +194,6 @@
                                     @if(date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00')))
                                         {{ $report['time_end'] }}
                                     @endif
-                                @else
-                                    {{ $report['time_in'] }}
                                 @endif
 
                                 {{-- {{ (date('H:i:s', strtotime($report['time_end'])) > date('H:i:s', strtotime('12:00:00'))) ? date('g:i A', strtotime($report['time_end'])) : '' }} --}}
@@ -270,7 +268,7 @@
                 <tr>
                     <td class="text-center w-full">
                         {{-- 211990 --}}
-                        @if($employee['blob'] && auth()->user()->hris_number == '111111')
+                        @if($employee['blob'] && auth()->user()->hris_number == '000000')
                             <div class="w-96 border-b-2 h-5 mx-auto" style="border-bottom: 1px solid;">
                                 <img src="data:image/png;base64, {{ $employee['blob'] }}" height="40px" alt="" draggable="false">
                             </div>

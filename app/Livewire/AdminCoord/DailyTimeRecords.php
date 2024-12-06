@@ -46,7 +46,7 @@ class DailyTimeRecords extends Component implements HasForms, HasTable
                 Employee::query()
                     ->with(['official_time' => fn($query) => $query->where('status', 'approved')])
                     ->where('employment_status', true)
-                    ->departmentCovered()
+                    ->whereIn('department_id', $this->departments)
             )
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('hris_number')

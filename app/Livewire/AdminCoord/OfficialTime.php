@@ -255,7 +255,7 @@ class OfficialTime extends Component implements HasForms, HasTable
                         $file = Storage::disk('public')->get($data['attachment']);
                         $file_explode = explode('/', $data['attachment']);
                         $filename = $file_explode[1];
-                        // $azure->put("movs", $file, $filename);
+                        $azure->put("movs", $file, $filename);
 
                         $official_time = $record->official_time()->create([
                             'hris_number' => $record->hris_number,

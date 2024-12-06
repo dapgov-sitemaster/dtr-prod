@@ -141,7 +141,7 @@ class Employee extends Model
         if ($user_dept->center == "DAPCC" && $user_dept->office == "ORD") {
             return (empty($departments)) ? $query : $query->whereIn('department_id', $departments)->orWhereIn('hris_number', ['212469', '210798']);
         } else if ($user_dept->center == "ADMIN" && $user_dept->office == "ICTD") {
-            return (empty($departments)) ? $query : $query->whereIn('department_id', $departments)->whereNotIn('hris_number', ['212469', '210798']);
+            return (empty($departments)) ? $query : $query->whereIn('department_id', $departments);
         } else {
             return (empty($departments)) ? $query : $query->whereIn('department_id', $departments);
         }
