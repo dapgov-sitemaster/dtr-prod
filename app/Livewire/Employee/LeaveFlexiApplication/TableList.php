@@ -302,7 +302,7 @@ class TableList extends Component implements HasForms, HasTable
 
                         if (count($date) > 1) {
                             $data = (object) [
-                                'employee' => $user->employee,
+                                'employee' => auth()->user()->employee,
                                 'tag' => Events::parse($data['tag']),
                                 'description' => $data['description'],
                                 'dates' => [Carbon::parse($date[0]), Carbon::parse($date[1])],
