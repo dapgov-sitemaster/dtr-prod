@@ -36,7 +36,7 @@ class Event extends Model
     protected function casts(): array
     {
         return [
-            'tag' => auth()->user()->employee->department->center == 'DAPCC' ? \App\Enums\Dapcc\Events::class : \App\Enums\Events::class,
+            'tag' => (auth()->user()->employee->department->center == 'DAPCC' || auth()->user()->hris_number == "210798" || auth()->user()->hris_number == "212469") ? \App\Enums\Dapcc\Events::class : \App\Enums\Events::class,
             // 'tag' => \App\Enums\Events::class,
             'start' => 'datetime',
             'end' => 'datetime',

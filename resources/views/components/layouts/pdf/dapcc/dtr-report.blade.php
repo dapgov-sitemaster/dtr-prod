@@ -57,7 +57,7 @@
                             <td style="border: 1px solid black;">{{ $report['tardy'] }}</td>
                             <td style="border: 1px solid black;">{{ $report['undertime'] }}</td>
                             {{-- <td style="border: 1px solid black;">{{ $report['overtime'] }}</td> --}}
-                            <td style="border: 1px solid black;">{!! $report['remarks']->where('value', '<>', 'SHIFT')->pluck('value')->implode(',') !!}</td>
+                            <td style="border: 1px solid black;font-size: 9px;">{!! $report['remarks']->where('value', '<>', 'SHIFT')->pluck('value')->implode(',') !!}</td>
                         </tr>
                     @endif
                 @endforeach
