@@ -3,16 +3,18 @@
 namespace App\Providers;
 
 use App\Models\Event;
-use Illuminate\Support\Str;
-use App\Observers\EventObserver;
 use App\View\Components\Custom\Calendar;
 use Filament\Support\Colors\Color;
-use Illuminate\Support\Stringable;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\ServiceProvider;
 use Filament\Support\Facades\FilamentColor;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
+use Illuminate\Support\Stringable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +31,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('login-api', function (Request $request) {
+            return Limit::perMinute(5)->by(Str::lower((string) $request->input('email')).'|'.$request->ip());
+        });
+
+        RateLimiter::for('authenticated-api', function (Request $request) {
+            return Limit::perMinute(120)->by((string) ($request->user()?->id ?? $request->ip()));
+        });
+
         JsonResource::withoutWrapping();
 
         Gate::define('special-events', function (\App\Models\User $user) {
@@ -48,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
             if ($event?->tag == \App\Enums\Events::WFH) {
                 return true;
             }
+
             return false;
             // return $user->employee->event()->whereDate('time_start', now()->format('Y-m-d'))->first()->tag == \App\Enums\Events::WFH;
         });
@@ -61,12 +72,12 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('isHrAdminRsp', function (\App\Models\User $user) {
-            return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::HRADMINRSP;
+            return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::HRADMIN;
         });
 
         Stringable::macro('initials', function () {
             $words = preg_split("/\s+/", $this);
-            $initials = "";
+            $initials = '';
 
             foreach ($words as $w) {
                 $initials .= (strlen($w) > 0) ? $w[0] : '';

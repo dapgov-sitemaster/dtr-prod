@@ -53,7 +53,7 @@ class EmployeeRelationManager extends RelationManager
                         if (!$state) {
                             return null;
                         }
-                        return 'https://edtrstorage.blob.core.windows.net/disk/' . $state . env('AZURE_STORAGE_SAS_TOKEN');
+                        return config('services.azure.storage.endpoint') . $state . config('services.azure.storage.read_sas_token');
                     })
                     ->openUrlInNewTab()
                     ->placeholder('Not uploaded!'),
@@ -62,7 +62,7 @@ class EmployeeRelationManager extends RelationManager
                         if (!$state) {
                             return null;
                         }
-                        return 'https://edtrstorage.blob.core.windows.net/disk/' . $state . env('AZURE_STORAGE_SAS_TOKEN');
+                        return config('services.azure.storage.endpoint') . $state . config('services.azure.storage.read_sas_token');
                     })
                     ->openUrlInNewTab()
                     ->placeholder('Not uploaded!'),

@@ -2,19 +2,17 @@
 
 namespace App\Livewire\Auth;
 
-use App\Models\User;
-use Livewire\Component;
-use Livewire\Attributes\Title;
+use Illuminate\Support\Facades\Password;
 use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\DB;
-use App\Mail\SendResetPasswordMail;
-use Illuminate\Support\Facades\Mail;
+use Livewire\Attributes\Title;
+use Livewire\Component;
 
 #[Layout('components.layouts.guest')]
 class ForgotPassword extends Component
 {
     #[Title('| Forgot Password')]
     public $email;
+
     public $status = false;
 
     public function render()
@@ -38,41 +36,9 @@ class ForgotPassword extends Component
     {
         $this->validate();
 
-        $user = User::where('email', $this->email)->first();
-        if (!$user) {
-            $this->addError('email', 'Email does not exist');
-        } else {
-            $tokenData = (string) str()->uuid();
-            $timestamp = now();
-            $prev = DB::table('password_reset_tokens')->where('email', $user->email)->first();
-            if ($prev) {
-                $created_at = \Carbon\Carbon::parse($prev->created_at);
-                if (now()->between($created_at, $created_at->copy()->addSeconds(60))) {
-                    $this->addError('spam', 'Please, try again after 60 seconds.');
-                    $this->status = false;
-                } else {
-                    DB::table('password_reset_tokens')->where('email', $user->email)->delete();
-                    DB::table('password_reset_tokens')->insert([
-                        'email' => $user->email,
-                        'token' => $tokenData,
-                        'created_at' => $timestamp
-                    ]);
+        Password::sendResetLink(['email' => $this->email]);
 
-                    Mail::to($user->email)->queue(new SendResetPasswordMail($tokenData));
-                    $this->status = true;
-                    $this->email = "";
-                }
-            } else {
-                DB::table('password_reset_tokens')->insert([
-                    'email' => $user->email,
-                    'token' => $tokenData,
-                    'created_at' => $timestamp
-                ]);
-
-                Mail::to($user->email)->queue(new SendResetPasswordMail($tokenData));
-                $this->status = true;
-                $this->email = "";
-            }
-        }
+        $this->status = true;
+        $this->reset('email');
     }
 }

@@ -3,150 +3,106 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\Role;
-use App\Models\User;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\TimeEntry;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    public function login(Request $request): JsonResponse
     {
+        $credentials = $this->validateCredentials($request);
+        $user = $this->authenticatedUser($credentials);
+
+        if (! $user) {
+            return $this->invalidCredentials();
+        }
+
+        $isScannerAccount = $user->employee?->department?->office === 'GSD'
+            || $user->role === Role::SUPERADMIN
+            || in_array($user->email, ['dapsec@dap.edu.ph', 'dapcc-sec@dap.edu.ph'], true);
+
+        if (! $isScannerAccount) {
+            activity('mobile login denied')->causedBy($user)->log('A user attempted to access a restricted mobile application.');
+
+            return response()->json(['message' => 'This account is not authorized for the mobile application.'], 403);
+        }
+
+        $token = $user->createToken($user->hris_number.'-access', ['attendance:read', 'attendance:write'])->plainTextToken;
+        $latest = TimeEntry::where('hris_number', $user->hris_number)
+            ->whereDate('time_start', now()->toDateString())
+            ->latest('time_start')
+            ->first();
+
+        return response()->json([
+            'status' => 'success',
+            'token' => $token,
+            'start' => $latest !== null && $latest->time_end === null,
+        ]);
+    }
+
+    public function mvpool_login(Request $request): JsonResponse
+    {
+        $credentials = $this->validateCredentials($request);
+        $user = $this->authenticatedUser($credentials);
+
+        if (! $user) {
+            return $this->invalidCredentials();
+        }
+
+        $tokenName = $user->hris_number.'-mvpool-access';
+        $response = $user->tokens()->where('name', $tokenName)->exists()
+            ? 'token-existed'
+            : $user->createToken($tokenName, ['mvpool:read', 'mvpool:write'])->plainTextToken;
+
+        return response()->json(['status' => 'success', 'response' => $response]);
+    }
+
+    public function v1_mvpool_login(Request $request): JsonResponse
+    {
+        $credentials = $this->validateCredentials($request);
         $validated = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+            'token' => ['nullable', 'string', 'max:255'],
         ]);
+        $user = $this->authenticatedUser($credentials);
 
-        $attempt = Auth::guard('web')->attempt($validated);
-
-        if ($attempt) {
-            $user = User::with('employee')->where('email', $request->email)->first();
-
-            if ($user->employee->department->office == 'GSD' || $user->role == Role::SUPERADMIN) {
-                $token = $user->createToken($user->hris_number . '-access')->plainTextToken;
-                $time_entry = TimeEntry::where('hris_number', $user->hris_number)->whereDate('time_start', now()->format('Y-m-d'))->orderBy('time_start', 'desc')->first();
-                if ($time_entry) {
-                    $start = true;
-                    if ($time_entry->time_end) {
-                        $start = false;
-                    } else {
-                        $start = true;
-                    }
-                } else {
-                    $start = false;
-                }
-
-                return response()->json(['status' => 'success', 'token' => $token, 'start' => $start]);
-            } else {
-                if ($user->email == 'dapsec@dap.edu.ph' || $user->email == 'dapcc-sec@dap.edu.ph') {
-                    $token = $user->createToken($user->id)->plainTextToken;
-                    $endpoint = env('AZURE_STORAGE_API_ENDPOINT');
-                    $sas_token = env('AZURE_STORAGE_SAS_TOKEN');
-
-                    return response()->json(['token' => $token, 'endpoint' => $endpoint, 'sas_token' => $sas_token], 200);
-                } else {
-                    activity('user logged in in apks')->log($user->employee->full_name . ' tried to login in DAP official mobile applications');
-                    return response()->json(['message' => 'You do not have any right to login into this application! This activity will be logged.'], 422);
-                }
-            }
-        } else {
-            return response()->json(['message' => 'User credentials are not correct.'], 422);
+        if (! $user) {
+            return $this->invalidCredentials();
         }
+
+        $response = ($validated['token'] ?? null) === 'not-exists'
+            ? $user->createToken($user->hris_number.'-mvpool-access', ['mvpool:read', 'mvpool:write'])->plainTextToken
+            : 'token-exists';
+
+        return response()->json(['response' => $response]);
     }
 
-    public function mvpool_login(Request $request)
+    /**
+     * @return array{email: string, password: string}
+     */
+    private function validateCredentials(Request $request): array
     {
-        $fields = $request->validate([
-            'email' => 'required',
-            'password' => 'required'
+        return $request->validate([
+            'email' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string', 'max:255'],
         ]);
-        if (Auth::guard('web')->attempt($fields)) {
-            $user = User::where('email', $request->email)->first();
-
-            if (count($user->tokens->where('name', $user->hris_number . '-access')) > 0) {
-                $response = "token-existed";
-            } else {
-                $response = $user->createToken($user->hris_number . '-access')->plainTextToken;
-            }
-            // $token = $user->createToken($user->hris_number.'-access', ['mvpool:access'])->plainTextToken;
-
-            return response()->json(['status' => 'success', 'response' => $response]);
-        } else {
-            return response()->json(['status' => 'failed']);
-        }
     }
 
-    public function v1_mvpool_login(Request $request)
+    /**
+     * @param  array{email: string, password: string}  $credentials
+     */
+    private function authenticatedUser(array $credentials): ?User
     {
-        if ($request->email == null || $request->password == null) {
-            return response()->json(['response' => 'The email/password field is required!'], 400);
-        }
+        $user = User::with('employee.department')->where('email', $credentials['email'])->first();
 
-        if (Auth::guard('web')->attempt(['email' => $request->email, 'password' => $request->password])) {
-            $user = User::where('email', $request->email)->first();
-            // info($user);
-            // $response = $user->createToken($user->hris_number . '-access')->plainTextToken;
-
-            if ($request->token == "not-exists") {
-                $response = $user->createToken($user->hris_number . '-access')->plainTextToken;
-            } else {
-                $response = "token-exists";
-            }
-            // if (count($user->tokens->where('name', $user->hris_number . '-access')) > 0) {
-            //     $response = "token-existed";
-            // } else {
-            // }
-            // $token = $user->createToken($user->hris_number.'-access', ['mvpool:access'])->plainTextToken;
-
-            return response()->json(['response' => $response], 200);
-
-            // if ($user->employee->department->office == 'GSD' || $user->role == Role::SUPERADMIN) {
-            //     if ($request->token == "not-exists") {
-            //         $token = $user->createToken($user->hris_number . '-access')->plainTextToken;
-            //     } else {
-            //         $token = "token-exists";
-            //     }
-            //     $time_entry = TimeEntry::where('hris_number', $user->hris_number)->whereDate('time_start', now()->format('Y-m-d'))->orderBy('time_start', 'desc')->first();
-            //     if ($time_entry) {
-            //         $start = true;
-            //         if ($time_entry->time_end) {
-            //             $start = false;
-            //         } else {
-            //             $start = true;
-            //         }
-            //     } else {
-            //         $start = false;
-            //     }
-
-            //     return response()->json(['status' => 'success', 'token' => $token, 'start' => $start], 200);
-            // } else {
-            //     activity('user logged in in apks')->log($user->employee->full_name . ' tried to sign in into DAP official mobile applications');
-            //     return response()->json(['response' => 'You do not have any right to login into this application! This activity will be logged.'], 400);
-            // }
-        } else {
-            return response()->json(['response' => 'Incorrect Credentials provided!'], 400);
-        }
+        return $user && Hash::check($credentials['password'], $user->password) ? $user : null;
     }
-    // public function old_login(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'email' => 'required|email',
-    //         'password' => 'required',
-    //     ]);
 
-    //     $attempt = Auth::guard('web')->attempt($validated);
-
-    //     if ($attempt) {
-    //         $user = User::where('email', $request->email)->first();
-    //         $token = $user->createToken($user->id)->plainTextToken;
-
-    //         $endpoint = env('AZURE_STORAGE_API_ENDPOINT');
-    //         $sas_token = env('AZURE_STORAGE_SAS_TOKEN');
-
-    //         return response()->json(['token' => $token, 'endpoint' => $endpoint, 'sas_token' => $sas_token], 200);
-    //     } else {
-    //         return response()->json(['message' => 'User credentials are not correct.'], 422);
-    //     }
-    // }
+    private function invalidCredentials(): JsonResponse
+    {
+        return response()->json(['message' => 'Invalid email or password.'], 401);
+    }
 }

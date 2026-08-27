@@ -22,7 +22,7 @@
 
                 <!-- Authentication -->
                 @if(in_array(auth()->user()->email, ['garciaml@dap.edu.ph', 'sinajona@dap.edu.ph', 'pabrigar@dap.edu.ph', 'delfind@dap.edu.ph', 'soriag@dap.edu.ph', 'delacruzp@dap.edu.ph', 'serraonj@dap.edu.ph', 'superadmin@dap.edu.ph', 'solanad@dap.edu.ph'], true) || auth()->user()->employee->department->office == 'GSD')
-                    <x-dropdown-link href="{{ env('AZURE_STORAGE_API_ENDPOINT') .'edtr-mvpool-v0.3.3.apk'. env('AZURE_STORAGE_SAS_TOKEN')}}" target="_blank">
+                    <x-dropdown-link href="{{ config('services.azure.storage.endpoint') .'edtr-mvpool-v0.3.3.apk'. config('services.azure.storage.read_sas_token') }}" target="_blank">
                         {{ __('Download MVPOOL apk') }}
                     </x-dropdown-link>
                 @endif
@@ -36,9 +36,12 @@
                     {{ __('E-Signature') }}
                 </x-dropdown-link>
                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
-                <x-dropdown-link href="{{ route('logout') }}">
-                    {{ __('Log Out') }}
-                </x-dropdown-link>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 transition duration-150 ease-in-out hover:bg-gray-100 focus:bg-gray-100 focus:outline-none dark:text-gray-300 dark:hover:bg-gray-800 dark:focus:bg-gray-800">
+                        {{ __('Log Out') }}
+                    </button>
+                </form>
             </x-slot>
         </x-dropdown>
     </div>

@@ -1,15 +1,16 @@
 <?php
 
-use App\Livewire\Auth\Login;
-use App\Livewire\Auth\ResetPassword;
-use Illuminate\Support\Facades\Mail;
+use App\Http\Controllers\DtrTestController;
+use App\Http\Controllers\Pdf\QrCodeController;
+use App\Http\Controllers\Testing2Controller;
+use App\Http\Controllers\TestingController;
 use App\Livewire\Auth\ChangePassword;
 use App\Livewire\Auth\ForgotPassword;
+use App\Livewire\Auth\Login;
+use App\Livewire\Auth\ResetPassword;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DtrTestController;
-use App\Http\Controllers\TestingController;
-use App\Http\Controllers\Testing2Controller;
-use App\Http\Controllers\Pdf\QrCodeController;
 
 Route::redirect('/', '/sign-in');
 // Route::get('/testing', TestingController::class);
@@ -34,17 +35,19 @@ Route::redirect('/', '/sign-in');
 //     return new \App\Mail\OfficialTimeChanges(false, $user);
 // });
 
-
 Route::get('/sign-in', Login::class)->middleware('guest')->name('login');
 Route::get('/forgot-password', ForgotPassword::class)->middleware('guest')->name('forgot-password');
-Route::get('/reset-password/{token}', ResetPassword::class)->middleware('guest')->name('forgot-password.reset');
+Route::get('/reset-password/{token}', ResetPassword::class)->middleware('guest')->name('password.reset');
 
 Route::middleware('auth')->group(function () {
     Route::get('/calendar/test', App\Livewire\AdminCoord\Events\Index::class)->name('calendar.test');
     Route::get('/home', App\Livewire\Home::class)->middleware('checkpassword')->name('home');
     Route::get('/auth/change-default-password', ChangePassword::class)->name('auth.change-password');
-    Route::get('/logout', function () {
-        Illuminate\Support\Facades\Auth::logout();
+    Route::post('/logout', function () {
+        Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
         return redirect('/');
     })->name('logout');
 

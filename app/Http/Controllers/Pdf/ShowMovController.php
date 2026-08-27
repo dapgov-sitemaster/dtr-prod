@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers\Pdf;
 
-use App\Models\Event;
 use App\Actions\Azure;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Mov;
+use Illuminate\Support\Facades\Gate;
 
 class ShowMovController extends Controller
 {
     public function __invoke(Mov $mov, Azure $azure)
     {
+        Gate::authorize('view', $mov);
+
         if ($mov) {
             $filename = $mov->filename;
             $response = $azure->get($filename);
@@ -23,8 +24,9 @@ class ShowMovController extends Controller
 
             $headers = [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . $name[1] . '"',
+                'Content-Disposition' => 'inline; filename="'.$name[1].'"',
             ];
+
             // dd($request->all());
             return response(base64_decode($response), 200, $headers);
         } else {
