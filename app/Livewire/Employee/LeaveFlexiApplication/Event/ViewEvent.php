@@ -168,7 +168,7 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                                         $options = [];
                                         foreach (Events::cases() as $case) {
                                             if ($case == Events::WFH || $case == Events::HWFH) {
-                                                if (Carbon::parse($get('date'))->dayOfWeek == Carbon::FRIDAY) {
+                                                if (Carbon::parse($get('date'))->dayOfWeek != Carbon::MONDAY) {
                                                     $options[$case->value] = $case->getLabel();
                                                 }
                                             } else if ($case != Events::HOL && $case != Events::FLAG && $case != Events::SUS) {

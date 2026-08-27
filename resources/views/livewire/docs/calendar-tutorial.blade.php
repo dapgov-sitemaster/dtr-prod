@@ -24,6 +24,7 @@
                                         <li>Vacation Leave</li>
                                         <li>Mandatory/Forced Leave</li>
                                         <li>Sick Leave</li>
+                                        <li>Wellness Leave</li>
                                         <li>Maternity Leave</li>
                                         <li>Paternity Leave</li>
                                         <li>Special Privilege Leave</li>

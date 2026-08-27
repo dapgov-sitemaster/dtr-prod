@@ -9,6 +9,7 @@ enum OfficialLeaves: string implements HasLabel
     case VL = 'vl';
     case MFL = 'mfl';
     case SL = 'sl';
+    case WL = 'wl';
     case ML = 'ml';
     case PL = 'pl';
     case SPL = 'spl';
@@ -25,6 +26,7 @@ enum OfficialLeaves: string implements HasLabel
             self::VL => 'Vacation Leave',
             self::MFL => 'Mandatory/Forced Leave',
             self::SL => 'Sick Leave',
+            self::WL => 'Wellness Leave',
             self::ML => 'Maternity Leave',
             self::PL => 'Paternity Leave',
             self::SPL => 'Special Privilege Leave',

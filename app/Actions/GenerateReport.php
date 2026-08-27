@@ -41,11 +41,20 @@ class GenerateReport
         // }
 
         // if ($dates) {
-        $time_entries = TimeEntry::query()
-            ->where('hris_number', $employee->hris_number)
-            ->whereBetween(DB::raw('DATE(time_start)'), [$period[0]->format('Y-m-d'), $period[count($period) - 1]->format('Y-m-d')])
-            ->get();
-        // dd($time_entries);
+        //$time_entries = TimeEntry::query()
+          //  ->where('hris_number', $employee->hris_number)
+            //->whereBetween(DB::raw('DATE(time_start)'), [$period[0]->format('Y-m-d'), $period[count($period) - 1]->format('Y-m-d')])
+            //->get();
+	
+	$time_entries = TimeEntry::query()
+    		->where('hris_number', $employee->hris_number)
+    		->whereBetween('time_start', [
+        	$period[0]->startOfDay()->format('Y-m-d H:i:s'),
+        	$period[count($period) - 1]->endOfDay()->format('Y-m-d H:i:s')])
+    		->get()->sortBy('time_start')->values();
+		
+
+        	//dd($time_entries);
 
         if ($time_entries) {
             foreach ($period as $date) {
@@ -175,7 +184,7 @@ class GenerateReport
             }
         }
         // }
-
+	//dd($dtrData);
         return $dtrData;
         // return Report::query()
         //     ->where('hris_number', $employee->hris_number)

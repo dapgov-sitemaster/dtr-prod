@@ -7,6 +7,7 @@ use Filament\Support\Contracts\HasLabel;
 
 enum Events: string implements HasLabel, HasColor
 {
+    case WFH = 'wfh';
     case SHIFT = 'dapcc_shift';
     case DAYOFF = 'dapcc_dayoff';
     case ALA = 'ala';
@@ -19,6 +20,7 @@ enum Events: string implements HasLabel, HasColor
     public function getLabel(): ?string
     {
         return match ($this) {
+            self::WFH => 'Work from Home',
             self::SHIFT => 'Shift',
             self::DAYOFF => 'Day-off',
             self::ALA => 'Official Leave',
@@ -33,6 +35,7 @@ enum Events: string implements HasLabel, HasColor
     public function getColor(): string|array|null
     {
         return match ($this) {
+            self::WFH => 'info',
             self::SHIFT => 'info',
             self::DAYOFF => 'warning',
             self::ALA => 'warning',
@@ -61,6 +64,7 @@ enum Events: string implements HasLabel, HasColor
     public function customColor(): string|array|null
     {
         return match ($this) {
+            self::WFH => 'hover:bg-blue-100 focus:bg-blue-500',
             self::SHIFT => 'hover:bg-blue-100 focus:bg-blue-500',
             self::DAYOFF => 'hover:bg-orange-100 focus:bg-orange-500',
             self::ALA => 'hover:bg-orange-100 focus:bg-orange-500',

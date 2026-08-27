@@ -239,7 +239,8 @@ class ProcessReport
                             //     }
                             // }
                         } else {
-                            $start = Carbon::parse($date->format('Y-m-d') . ' 09:30:00')->seconds(0);
+                            // Fullflexi start time 10:00AM
+                            $start = Carbon::parse($date->format('Y-m-d') . ' 10:00:00')->seconds(0);
                             if ($time_end == null) {
                                 $tardy = intdiv(480, 60) . ':' . (480 % 60);
                                 $tardies[$date->format('Y-m-d')] = [480, [ScheduleType::FULLFLEXI->value, $official_start_time], $time_in, true];
@@ -254,7 +255,8 @@ class ProcessReport
                                 // $tardy = intdiv($start_minsdiff, 60) . ':' . ($start_minsdiff % 60);
                                 // $tardies[$date->format('Y-m-d')] = [$start_minsdiff, [ScheduleType::FULLFLEXI->value, $official_start_time], $time_in, true];
 
-                                $end = Carbon::parse($date->format('Y-m-d') . ' 18:30:00')->seconds(0);
+                                // Fullflexi end time 07:00PM
+                                $end = Carbon::parse($date->format('Y-m-d') . ' 19:00:00')->seconds(0);
                                 if ($time_end->format('Y-m-d H:i') < $end->format('Y-m-d H:i')) {
                                     $end_minsdiff = floor($time_end->diffInMinutes($end));
                                     $undertime_format = intdiv($end_minsdiff, 60) . ':' . ($end_minsdiff % 60);

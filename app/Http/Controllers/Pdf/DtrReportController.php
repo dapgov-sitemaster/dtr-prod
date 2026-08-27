@@ -169,7 +169,7 @@ class DtrReportController extends Controller
             $week = $request->get('week');
             $date_from = null;
             $date_to = null;
-
+			
             if ($week == "null") {
                 $range = $this->date_range($appointment_status, $cutoff, $yearmonth);
                 $date_from = Carbon::parse($range['date_from']);
@@ -180,7 +180,7 @@ class DtrReportController extends Controller
                 $date_from = Carbon::parse($range['date_from']);
                 $date_to = Carbon::parse($range['date_to']);
             }
-
+			
             $events = Event::query()
                 ->select('id', 'tag', 'start', 'end', 'hris_number')
                 ->whereBetween('start', [$date_from, $date_to->copy()->addDay()])

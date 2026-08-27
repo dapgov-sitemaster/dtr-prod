@@ -54,7 +54,7 @@ class CreateEvent extends Component implements HasForms
                         $options = [];
                         foreach (Events::cases() as $case) {
                             if ($case == Events::WFH || $case == Events::HWFH) {
-                                if ($this->date->dayOfWeek == Carbon::FRIDAY) {
+                                if ($this->date->dayOfWeek != Carbon::MONDAY) {
                                     $options[$case->value] = $case->getLabel();
                                 }
                             } else if ($case == Events::ALA) {

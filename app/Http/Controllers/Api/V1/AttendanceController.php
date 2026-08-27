@@ -75,14 +75,14 @@ class AttendanceController extends Controller
             $employee = Employee::where('hris_number', $hris_number)->first();
 
             if ($employee->department->center != "DAPCC") {
-                $schedule = Event::where('hris_number', $employee->hris_number)->whereDate('start', now()->format('Y-m-d'))->where('tag', 'wfh')->first();
+                /* $schedule = Event::where('hris_number', $employee->hris_number)->whereDate('start', now()->format('Y-m-d'))->where('tag', 'wfh')->first();
 
                 if ($schedule) {
                     return response()->json([
                         'message' => $employee->first_name . ' is currently on Work From Home arrangement. Please contact your Admin Coordinator to change your Work From Home to Hybrid.'
                     ], 422);
                 }
-
+				*/
                 $official_time = null;
                 $sched_type = ($employee->official_time) ? $employee->official_time->schedule_type : ScheduleType::FULLFLEXI;
                 if ($sched_type == ScheduleType::FIXED) {

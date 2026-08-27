@@ -104,6 +104,7 @@ class TableList extends Component implements HasForms, HasTable
                     ->sortable(),
             ])
             ->headerActions([
+                // Create Event function
                 \Filament\Tables\Actions\Action::make('create-event')
                     ->icon('heroicon-m-document-plus')
                     ->label('Create Event')
@@ -156,7 +157,7 @@ class TableList extends Component implements HasForms, HasTable
                                         $options = [];
                                         foreach (Events::cases() as $case) {
                                             if ($case == Events::WFH || $case == Events::HWFH) {
-                                                if (Carbon::parse($get('date'))->dayOfWeek == Carbon::FRIDAY && $get('date_type') == 'single') {
+                                                if (Carbon::parse($get('date'))->dayOfWeek != Carbon::MONDAY && $get('date_type') == 'single') {
                                                     $options[$case->value] = $case->getLabel();
                                                 }
                                             } else if ($case != Events::HOL && $case != Events::FLAG && $case != Events::SUS) {
@@ -357,6 +358,7 @@ class TableList extends Component implements HasForms, HasTable
                                 ->send();
                         })
                         ->visible(fn($record) => $record->status === 'pending'),
+                    // Edit Event function
                     \Filament\Tables\Actions\EditAction::make()
                         ->mutateRecordDataUsing(function ($data, $record) {
                             $data['date'] = $record->start->format('Y-m-d');
@@ -386,7 +388,7 @@ class TableList extends Component implements HasForms, HasTable
                                             $options = [];
                                             foreach (Events::cases() as $case) {
                                                 if ($case == Events::WFH || $case == Events::HWFH) {
-                                                    if (Carbon::parse($get('date'))->dayOfWeek == Carbon::FRIDAY) {
+                                                    if (Carbon::parse($get('date'))->dayOfWeek != Carbon::MONDAY) {
                                                         $options[$case->value] = $case->getLabel();
                                                     }
                                                 } else if ($case != Events::HOL && $case != Events::FLAG && $case != Events::SUS) {
@@ -431,7 +433,7 @@ class TableList extends Component implements HasForms, HasTable
                             if (Events::parse($data['tag']) == Events::ALA) {
                                 $data['description'] = $data['description_leave'];
                             } else {
-                                $data['description'] = $data['tag']->getLabel();
+                                $data['description'] = ($data['tag'] instanceof \App\Enums\Events)  ? $data['tag']->getLabel() : Events::tryFrom($data['tag'])->getLabel();
                             }
 
 

@@ -228,7 +228,7 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                                             $options = [];
                                             foreach (Events::cases() as $case) {
                                                 if ($case == Events::WFH || $case == Events::HWFH) {
-                                                    if ($record->start->dayOfWeek == Carbon::FRIDAY) {
+                                                    if ($record->start->dayOfWeek != Carbon::MONDAY) {
                                                         $options[$case->value] = $case->getLabel();
                                                     }
                                                 } else if ($case != Events::HOL && $case != Events::FLAG && $case != Events::SUS) {
@@ -260,11 +260,10 @@ class ViewEvent extends Component implements HasForms, HasTable, HasInfolists
                         ])
                         ->mutateFormDataUsing(function (array $data): array {
                             if ($data['tag'] == Events::ALA) {
-                                $description = $data['description_leave'];
+                                $data['description'] = $data['description_leave'];
                             } else {
-                                $description = $data['tag']->getLabel();
+                                $data['description'] = ($data['tag'] instanceof \App\Enums\Events)  ? $data['tag']->getLabel() : Events::tryFrom($data['tag'])->getLabel();
                             }
-                            $data['description'] = $description;
 
                             return $data;
                         })
