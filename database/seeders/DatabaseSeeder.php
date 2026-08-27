@@ -38,5 +38,9 @@ class DatabaseSeeder extends Seeder
                 'appointment_status' => 'pbp',
             ],
         );
+
+        if (app()->environment(['local', 'testing'])) {
+            $this->call(SampleDataSeeder::class);
+        }
     }
 }
