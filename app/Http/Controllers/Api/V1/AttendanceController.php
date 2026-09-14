@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use Carbon\Carbon;
-use App\Models\Event;
-use App\Models\Employee;
-use App\Models\Location;
-use App\Models\TimeEntry;
-use App\Jobs\TimeEntryJob;
 use App\Enums\ScheduleType;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Crypt;
 use App\Http\Resources\EmployeeResource;
 use App\Http\Resources\TimeEntryResource;
+use App\Jobs\TimeEntryJob;
+use App\Models\Employee;
+use App\Models\Event;
+use App\Models\Location;
+use App\Models\TimeEntry;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class AttendanceController extends Controller
 {
@@ -23,7 +24,6 @@ class AttendanceController extends Controller
         try {
             $hris = Crypt::decryptString($request->hris);
             // $hris = $request->hris;
-
 
             $employee = Employee::with('department')->where('hris_number', $hris)->first();
             // return $employee;
@@ -41,7 +41,7 @@ class AttendanceController extends Controller
                 'center' => $employee->department->center,
                 'office' => $employee->department->office,
                 'image_path' => $employee->identity_photo_path,
-                'remarks' => ""
+                'remarks' => '',
             ]);
         } catch (\Throwable $th) {
             return response()->json(['message' => 'HRIS could not be found. QR Code is not valid!'], 422);
@@ -53,7 +53,7 @@ class AttendanceController extends Controller
         try {
             $hris_number = Crypt::decryptString($request->hris);
             $employee = Employee::with('department')->where('hris_number', $hris_number)->first();
-            if (!$employee) {
+            if (! $employee) {
                 return response()->json(['message' => 'HRIS Number could not be found!'], 422);
             }
 
@@ -64,6 +64,7 @@ class AttendanceController extends Controller
             }
         } catch (\Exception $e) {
             info('Time Entry error!', [$e->getMessage()]);
+
             return response()->json(['message' => 'Unknown error occured!'], 422);
         }
     }
@@ -74,7 +75,7 @@ class AttendanceController extends Controller
             $hris_number = Crypt::decryptString($request->hris);
             $employee = Employee::where('hris_number', $hris_number)->first();
 
-            if ($employee->department->center != "DAPCC") {
+            if ($employee->department->center != 'DAPCC') {
                 /* $schedule = Event::where('hris_number', $employee->hris_number)->whereDate('start', now()->format('Y-m-d'))->where('tag', 'wfh')->first();
 
                 if ($schedule) {
@@ -82,7 +83,7 @@ class AttendanceController extends Controller
                         'message' => $employee->first_name . ' is currently on Work From Home arrangement. Please contact your Admin Coordinator to change your Work From Home to Hybrid.'
                     ], 422);
                 }
-				*/
+                */
                 $official_time = null;
                 $sched_type = ($employee->official_time) ? $employee->official_time->schedule_type : ScheduleType::FULLFLEXI;
                 if ($sched_type == ScheduleType::FIXED) {
@@ -99,7 +100,7 @@ class AttendanceController extends Controller
                     if ($latest->time_end == null) {
                         if ($latest->time_start->format('Y-m-d H:i') == $timestart->format('Y-m-d H:i')) {
                             return response()->json([
-                                'message' => 'Time captured already. Please stop spamming!'
+                                'message' => 'Time captured already. Please stop spamming!',
                             ], 422);
                         }
 
@@ -117,7 +118,7 @@ class AttendanceController extends Controller
                             'sched_type' => $sched_type,
                             'official_time' => $official_time,
                             'tag' => 'ROS',
-                            'timekeeper_id' => auth()->user()->id
+                            'timekeeper_id' => auth()->user()->id,
                         ]);
 
                         return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A')], 200);
@@ -130,12 +131,11 @@ class AttendanceController extends Controller
                         'sched_type' => $sched_type,
                         'official_time' => $official_time,
                         'tag' => 'ROS',
-                        'timekeeper_id' => auth()->user()->id
+                        'timekeeper_id' => auth()->user()->id,
                     ]);
 
                     return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A')], 200);
                 }
-
 
                 // if ($latest?->time_end) {
                 //     TimeEntryJob::dispatch(type: 'new', data: [
@@ -166,9 +166,11 @@ class AttendanceController extends Controller
                 // }
 
             }
+
             return response()->json(['message' => 'PASIG employees only!'], 422);
         } catch (\Exception $e) {
             info('PASIG Time Entry error!', [$e->getMessage()]);
+
             return response()->json(['message' => 'Unknown error occured!'], 422);
         }
     }
@@ -187,15 +189,15 @@ class AttendanceController extends Controller
                 $timecapture = $timestart->copy()->toDateTimeString();
                 $shift_remarks = '';
 
-                if (!$shift) {
-                    $shift_remarks = $employee->full_name . ', you have no schedule of duty for today. But we will record your Time Entry. Please contact your Admin Coordinator to schedule your duty today. Thank you.';
+                if (! $shift) {
+                    $shift_remarks = $employee->full_name.', you have no schedule of duty for today. But we will record your Time Entry. Please contact your Admin Coordinator to schedule your duty today. Thank you.';
                 }
 
                 if ($time_entry->isNotEmpty()) {
                     if ($time_entry->first()->time_end != null) {
                         return response()->json([
                             'capture_status' => 'error',
-                            'remarks' => "You have already completed your time entries for today`s duty. Your Time in: " . $time_entry->first()->time_start->format('g:i A') . ", your Time out: " . $time_entry->first()->time_end->format('g:i A')
+                            'remarks' => 'You have already completed your time entries for today`s duty. Your Time in: '.$time_entry->first()->time_start->format('g:i A').', your Time out: '.$time_entry->first()->time_end->format('g:i A'),
                         ], 422);
                     }
 
@@ -222,7 +224,7 @@ class AttendanceController extends Controller
                     //     'time_only' => $time_only,
                     //     'remarks' => 'Hey! It seems like you forgot to logout and you have rendered more than 24 hours. This is your Time out for date '.$time_entry->time_start->format('M d, Y').'. You have to Scan again to log your Time in for today. Thank you.'
                     // ]);
-                    return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A'), 'remarks' => 'Hey! It seems like you forgot to logout and you have rendered more than 24 hours. This is your Time out for date ' . $time_entry->time_start->format('M d, Y') . '. You have to Scan again to log your Time in for today. Thank you.'], 200);
+                    return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A'), 'remarks' => 'Hey! It seems like you forgot to logout and you have rendered more than 24 hours. This is your Time out for date '.$time_entry->time_start->format('M d, Y').'. You have to Scan again to log your Time in for today. Thank you.'], 200);
                 } else {
                     $official_time = null;
                     $sched_type = ($employee->official_time) ? $employee->official_time->schedule_type : ScheduleType::FULLFLEXI;
@@ -237,15 +239,17 @@ class AttendanceController extends Controller
                         'sched_type' => $sched_type,
                         'official_time' => $official_time,
                         'tag' => 'ros',
-                        'timekeeper_id' => auth()->user()->id
+                        'timekeeper_id' => auth()->user()->id,
                     ]);
 
                     return response()->json(['timeentry' => $timestart->copy()->format('M d, Y g:i A'), 'timeonly' => $timestart->copy()->format('g:i A'), 'remarks' => $shift_remarks], 200);
                 }
             }
+
             return response()->json(['message' => 'DAPCC employees only!'], 422);
         } catch (\Exception $e) {
             info('DAPCC Time Entry error!', [$e->getMessage()]);
+
             return response()->json(['message' => 'Unknown error occured!'], 422);
         }
     }
@@ -253,8 +257,8 @@ class AttendanceController extends Controller
     public function mvpool_time_entry(Request $request)
     {
         $validated = $request->validate([
-            'latitude' => 'required',
-            'longitude' => 'required',
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
         ]);
 
         $employee = Employee::where('hris_number', auth()->user()->hris_number)->first();
@@ -267,11 +271,9 @@ class AttendanceController extends Controller
         // $official_timein = ($employee->official_time) ? $employee->official_time->time_in : date('H:i:s', strtotime('08:00:00'));
         try {
             $timestart = now();
-            $maps_api = "https://atlas.microsoft.com/search/address/reverse/json?subscription-key=WYk5KFvt_gxcLFXFN9TfbruJYxXv_HtTCJX-aftj5GU&api-version=1.0&query=" . $validated['latitude'] . "," . $validated['longitude'];
+            $response = $this->reverseGeocode($validated['latitude'], $validated['longitude']);
 
-            $response = Http::get($maps_api);
-
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 return response()->json(['capture_status' => 'error', 'remarks' => 'Something went wrong.']);
                 // $new_loc = new Location();
                 // $new_loc->time_entry_id = $start->id;
@@ -289,7 +291,7 @@ class AttendanceController extends Controller
                         'time_end' => $timestart,
                         'location' => [
                             'address' => $addresses['address']['freeformAddress'],
-                            'coordinates' => $validated['latitude'] . "," . $validated['longitude'],
+                            'coordinates' => $validated['latitude'].','.$validated['longitude'],
                         ],
                     ]);
 
@@ -309,7 +311,7 @@ class AttendanceController extends Controller
                 'timekeeper_id' => auth()->user()->id,
                 'location' => [
                     'address' => $addresses['address']['freeformAddress'],
-                    'coordinates' => $validated['latitude'] . "," . $validated['longitude'],
+                    'coordinates' => $validated['latitude'].','.$validated['longitude'],
                 ],
             ]);
 
@@ -329,10 +331,6 @@ class AttendanceController extends Controller
                 $start = true;
             }
 
-            // $maps_api = "https://atlas.microsoft.com/search/address/reverse/json?subscription-key=WYk5KFvt_gxcLFXFN9TfbruJYxXv_HtTCJX-aftj5GU&api-version=1.0&query=" . $validated['latitude'] . "," . $validated['longitude'];
-
-            // $response = Http::get($maps_api);
-
             // if ($response->ok()) {
             //     $addresses = $response->json()['addresses'][0];
             //     $new_loc = new Location();
@@ -344,17 +342,20 @@ class AttendanceController extends Controller
 
             return response()->json(['timeonly' => $timeonly, 'start' => $start]);
         } catch (\Throwable $th) {
+            Log::warning('MVPOOL time entry failed.', ['exception' => $th::class]);
+
             return response()->json(['capture_status' => 'error', 'remarks' => 'Something went wrong.']);
         }
     }
 
     public function location(Request $request)
     {
-        $latitude = $request->latitude;
-        $longitude = $request->longitude;
-        $maps_api = "https://atlas.microsoft.com/search/address/reverse/json?subscription-key=WYk5KFvt_gxcLFXFN9TfbruJYxXv_HtTCJX-aftj5GU&api-version=1.0&query=" . $latitude . "," . $longitude;
+        $validated = $request->validate([
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+        ]);
 
-        $response = Http::get($maps_api);
+        $response = $this->reverseGeocode($validated['latitude'], $validated['longitude']);
         if ($response->ok()) {
             $addresses = $response->json()['addresses'][0];
 
@@ -370,10 +371,21 @@ class AttendanceController extends Controller
             // disabled mvpool_time_entries
             $user = auth()->user();
             $time_entries = TimeEntryResource::collection(TimeEntry::where('hris_number', $user->hris_number)->whereDate('time_start', now()->format('Y-m-d'))->get())->additional(['date' => now()->format('F d, Y')]);
+
             return $time_entries;
+
             return response()->json(['time_entries' => $time_entries]);
         } catch (\Throwable $th) {
             return response()->json(['capture_status' => 'error', 'remarks' => 'Somethin went wrong.']);
         }
+    }
+
+    private function reverseGeocode(float $latitude, float $longitude)
+    {
+        return Http::connectTimeout(5)->timeout(10)->get(config('services.azure.maps.endpoint'), [
+            'subscription-key' => config('services.azure.maps.subscription_key'),
+            'api-version' => '1.0',
+            'query' => $latitude.','.$longitude,
+        ]);
     }
 }

@@ -9,11 +9,12 @@ trait HasPermissionTrait
     public function givePermissionsTo(...$permissions)
     {
         $permissions = $this->getAllPermissions($permissions);
-        dd($permissions);
-        if ($permissions === null) {
+        if ($permissions->isEmpty()) {
             return $this;
         }
-        $this->permissions()->saveMany($permissions);
+
+        $this->permissions()->syncWithoutDetaching($permissions->modelKeys());
+
         return $this;
     }
 
@@ -21,18 +22,21 @@ trait HasPermissionTrait
     {
         $permissions = $this->getAllPermissions($permissions);
         $this->permissions()->detach($permissions);
+
         return $this;
     }
 
     public function refreshPermissions(...$permissions)
     {
-        $this->permissions()->detach();
-        return $this->givePermissionsTo($permissions);
+        $permissionIds = $this->getAllPermissions($permissions)->modelKeys();
+        $this->permissions()->sync($permissionIds);
+
+        return $this;
     }
 
     public function permissions()
     {
-        return $this->belongsToMany(Permission::class, 'users_permissions')->withPivot('permissions.name');
+        return $this->belongsToMany(Permission::class, 'users_permissions');
     }
 
     public function hasPermissionTo($permission)

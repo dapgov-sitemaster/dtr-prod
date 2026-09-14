@@ -11,12 +11,11 @@ class HasWfhSchedule
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $event = \App\Models\Event::where('hris_number', auth()->user()->hris_number)->whereDate('start', now()->format('Y-m-d'))->first();
-        if ($event?->tag == \App\Enums\Events::WFH) {
+        if ($request->user()->can('has-wfh-schedule')) {
             return $next($request);
         }
 

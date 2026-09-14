@@ -2,17 +2,22 @@
 
 namespace App\Providers;
 
+use App\Enums\Events;
+use App\Enums\Role;
 use App\Models\Event;
-use Illuminate\Support\Str;
-use App\Observers\EventObserver;
+use App\Models\User;
 use App\View\Components\Custom\Calendar;
 use Filament\Support\Colors\Color;
-use Illuminate\Support\Stringable;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\ServiceProvider;
 use Filament\Support\Facades\FilamentColor;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
+use Illuminate\Support\Stringable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,44 +34,63 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        JsonResource::withoutWrapping();
+        Gate::before(function (User $user, string $ability) {
+            if ($user->role !== Role::SUPERADMIN) {
+                return null;
+            }
 
-        Gate::define('special-events', function (\App\Models\User $user) {
-            return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::HRADMIN;
+            // These abilities select a center-specific data scope rather than
+            // authorize an action, so their existing behavior must be retained.
+            return in_array($ability, ['view-dapcc', 'view-pasig'], true) ? null : true;
         });
 
-        Gate::define('view-dapcc', function (\App\Models\User $user) {
+        RateLimiter::for('login-api', function (Request $request) {
+            return Limit::perMinute(5)->by(Str::lower((string) $request->input('email')).'|'.$request->ip());
+        });
+
+        RateLimiter::for('authenticated-api', function (Request $request) {
+            return Limit::perMinute(120)->by((string) ($request->user()?->id ?? $request->ip()));
+        });
+
+        JsonResource::withoutWrapping();
+
+        Gate::define('special-events', function (User $user) {
+            return $user->role == Role::SUPERADMIN || $user->role == Role::HRADMIN;
+        });
+
+        Gate::define('view-dapcc', function (User $user) {
             return $user->employee->department->center == 'DAPCC' || $user->employee->department->office == 'ICTD';
         });
 
-        Gate::define('view-pasig', function (\App\Models\User $user) {
-            return $user->role == \App\Enums\Role::SUPERADMIN || $user->employee->department->center != 'DAPCC';
+        Gate::define('view-pasig', function (User $user) {
+            return $user->role == Role::SUPERADMIN || $user->employee->department->center != 'DAPCC';
         });
 
-        Gate::define('has-wfh-schedule', function (\App\Models\User $user) {
+        Gate::define('has-wfh-schedule', function (User $user) {
             $event = $user->employee->event()->whereDate('start', now()->format('Y-m-d'))->where('status', 'approved')->first();
-            if ($event?->tag == \App\Enums\Events::WFH) {
+            if ($event?->tag == Events::WFH) {
                 return true;
             }
+
             return false;
             // return $user->employee->event()->whereDate('time_start', now()->format('Y-m-d'))->first()->tag == \App\Enums\Events::WFH;
         });
 
-        Gate::define('isAdminCoordinator', function (\App\Models\User $user) {
-            return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::ADMINCOORD || $user->role == \App\Enums\Role::CENTERADMINCOORD || $user->role == \App\Enums\Role::GROUPADMINCOORD;
+        Gate::define('isAdminCoordinator', function (User $user) {
+            return $user->role == Role::SUPERADMIN || $user->role == Role::ADMINCOORD || $user->role == Role::CENTERADMINCOORD || $user->role == Role::GROUPADMINCOORD;
         });
 
-        Gate::define('isHrAdmin', function (\App\Models\User $user) {
-            return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::HRADMIN;
+        Gate::define('isHrAdmin', function (User $user) {
+            return $user->role == Role::SUPERADMIN || $user->role == Role::HRADMIN;
         });
 
-        Gate::define('isHrAdminRsp', function (\App\Models\User $user) {
-            return $user->role == \App\Enums\Role::SUPERADMIN || $user->role == \App\Enums\Role::HRADMINRSP;
+        Gate::define('isHrAdminRsp', function (User $user) {
+            return $user->role == Role::SUPERADMIN || $user->role == Role::HRADMIN;
         });
 
         Stringable::macro('initials', function () {
             $words = preg_split("/\s+/", $this);
-            $initials = "";
+            $initials = '';
 
             foreach ($words as $w) {
                 $initials .= (strlen($w) > 0) ? $w[0] : '';

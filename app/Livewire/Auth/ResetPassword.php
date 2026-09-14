@@ -2,25 +2,36 @@
 
 namespace App\Livewire\Auth;
 
-use Livewire\Component;
-use Livewire\Attributes\Title;
-use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rules;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
 
 #[Layout('components.layouts.guest')]
 class ResetPassword extends Component
 {
     #[Title('| Forgot Password')]
+    public $token;
 
-    public $token = null;
+    public $email;
+
     public $password;
+
     public $password_confirmation;
 
-    public function mount($token)
+    public function mount(string $token)
     {
-        $this->token = DB::table('password_reset_tokens')->where('token', $token)->first();
-        if ($this->token == null) {
+        $this->token = $token;
+        $this->email = request()->query('email');
+
+        $user = User::where('email', $this->email)->first();
+
+        if (! $user || ! Password::broker()->tokenExists($user, $token)) {
             abort(404);
         }
     }
@@ -33,15 +44,33 @@ class ResetPassword extends Component
     public function submit()
     {
         $this->validate([
-            'password' => 'required|confirmed|min:6'
+            'email' => ['required', 'email'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::where('email', $this->token->email)->update([
-            'password' => bcrypt($this->password)
-        ]);
+        $status = Password::reset(
+            [
+                'email' => $this->email,
+                'password' => $this->password,
+                'password_confirmation' => $this->password_confirmation,
+                'token' => $this->token,
+            ],
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                    'remember_token' => Str::random(60),
+                ])->save();
 
-        if ($user) {
-            return redirect()->to('/');
+                event(new PasswordReset($user));
+            },
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            $this->addError('email', __($status));
+
+            return null;
         }
+
+        return redirect()->route('login');
     }
 }

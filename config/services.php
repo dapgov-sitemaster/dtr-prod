@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    'azure' => [
+        'storage' => [
+            'endpoint' => env('AZURE_STORAGE_API_ENDPOINT'),
+            'read_sas_token' => env('AZURE_STORAGE_SAS_TOKEN'),
+            'write_sas_token' => env('AZURE_STORAGE_PUT_SAS_TOKEN'),
+            'delete_sas_token' => env('AZURE_STORAGE_DEL_SAS_TOKEN'),
+        ],
+        'maps' => [
+            'endpoint' => env('AZURE_MAPS_ENDPOINT', 'https://atlas.microsoft.com/search/address/reverse/json'),
+            'subscription_key' => env('AZURE_MAPS_SUBSCRIPTION_KEY'),
+        ],
+    ],
+
 ];

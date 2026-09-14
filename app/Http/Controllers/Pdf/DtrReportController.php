@@ -2,24 +2,22 @@
 
 namespace App\Http\Controllers\Pdf;
 
-use Carbon\Carbon;
+use App\Actions\Azure;
+use App\Actions\GenerateReport;
+use App\Actions\ProcessDapccReport;
+use App\Actions\ProcessReport;
+use App\Enums\AppointmentStatus;
 use App\Enums\Role;
-use NumberFormatter;
+use App\Http\Controllers\Controller;
+use App\Models\Department;
+use App\Models\Employee;
 use App\Models\Event;
 use App\Models\Report;
-use App\Models\Employee;
-use Carbon\CarbonPeriod;
-use App\Models\TimeEntry;
-use App\Models\Department;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Actions\ProcessReport;
-use App\Actions\GenerateReport;
-use App\Enums\AppointmentStatus;
-use Illuminate\Support\Facades\DB;
-use App\Actions\ProcessDapccReport;
 use Illuminate\Support\Facades\App;
-use App\Http\Controllers\Controller;
-use App\Actions\Azure;
+use Illuminate\Support\Facades\Gate;
+use NumberFormatter;
 
 class DtrReportController extends Controller
 {
@@ -29,14 +27,14 @@ class DtrReportController extends Controller
         $date_to = null;
 
         if ($appointment_status == 'pbp') {
-            $date_from = ($cutoff == 1) ? $yearmonth . '-01' : $yearmonth . '-16';
-            $date_to = ($cutoff == 1) ? $yearmonth . '-15' : $yearmonth . '-' . date('t', strtotime($yearmonth . '-' . '01'));
-        } else if ($appointment_status == 'npp') {
+            $date_from = ($cutoff == 1) ? $yearmonth.'-01' : $yearmonth.'-16';
+            $date_to = ($cutoff == 1) ? $yearmonth.'-15' : $yearmonth.'-'.date('t', strtotime($yearmonth.'-'.'01'));
+        } elseif ($appointment_status == 'npp') {
             $yearmonth_ex = explode('-', $yearmonth);
             $prevMonth = (int) $yearmonth_ex[1] - 1;
 
-            $date_from = ($cutoff == 1) ? $yearmonth_ex[0] . '-' . $prevMonth . '-26' : $yearmonth . '-11';
-            $date_to = ($cutoff == 1) ? $yearmonth . '-10' : $yearmonth . '-25';
+            $date_from = ($cutoff == 1) ? $yearmonth_ex[0].'-'.$prevMonth.'-26' : $yearmonth.'-11';
+            $date_to = ($cutoff == 1) ? $yearmonth.'-10' : $yearmonth.'-25';
         }
 
         return ['date_from' => $date_from, 'date_to' => $date_to];
@@ -44,11 +42,14 @@ class DtrReportController extends Controller
 
     public function individual($hris_number, Request $request, GenerateReport $generate)
     {
-        $employee = Employee::with(['official_time', 'department'])->where('hris_number', $hris_number)->first();
+        $employee = Employee::with(['official_time', 'department'])->where('hris_number', $hris_number)->firstOrFail();
+        Gate::authorize('viewDtr', $employee);
+
         if ($employee) {
-            if ($employee->hris_number == "212469" || $employee->hris_number == "210798") {
-                $request->merge(['week' => "null"]);
+            if ($employee->hris_number == '212469' || $employee->hris_number == '210798') {
+                $request->merge(['week' => 'null']);
                 $process = new ProcessDapccReport;
+
                 return $this->dapcc_individual($employee->hris_number, $request, $process);
             }
 
@@ -75,20 +76,20 @@ class DtrReportController extends Controller
             $process = new ProcessReport;
             $processed = $process->handle($employee, $dtr_report, $date_from->format('Y-m-d'), $date_to->copy()->format('Y-m-d'), $events);
 
-
             $azure = new Azure;
             $employee['reports'] = $processed['reports'];
             $employee['total'] = $processed['total'];
             $employee['blob'] = ($employee->signature_path) ? $azure->get($employee->signature_path) : null;
 
-            $title = 'DTR Report-' . $date_from->format('m/d/Y') . '-' . $date_to->format('m/d/Y') . ' (' . $employee->hris_number . ').pdf';
+            $title = 'DTR Report-'.$date_from->format('m/d/Y').'-'.$date_to->format('m/d/Y').' ('.$employee->hris_number.').pdf';
             $pdf = App::make('dompdf.wrapper');
             $pdf->setOption(['dpi' => 100, 'defaultFont' => 'sans-serif']);
             $pdf->loadView('components.layouts.pdf.dtr-report', [
                 'employees' => [$employee],
-                'date_covered' => $date_from->format('M d, Y') . ' TO ' . $date_to->format('M d, Y'),
+                'date_covered' => $date_from->format('M d, Y').' TO '.$date_to->format('M d, Y'),
                 'title' => $title,
             ]);
+
             return $pdf->stream($title);
         } else {
             abort(404);
@@ -97,22 +98,24 @@ class DtrReportController extends Controller
 
     public function bulk(Department $department, Request $request, GenerateReport $generate, ProcessReport $process)
     {
+        Gate::authorize('viewDtr', $department);
+
         ini_set('memory_limit', '256M');
         $title = null;
         $appointment_status = $request->get('appointment_status');
 
         if (auth()->user()->hasRole(Role::ADMINCOORD) || auth()->user()->hasRole(Role::SUPERADMIN) || auth()->user()->hasRole(Role::HRADMIN)) {
             $title = $department->description;
-        } else if (auth()->user()->hasRole(Role::CENTERADMINCOORD)) {
-            $title = $department->group . '/' . $department->center;
-        } else if (auth()->user()->hasRole(Role::GROUPADMINCOORD)) {
+        } elseif (auth()->user()->hasRole(Role::CENTERADMINCOORD)) {
+            $title = $department->group.'/'.$department->center;
+        } elseif (auth()->user()->hasRole(Role::GROUPADMINCOORD)) {
             $title = $department->group;
         }
 
         $employees = Employee::query()
             ->with(['official_time', 'department'])
             ->where('department_id', $department->id)
-            ->when(auth()->user()->employee->department->office == 'ICTD', fn($query) => $query->whereNotIn('hris_number', ['212469', '210798']))
+            ->when(auth()->user()->employee->department->office == 'ICTD', fn ($query) => $query->whereNotIn('hris_number', ['212469', '210798']))
             ->where('appointment_status', AppointmentStatus::tryFrom($appointment_status))
             ->get();
 
@@ -146,22 +149,24 @@ class DtrReportController extends Controller
                 $employee['blob'] = ($employee->signature_path) ? $azure->get($employee->signature_path) : null;
             }
 
-
-            $file_title = $title . '_DTR_report_(' . $request->get('yearmonth') . ' ' . (new NumberFormatter('en_US', NumberFormatter::ORDINAL))->format($request->get('cutoff')) . '-cutoff).pdf';
+            $file_title = $title.'_DTR_report_('.$request->get('yearmonth').' '.(new NumberFormatter('en_US', NumberFormatter::ORDINAL))->format($request->get('cutoff')).'-cutoff).pdf';
             $pdf = App::make('dompdf.wrapper');
             $pdf->setOption(['dpi' => 100, 'defaultFont' => 'sans-serif']);
             $pdf->loadView('components.layouts.pdf.dtr-report', [
                 'employees' => $employees,
-                'date_covered' => $date_from->format('M d, Y') . ' TO ' . $date_to->format('M d, Y'),
+                'date_covered' => $date_from->format('M d, Y').' TO '.$date_to->format('M d, Y'),
                 'title' => $file_title,
             ]);
+
             return $pdf->stream($file_title);
         }
     }
 
     public function dapcc_individual($hris_number, Request $request, ProcessDapccReport $process)
     {
-        $employee = Employee::with(['official_time', 'department'])->where('hris_number', $hris_number)->first();
+        $employee = Employee::with(['official_time', 'department'])->where('hris_number', $hris_number)->firstOrFail();
+        Gate::authorize('viewDtr', $employee);
+
         if ($employee) {
             $appointment_status = $employee->appointment_status->value;
             $yearmonth = $request->get('yearmonth');
@@ -169,8 +174,8 @@ class DtrReportController extends Controller
             $week = $request->get('week');
             $date_from = null;
             $date_to = null;
-			
-            if ($week == "null") {
+
+            if ($week == 'null') {
                 $range = $this->date_range($appointment_status, $cutoff, $yearmonth);
                 $date_from = Carbon::parse($range['date_from']);
                 $date_to = Carbon::parse($range['date_to']);
@@ -180,7 +185,7 @@ class DtrReportController extends Controller
                 $date_from = Carbon::parse($range['date_from']);
                 $date_to = Carbon::parse($range['date_to']);
             }
-			
+
             $events = Event::query()
                 ->select('id', 'tag', 'start', 'end', 'hris_number')
                 ->whereBetween('start', [$date_from, $date_to->copy()->addDay()])
@@ -193,14 +198,15 @@ class DtrReportController extends Controller
             $employee['reports'] = $processed['reports'];
             $employee['total'] = $processed['total'];
 
-            $title = 'DTR Report-' . $date_from->format('m/d/Y') . '-' . $date_to->format('m/d/Y') . ' (' . $employee->hris_number . ').pdf';
+            $title = 'DTR Report-'.$date_from->format('m/d/Y').'-'.$date_to->format('m/d/Y').' ('.$employee->hris_number.').pdf';
             $pdf = App::make('dompdf.wrapper');
             $pdf->setOption(['dpi' => 100, 'defaultFont' => 'sans-serif']);
             $pdf->loadView('components.layouts.pdf.dapcc.dtr-report', [
                 'employees' => [$employee],
-                'date_covered' => $date_from->format('M d, Y') . ' TO ' . $date_to->format('M d, Y'),
+                'date_covered' => $date_from->format('M d, Y').' TO '.$date_to->format('M d, Y'),
                 'title' => $title,
             ]);
+
             return $pdf->stream($title);
         } else {
             abort(404);
@@ -209,21 +215,24 @@ class DtrReportController extends Controller
 
     public function dapcc_bulk(Department $department, Request $request, ProcessDapccReport $process)
     {
+        Gate::authorize('viewDtr', $department);
+
         ini_set('memory_limit', '256M');
         $title = null;
         $appointment_status = $request->get('appointment_status');
 
         if (auth()->user()->hasRole(Role::ADMINCOORD) || auth()->user()->hasRole(Role::SUPERADMIN)) {
             $title = $department->description;
-        } else if (auth()->user()->hasRole(Role::CENTERADMINCOORD)) {
-            $title = $department->group . '/' . $department->center;
-        } else if (auth()->user()->hasRole(Role::GROUPADMINCOORD)) {
+        } elseif (auth()->user()->hasRole(Role::CENTERADMINCOORD)) {
+            $title = $department->group.'/'.$department->center;
+        } elseif (auth()->user()->hasRole(Role::GROUPADMINCOORD)) {
             $title = $department->group;
         }
 
         $employees = Employee::query()
             ->with(['official_time', 'department'])
             ->departmentCovered()
+            ->where('department_id', $department->id)
             ->where('appointment_status', AppointmentStatus::tryFrom($appointment_status))
             ->get();
         if ($employees) {
@@ -231,7 +240,7 @@ class DtrReportController extends Controller
             $cutoff = $request->get('cutoff');
             $week = $request->get('week');
 
-            if ($week == "null") {
+            if ($week == 'null') {
                 $range = $this->date_range($appointment_status, $cutoff, $yearmonth);
                 $date_from = Carbon::parse($range['date_from']);
                 $date_to = Carbon::parse($range['date_to']);
@@ -265,17 +274,18 @@ class DtrReportController extends Controller
             }
 
             if ($week == null) {
-                $file_title = $title . '_DTR_report_(' . $request->get('yearmonth') . ' ' . (new NumberFormatter('en_US', NumberFormatter::ORDINAL))->format($request->get('cutoff')) . '-cutoff).pdf';
+                $file_title = $title.'_DTR_report_('.$request->get('yearmonth').' '.(new NumberFormatter('en_US', NumberFormatter::ORDINAL))->format($request->get('cutoff')).'-cutoff).pdf';
             } else {
-                $file_title = $title . ' DTR Report - ' . $appointment_status . ' (' . $date_from . ' to ' . $date_to . ').pdf';
+                $file_title = $title.' DTR Report - '.$appointment_status.' ('.$date_from.' to '.$date_to.').pdf';
             }
             $pdf = App::make('dompdf.wrapper');
             $pdf->setOption(['dpi' => 100, 'defaultFont' => 'sans-serif']);
             $pdf->loadView('components.layouts.pdf.dapcc.dtr-report', [
                 'employees' => $employees,
-                'date_covered' => $date_from->format('M d, Y') . ' TO ' . $date_to->format('M d, Y'),
+                'date_covered' => $date_from->format('M d, Y').' TO '.$date_to->format('M d, Y'),
                 'title' => $file_title,
             ]);
+
             return $pdf->stream($file_title);
         }
     }

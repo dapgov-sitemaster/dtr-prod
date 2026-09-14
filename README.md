@@ -11,10 +11,11 @@ Electronic Daily Time Record (eDTR) is a web application to record the attendanc
 ## Steps to clone this repository to your local development environment
 
 -   Git clone this repository
--   Duplicate the **.env.developement-stage** and rename it into your **.env**
--   Create your database in your dev stage
--   Run **php artisan migrate --seed** to migrate database tables into your database and create initial user
 -   Run **composer install**
+-   Duplicate **.env.example** and rename it to **.env**
+-   Run **php artisan key:generate**
+-   Create your development database and configure its connection in **.env**
+-   Run **php artisan migrate --seed** to migrate database tables and create the initial user
 -   Run **npm install**
 -   Run **php artisan serve** (Note: You can setup your virtual host in your development environment with a host of dtr-dev.test, if you have chosen another host name, update the APP_URL host in the **env**)
 -   Run **npm run dev**

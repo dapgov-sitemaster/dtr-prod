@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\Department;
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,26 +14,33 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        // $user = User::factory()->create([
-        //     'hris_number' => '000000',
-        //     'role' => 'superadmin',
-        //     'email' => 'superadmin@dap.edu.ph',
-        // ]);
-
-        User::find(1)->first()->employee()->create([
-            'hris_number' => '000000',
-            'last_name' => 'Test',
-            'first_name' => 'Super Admin',
-            'department_id' => 61,
-            'appointment_status' => 'pbp',
+        $department = Department::firstOrCreate([
+            'group' => 'SYSTEM',
+            'center' => 'SYSTEM',
+            'office' => 'ADMINISTRATION',
         ]);
 
-        // $user->employee->create([
-        //     '' => fake()->lastName('male'),
-        //     '' => fake()->lastName('male'),
-        //     '' => fake()->lastName('male'),
-        // ]);
+        $user = User::updateOrCreate(
+            ['hris_number' => '000000'],
+            [
+                'role' => 'superadmin',
+                'email' => 'superadmin@dap.edu.ph',
+                'password' => Hash::make('password'),
+            ],
+        );
+
+        $user->employee()->updateOrCreate(
+            ['hris_number' => $user->hris_number],
+            [
+                'last_name' => 'Test',
+                'first_name' => 'Super Admin',
+                'department_id' => $department->id,
+                'appointment_status' => 'pbp',
+            ],
+        );
+
+        if (app()->environment(['local', 'testing'])) {
+            $this->call(SampleDataSeeder::class);
+        }
     }
 }

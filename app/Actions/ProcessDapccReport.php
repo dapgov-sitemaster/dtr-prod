@@ -114,7 +114,7 @@ class ProcessDapccReport
                             }
                         }
                     } else if ($official_end_time) {
-                        $end = Carbon::parse($date->format('Y-m-d') . ' ' . $official_end_time)->seconds(0);
+                        $end = Carbon::parse($official_end_time)->seconds(0);
                         if ($time_end->format('Y-m-d H:i') < $end->format('Y-m-d H:i')) {
                             $end_minsdiff = $time_end->diffInMinutes($end);
                             $undertime = intdiv($end_minsdiff, 60) . ':' . ($end_minsdiff % 60);

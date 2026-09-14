@@ -59,9 +59,6 @@ class SuperadminPanelProvider extends PanelProvider
                 FilamentFullCalendarPlugin::make()
                 // ->selectable()
                 // ->editable()
-            )
-            ->resources([
-                config('filament-logger.activity_resource')
-            ]);
+            );
     }
 }
